@@ -1,0 +1,11 @@
+# an experiment for the generation of the comparisons
+
+name: "comp_vit"
+
+tocompare:
+  - "vit_base"
+  - "vit_large"
+
+
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'

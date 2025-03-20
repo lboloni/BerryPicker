@@ -1,0 +1,17 @@
+# an experiment for the generation of the comparisons
+
+name: "comp_all_with_vit"
+
+tocompare:
+  - "vp_convvae_128"
+  - "vp_convvae_256"
+  - "vp_ptun_vgg19_128"
+  - "vp_ptun_vgg19_256"
+  - "vp_ptun_resnet50_128"
+  - "vp_ptun_resnet50_256"
+  - "vit_base"
+  - "vit_large"
+  - "vp_aruco_128"
+
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'
