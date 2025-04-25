@@ -6,7 +6,10 @@ sys.path.append(str(current_file.parent.parent.parent))
 
 import unittest
 import json
-from settings import Config
+
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
+
 from robot.al5d_position_controller import RobotPosition
 from behavior_cloning.demo_to_trainingdata import BCDemonstration
 

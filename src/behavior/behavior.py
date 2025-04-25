@@ -1,6 +1,7 @@
 import sys
 sys.path.append("..")
-from settings import Config
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
 
 import numpy as np
 

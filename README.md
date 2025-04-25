@@ -25,7 +25,8 @@ Developing and validating robotics requires extensive experimentation with vario
 The main configuration object is the singleton Config class in settings. From anywhere in the system, the various top level configuration settings can be used as follows:
 
 ```
-from settings import Config
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
 
 Config()["robot"]["usb_port"]
 ```

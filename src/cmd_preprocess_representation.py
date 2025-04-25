@@ -1,5 +1,8 @@
 import sys
-from settings import Config
+
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
+
 sys.path.append(Config().values["conv_vae"]["code_dir"])
 
 from sensorprocessing import sp_conv_vae

@@ -8,7 +8,8 @@ FIXME: add (1) models that also take into account tasks (2) models that predict 
 
 import sys
 sys.path.append("..")
-from settings import Config
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
 
 import torch
 import torch.nn as nn
