@@ -22,7 +22,10 @@ logger.setLevel(logging.WARNING)
 
 
 class DemonstrationRecorder:
-    """Record demonstration data collected from various controllers, sensors etc."""
+    """
+    FIXME: obsolete. see the new code in demonstration...
+    
+    Record demonstration data collected from various controllers, sensors etc."""
 
     def __init__(self, controller, robot_controller: PositionController, camera_controller: CameraController, task_name = "unknown", save_dir = None):
         self.save_dir = save_dir
