@@ -22,7 +22,7 @@ def select_demo(exp, force_choice=None):
     demos_dict = {}
     for i, t in enumerate(demodirs):
         demos_dict[i] = t
-    print("A pop up dialog will appear now. Enter the number of demonstration.")
+    print("A pop up dialog will appear now. Enter the number of demonstration.", flush=True)
     for key in demos_dict:
         print(f"\t{key}: {demos_dict[key].name}")
     # FIXME: for easier debugging
@@ -61,6 +61,7 @@ class Demonstration:
                 cameraname = a.name[6:-4]
                 cameraset[cameraname] = cameraname
         self.cameras = sorted(cameraset.keys())
+        self.videocap = {} # placeholder for open videos
 
     def __str__(self):
         return pprint.pformat(self.__dict__)
