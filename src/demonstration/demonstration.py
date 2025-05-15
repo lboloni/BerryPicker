@@ -3,21 +3,25 @@ demonstration.py
 
 A class that wraps the data files in the demonstration, and allows convenient accesss to them. 
 """
+import json
 import sys
+
+import cv2
 sys.path.append("..")
 
 import pprint
 import pathlib
 from sensorprocessing.sp_helper import load_picturefile_to_tensor, load_capture_to_tensor
 
-
 def list_demos(exp):
     """List all the demonstrations described in an exp/run. This can be passed as the second argument of the Demonstration constructor."""
     demos = [item.name for item in exp.data_dir().iterdir() if item.is_dir()]
     return demos
 
-def select_demo(exp, force_choice=None):
-    """Interactively select one one the demonstrations, or force the choice to a number."""
+def select_demo(exp, force_choice=None, force_name=None):
+    """Interactively select one one the demonstrations, or force the choice to a number or a name."""
+    if force_name:
+        return force_name
     demodirs = [item for item in exp.data_dir().iterdir() if item.is_dir()]
     demos_dict = {}
     for i, t in enumerate(demodirs):
@@ -49,7 +53,13 @@ class Demonstration:
         self.exp = exp
         self.demo = demo
         self.demo_dir = pathlib.Path(exp.data_dir(), demo)
-        self.maxsteps = -1
+        # load the _demonstration.json file, if it exists
+        metadata_path = pathlib.Path(self.demo_dir, "_demonstration.json")
+        self.metadata = json.load(metadata_path.open()) if metadata_path.exists() else {}
+        if "maxsteps" in self.metadata:
+            self.maxsteps = self.metadata["maxsteps"]
+        else:
+            self.maxsteps = -1
         # Analyzes the demonstration to get the list of cameras. 
         # FIXME: this does the analysis based on the picture names. Instead, everything should be in the _demonstration.json.
         cameraset = {}
@@ -60,11 +70,69 @@ class Demonstration:
             if a.name.endswith(".jpg"):
                 cameraname = a.name[6:-4]
                 cameraset[cameraname] = cameraname
+        self.maxsteps += 1 # make it a proper count
         self.cameras = sorted(cameraset.keys())
         self.videocap = {} # placeholder for open videos
 
     def __str__(self):
         return pprint.pformat(self.__dict__)
+
+    def move_to_video_per_camera(self, cam, delete_img_files = False):
+        """Move the content of a specific camera into video"""
+        if cam in self.exp["cameras"]:
+            params = self.exp["cameras"][cam]
+        else:
+            params = self.exp["cameras"]["all"]
+        video_path = self.get_video_path()
+        image_paths = []
+        # Initialize video writer
+        if not video_path.exists():
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(video_path, fourcc, params["fps"], (params["width"], params["height"]))
+            for i in range(self.maxsteps):
+                img_path = self.get_image_path(i, camera=cam)
+                image_paths.append(img_path)
+                frame = cv2.imread(str(img_path))
+                out.write(frame)
+            out.release()
+        # if specified, delete the image files
+        if delete_img_files:
+            for img_path in image_paths:
+                img_path.unlink()
+        
+    def get_image_from_video(self, i, camera=None, cache=False):
+        """Extracts an image from the video. 
+        FIXME: this function opens the video file, seeks and closes it, so it should be very inefficient, we should store the open one in the demonstration instead
+        If cache is False, the function closes the open file
+        """
+        if camera is None:
+            camera = self.cameras[0]    
+        if camera not in self.videocap:    
+            video_path = self.get_video_path(camera)
+            cap = cv2.VideoCapture(video_path)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, i) 
+            self.videocap[camera] = cap
+        else:
+            cap = self.videocap[camera]
+        ret, frame = cap.read()
+        if ret:
+            # CV2 reads by default in BGR... 
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # cv2.imwrite(output_image, frame)    
+            image_to_process, image_to_show = load_capture_to_tensor(frame, transform=None)
+        else:
+            print(f"Could not read frame {i}")
+            image_to_process = None
+            image_to_show = None
+        if not cache:
+            self.videocap[camera].release()
+            self.videocap.pop(camera)
+        return image_to_process, image_to_show     
+
+    def move_to_video(self, delete_img_files = False):
+        """Moves to the video the content all all cameras"""
+        for cam in self.cameras:
+            self.move_to_video_per_camera(cam, delete_img_files)
 
     def get_image_path(self, i, camera=None):
         """Returns the path to the image, if the demo is stored as independent image files."""
