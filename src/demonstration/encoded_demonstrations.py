@@ -1,7 +1,7 @@
 """
-demonstration_helper.py
+encoded_demonstrations.py
 
-Create training data from demonstrations with support for multiple camera views.
+A set of demonstrations that had already been encoded with the sensor processor and paired with the actions. Primarily used as preprocessed training data for behavior cloning. 
 """
 import sys
 sys.path.append("..")
@@ -14,8 +14,11 @@ from sensorprocessing.sp_helper import load_picturefile_to_tensor
 
 from demonstration import Demonstration
 
-class BCDemonstration(Demonstration):
+class EncodedDemonstrations():
     """This class encapsulates loading a demonstration with the intention to convert it into training data.
+
+    FIXME: not converted yet to the model. 
+    FIXME: the parameters of this should be the exp/runs 
 
     This code is a training helper which encapsulates one behavior cloning demonstration, which is a sequence of form $\{(s_0, a_0), ...(s_n, a_n)\}$.
 
@@ -25,12 +28,10 @@ class BCDemonstration(Demonstration):
 
     The class now supports multiple camera views per timestep.
 
-    FIXME: the parameters of this should be the exp/runs 
 
     """
 
     def __init__(self, exp_demo, demo, sensorprocessor, actiontype="rc-position-target", cameras=None):
-        super().init(exp_demo, demo)
         self.sensorprocessor = sensorprocessor
         assert actiontype in ["rc-position-target", "rc-angle-target", "rc-pulse-target"]
         self.actiontype = actiontype

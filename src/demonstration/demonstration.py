@@ -30,7 +30,6 @@ def select_demo(exp, force_choice=None, force_name=None):
     print("A pop up dialog will appear now. Enter the number of demonstration.", flush=True)
     for key in demos_dict:
         print(f"\t{key}: {demos_dict[key].name}")
-    # FIXME: for easier debugging
     if not force_choice:
         inpval = input("Choose the demonstration: ")
     else:
