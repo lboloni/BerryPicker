@@ -90,6 +90,12 @@ class Demonstration:
             self.actions.append(data)
         self.save_metadata()
 
+    def get_action(self, i, type="rc_position_target"):
+        """Returns the action at timestep i. The action is a dictionary, and the type is the key to the dictionary. The default is "rc_position_target", which is the position of the robot in the world frame. Other types are "rc_velocity_target" and "rc_orientation_target".
+        """
+        actions = self.actions[i][type]
+        return list(actions.values())
+
     def __init__(self, exp, demo):
         """Initializes the demonstration, based on an experiment"""
         self.exp = exp
@@ -132,7 +138,6 @@ class Demonstration:
         if delete_img_files:
             for img_path in image_paths:
                 img_path.unlink()
-
 
     def get_image(self, i, camera=None, transform=None):
         """Gets the image as a pair of (sensor_readings, image) from the demonstration. Prefers loading it from image if it is stored as images, otherwise loads it from the video.
