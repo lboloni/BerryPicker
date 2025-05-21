@@ -1,5 +1,8 @@
 name : 'vgg19-256'
+
+image_size: [64, 64]
 latent_size: 256
+
 model: 'VGG19ProprioTunedRegression'
 loss: 'MSELoss' # alternatively it could be L1Loss
 epochs: 10
@@ -11,6 +14,6 @@ freeze_feature_extractor: True
 
 # the training data in the demonstration / subrun form 
 training_data:
-  - ["freeform", "2024_12_26__16_40_20"]
-  - ["freeform", "2024_12_26__16_44_06"]
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2024_12_26__16_44_06", "dev2"]
 

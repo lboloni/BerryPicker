@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 # these imports are from the Conv-VAE-Torch package
 import data_loader.data_loaders as module_data
-from sensorprocessing.sp_helper import get_transform_to_robot
+from sensorprocessing.sp_helper import get_transform_to_sp
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch

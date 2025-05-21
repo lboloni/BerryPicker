@@ -1,6 +1,7 @@
 # resnet-50 00 
 name : 'resnet-50-128'
 
+image_size: [64, 64]
 latent_size: 128
 
 

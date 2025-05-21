@@ -10,7 +10,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import get_transform_to_robot, load_picturefile_to_tensor
+from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
 
 import numpy as np
 import cv2

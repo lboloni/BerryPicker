@@ -14,6 +14,8 @@ sys.path.append("..")
 import pprint
 import pathlib
 from sensorprocessing.sp_helper import load_picturefile_to_tensor, load_capture_to_tensor
+from torchvision import transforms
+
 
 def list_demos(exp):
     """List all the demonstrations described in an exp/run. This can be passed as the second argument of the Demonstration constructor."""
@@ -45,6 +47,13 @@ def select_demo(exp, force_choice=None, force_name=None):
         else:
             print(f"No such demo: {demo_id}")
     return demo_dir.name
+
+def get_simple_transform():
+    """Simple transform that only converts the image to a tensor."""
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+    return transform
 
 class Demonstration:
     """This class encapsulates all the convenience functions for a demonstration, including loading images etc. A demonstration stores a sequence of images and the corresponding actions. 
@@ -161,7 +170,7 @@ class Demonstration:
             for img_path in image_paths:
                 img_path.unlink()
 
-    def get_image(self, i, camera=None, transform=None):
+    def get_image(self, i, device, camera=None, transform=None):
         """Gets the image as a pair of (sensor_readings, image) from the demonstration. Prefers loading it from image if it is stored as images, otherwise loads it from the video.
 
         Args:
@@ -170,9 +179,9 @@ class Demonstration:
             transform: Optional transform to apply to the image
         """
         if self.metadata["stored_as_images"]:
-            return self.get_image_from_imagefile(i, camera=camera, transform=transform)
+            return self.get_image_from_imagefile(i, device=device, camera=camera, transform=transform)
         else:
-            return self.get_image_from_video(i, camera=camera, cache=True)
+            return self.get_image_from_video(i, device=device, camera=camera, cache=True)
 
     def write_image(self, i, filepath, camera=None, transform=None):
         """Writes the specified image to a jpg file in filepath. This 
@@ -183,7 +192,7 @@ class Demonstration:
         image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(filepath, image_bgr)
 
-    def get_image_from_video(self, i, camera=None, transform=None, cache=False):
+    def get_image_from_video(self, i, device, camera=None, transform=None, cache=False):
         """Extracts an image from the video. 
         If cache is False, the function closes the open file
         """
@@ -202,7 +211,7 @@ class Demonstration:
             # CV2 reads by default in BGR... 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # cv2.imwrite(output_image, frame)    
-            image_to_process, image_to_show = load_capture_to_tensor(frame, transform=transform)
+            image_to_process, image_to_show = load_capture_to_tensor(frame, transform=transform, device=device)
         else:
             print(f"Could not read frame {i}")
             image_to_process = None
@@ -236,7 +245,7 @@ class Demonstration:
         video_path = pathlib.Path(self.demo_dir, f"video_{camera}.mp4")
         return video_path
 
-    def get_image_from_imagefile(self, i, camera=None, transform=None):
+    def get_image_from_imagefile(self, i, transform, device, camera=None):
         """
         Gets the image as a torch batch from an image file. 
 
@@ -247,10 +256,10 @@ class Demonstration:
         """
         assert self.metadata["stored_as_images"], "The demonstration is not stored as images"
         filepath = self.get_image_path(i, camera)
-        sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
+        sensor_readings, image = load_picturefile_to_tensor(filepath, transform, device=device)
         return sensor_readings, image
 
-    def get_all_images_from_imagefile(self, i, transform=None):
+    def get_all_images_from_imagefile(self, i, transform=None, device=None):
         """
         Gets images from all cameras for a specific timestep
 
@@ -265,7 +274,7 @@ class Demonstration:
         for camera in self.metadata["cameras"]:
             filepath = self.get_image_path(i, camera)
             if filepath.exists():
-                sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
+                sensor_readings, image = load_picturefile_to_tensor(filepath, transform, device=device)
                 images[camera] = (sensor_readings, image)
 
         return images

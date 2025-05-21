@@ -10,14 +10,12 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import get_transform_to_robot, load_picturefile_to_tensor
+from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
 
 import pathlib
 import torch
 import torch.nn as nn
 from torchvision import models
-from torchvision import transforms
-
 
 class VGG19ProprioTunedRegression(nn.Module):
     """Neural network used to create a latent embedding. Starts with a VGG19 neural network, without the classification head. The features are flattened, and fed into a regression MLP trained on visual proprioception. 

@@ -32,7 +32,7 @@ from pathlib import Path
 # from mpl_toolkits.axes_grid1 import ImageGrid
 
 from sensorprocessing.conv_vae import get_conv_vae_config
-from .sp_helper import get_transform_to_robot
+from .sp_helper import get_transform_to_sp
 from .sensor_processing import AbstractSensorProcessing
 
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
@@ -62,7 +62,7 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self.model.to(self.device)
         self.model.eval()
-        self.transform = get_transform_to_robot()
+        self.transform = get_transform_to_sp()
 
 
     def process(self, sensor_readings):
