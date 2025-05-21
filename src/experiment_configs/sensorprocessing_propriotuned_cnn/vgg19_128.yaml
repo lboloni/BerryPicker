@@ -1,6 +1,7 @@
 name : 'vgg19-128'
 
-image_size: [64, 64]
+# image_size: [64, 64]
+image_size: [256, 256]
 latent_size: 128
 
 model: 'VGG19ProprioTunedRegression'
@@ -12,8 +13,11 @@ output_size: 6
 
 freeze_feature_extractor: True
 
-# the training data in the demonstration / subrun form 
+# the training data in the demonstration / subrun / camera form 
 training_data:
   - ["freeform", "2024_12_26__16_40_20", "dev2"]
   - ["freeform", "2024_12_26__16_44_06", "dev2"]
 
+# the testing data in the demonstration / subrun / camera form
+testing_data:
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]

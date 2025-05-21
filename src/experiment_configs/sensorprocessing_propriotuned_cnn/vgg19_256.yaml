@@ -1,6 +1,7 @@
 name : 'vgg19-256'
 
-image_size: [64, 64]
+# image_size: [64, 64]
+image_size: [256, 256]
 latent_size: 256
 
 model: 'VGG19ProprioTunedRegression'

@@ -1,7 +1,9 @@
 # resnet-50 00 
 name : 'resnet-50-256'
 
-image_size: [64, 64]
+# image_size: [64, 64]
+image_size: [256, 256]
+
 latent_size: 256
 
 reductor_step_1: 512
