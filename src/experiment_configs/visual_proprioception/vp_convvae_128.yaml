@@ -9,7 +9,7 @@ regressor_hidden_size_2: 64
 loss: "MSE"
 
 # The number of epochs the MLP is supposed to be trained
-epochs: 1000
+# epochs: 1000
 batch_size: 32
 
 # information about the sp specified by the exp/run

@@ -11,5 +11,5 @@ regressor_hidden_size_2: 64
 # this should be somehow picked from the regular config
 output_size: 6
 
-# epochs for training
+# a modest amount of epochs for training
 epochs: 100
