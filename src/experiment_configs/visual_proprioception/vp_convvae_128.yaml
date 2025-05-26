@@ -20,15 +20,16 @@ sp_run: 'proprio_128'
 # proprioception_training_task: 'proprio_regressor_training'
 # proprioception_testing_task: 'proprio_regressor_validation'
 
+# the training data: use the default
 
 # the training data in the demonstration / subrun / camera form 
-training_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
-  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+#training_data:
+#  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+#  - ["freeform", "2024_12_26__16_44_06", "dev2"]
 
 
 # the validation data in the demonstration / subrun form 
-validation_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
-  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+#validation_data:
+#  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+#  - ["freeform", "2024_12_26__16_44_06", "dev2"]
 

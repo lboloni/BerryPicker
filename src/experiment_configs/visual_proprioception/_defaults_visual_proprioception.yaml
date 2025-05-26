@@ -13,3 +13,14 @@ output_size: 6
 
 # a modest amount of epochs for training
 epochs: 100
+
+# the training data in the demonstration / subrun / camera form 
+training_data:
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+
+
+# the validation data in the demonstration / subrun form 
+validation_data:
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2024_12_26__16_44_06", "dev2"]

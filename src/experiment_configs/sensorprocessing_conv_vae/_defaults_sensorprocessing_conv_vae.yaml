@@ -5,5 +5,18 @@ model_name: 'VAE_Robot'
 model_dir: 'models'
 
 latent_size: 128
-epochs: 100
+epochs: 5
 save_period: 5
+
+# Default training data
+
+# the training data in the demonstration / subrun / camera form 
+training_data:
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+
+
+# the validation data in the demonstration / subrun form 
+validation_data:
+  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2024_12_26__16_44_06", "dev2"]

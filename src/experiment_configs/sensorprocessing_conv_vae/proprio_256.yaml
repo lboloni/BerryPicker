@@ -3,17 +3,19 @@
 
 latent_size: 256
 image_size: [64, 64]
-# epochs: 300
-epochs: 5
 
+# Fall back the low default training
+# epochs: 300
+
+# Fall back to the default training data
 
 # the training data in the demonstration / subrun / camera form 
-training_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
-  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+#training_data:
+#  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+#  - ["freeform", "2024_12_26__16_44_06", "dev2"]
 
 
 # the validation data in the demonstration / subrun form 
-validation_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
-  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+#validation_data:
+#  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+#  - ["freeform", "2024_12_26__16_44_06", "dev2"]
