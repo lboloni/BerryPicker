@@ -100,14 +100,23 @@ class Experiment:
         parsed = datetime.strptime(self.values[Config.TIME_STARTED], Config.TIME_FORMAT)
         return parsed
 
-    def start_timer(self, timer_name="default"):
+    def start_timer(self, timer_name="default", verbose=False):
         now = datetime.now()
         self.values["timer-" + timer_name + "-start"] = now.strftime(Config.TIME_FORMAT)
+        if verbose:
+            print("***Timer*** {timer_name} started")
+        self.save()
 
-    def end_timer(self, timer_name="default"):
+    def end_timer(self, timer_name="default", verbose=False):
         now = datetime.now()
         self.values["timer-" + timer_name + "-end"] = now.strftime(Config.TIME_FORMAT)        
+        start = datetime.strptime(self.values["timer-" + timer_name + "-start"], Config.TIME_FORMAT)
+        seconds = (now - start).total_seconds()
+        self.values["timer-" + timer_name + "-seconds"] = seconds   
+        if verbose:
+            print("***Timer*** {timer_name} finished in {seconds} seconds")
         self.save()
+
 
     def done(self):
         """Sets the time done variable, and saves"""
@@ -127,7 +136,7 @@ class Config:
     SUBRUN_NAME = "subrun_name"
     TIME_STARTED = "time_started"
     TIME_DONE = "time_done"
-    TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+    TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
     def __new__(cls, *args, **kwargs):
         if Config.PROJECTNAME is None:
