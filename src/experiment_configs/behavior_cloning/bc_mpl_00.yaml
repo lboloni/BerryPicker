@@ -1,12 +1,12 @@
 # behavior cloning approach using an MLP
 
 # information about the sp specified by the exp/run
-sensor_processing: 'ConvVaeSensorProcessing'
 sp_experiment: 'sensorprocessing_conv_vae'
 sp_run: 'sp_vae_256'
 
 # controller type
 controller: "MLP_Simple"
+controller_file: "controller.pth"
 
 # information about the training
 epochs: 10
