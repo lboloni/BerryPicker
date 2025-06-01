@@ -59,7 +59,35 @@ class Demonstration:
     """This class encapsulates all the convenience functions for a demonstration, including loading images etc. A demonstration stores a sequence of images and the corresponding actions. 
     The images can be stored either as a sequence of images, or as a video. Metadata about the demonstration, including annotations are stored in the _metadata.yaml file.
     """
-    
+
+    def __init__(self, exp, demo, parse_old_style = True):
+        """Initializes the demonstration, based on an experiment"""
+        self.exp = exp
+        self.demo = demo
+        self.demo_dir = pathlib.Path(exp.data_dir(), demo)
+        self.metadata = {}
+        # Set default values for metadata
+        self.metadata["stored_as_video"] = False
+        self.metadata["stored_as_images"] = True
+        self.metadata["maxsteps"] = 0
+        self.actions = []
+        self.annotations = []                
+        self.videocap = {} # placeholder for open videos
+        # load the _metadata.yaml file, if it exists, otherwise infer it from the directory
+        metadata_path = pathlib.Path(self.demo_dir, "_metadata.yaml")
+        if metadata_path.exists():
+            with open(metadata_path) as file:
+                self.metadata = yaml.safe_load(file)
+            action_path = pathlib.Path(self.demo_dir, "_action.yaml")
+            with open(action_path) as file:
+                self.actions = yaml.safe_load(file)
+            annotation_path = pathlib.Path(self.demo_dir, "_annotation.yaml")
+            with open(annotation_path) as file:
+                self.annotations = yaml.safe_load(file)
+        else:
+            if parse_old_style:
+                self.parse_image_based_demonstration()    
+
     def save_metadata(self):
         """Saves the metadata of the demonstration to a file"""
         metadata_path = pathlib.Path(self.demo_dir, "_metadata.yaml")
@@ -124,25 +152,7 @@ class Demonstration:
         actions = self.actions[i][type]
         return list(actions.values())
 
-    def __init__(self, exp, demo):
-        """Initializes the demonstration, based on an experiment"""
-        self.exp = exp
-        self.demo = demo
-        self.demo_dir = pathlib.Path(exp.data_dir(), demo)
-        # load the _metadata.yaml file, if it exists, otherwise infer it from the directory
-        metadata_path = pathlib.Path(self.demo_dir, "_metadata.yaml")
-        if metadata_path.exists():
-            with open(metadata_path) as file:
-                self.metadata = yaml.safe_load(file)
-            action_path = pathlib.Path(self.demo_dir, "_action.yaml")
-            with open(action_path) as file:
-                self.actions = yaml.safe_load(file)
-            annotation_path = pathlib.Path(self.demo_dir, "_annotation.yaml")
-            with open(annotation_path) as file:
-                self.annotations = yaml.safe_load(file)
-        else:
-            self.parse_image_based_demonstration()    
-        self.videocap = {} # placeholder for open videos
+
 
     def __str__(self):
         return pprint.pformat(self.__dict__)
