@@ -32,7 +32,7 @@ class DemonstrationRecorder:
         self.remote_control = controller
         self.robot_controller = robot_controller
         self.camera_controller = camera_controller
-        self.counter = 1
+        self.counter = 0
         self.task_name = task_name
         pass
 
