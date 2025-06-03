@@ -1,5 +1,13 @@
 # default values for behavior cloning
 
+# the size
+control_size: 6
+# the lenght of the sequence created for the LSTM-type training
+sequence_length: 10
+
+# training epochs - low value, for debugging
+epochs: 10
+
 # the training data in the demonstration / subrun / camera form 
 training_data:
   - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
@@ -7,8 +15,7 @@ training_data:
   - ["random-both-cameras", "2025_03_08__14_19_12" , "dev2"]
   - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
 
-
-# the validation data in the demonstration / subrun form 
-validation_data:
+# the test data in the demonstration / subrun form 
+test_data:
   - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
   - ["random-both-cameras", "2025_03_08__14_24_52" , "dev2"]

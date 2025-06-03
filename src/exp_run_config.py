@@ -100,21 +100,21 @@ class Experiment:
         parsed = datetime.strptime(self.values[Config.TIME_STARTED], Config.TIME_FORMAT)
         return parsed
 
-    def start_timer(self, timer_name="default", verbose=False):
+    def start_timer(self, timer_name="default", verbose=True):
         now = datetime.now()
         self.values["timer-" + timer_name + "-start"] = now.strftime(Config.TIME_FORMAT)
         if verbose:
-            print("***Timer*** {timer_name} started")
+            print(f"***Timer*** {timer_name} started")
         self.save()
 
-    def end_timer(self, timer_name="default", verbose=False):
+    def end_timer(self, timer_name="default", verbose=True):
         now = datetime.now()
         self.values["timer-" + timer_name + "-end"] = now.strftime(Config.TIME_FORMAT)        
         start = datetime.strptime(self.values["timer-" + timer_name + "-start"], Config.TIME_FORMAT)
         seconds = (now - start).total_seconds()
         self.values["timer-" + timer_name + "-seconds"] = seconds   
         if verbose:
-            print("***Timer*** {timer_name} finished in {seconds} seconds")
+            print(f"***Timer*** {timer_name} finished in {seconds} seconds")
         self.save()
 
 

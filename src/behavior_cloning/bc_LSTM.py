@@ -49,7 +49,7 @@ class LSTMResidualController(nn.Module):
     * In its current form, this is sequence prediction, this needs to be changed to cover stuff. 
     * In its current form, it does not have an MDM at the end. 
     """
-    def __init__(self, latent_size, hidden_size):
+    def __init__(self, latent_size, hidden_size, output_size):
         super(LSTMResidualController, self).__init__()
         self.lstm_1 = nn.LSTM(latent_size, hidden_size, num_layers=1, batch_first=True)
 
@@ -57,7 +57,7 @@ class LSTMResidualController(nn.Module):
 
         self.lstm_3 = nn.LSTM(hidden_size, hidden_size, num_layers=1, batch_first=True)
 
-        self.fc = nn.Linear(hidden_size, latent_size)
+        self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         # x: [batch_size, sequence_length, latent_size]

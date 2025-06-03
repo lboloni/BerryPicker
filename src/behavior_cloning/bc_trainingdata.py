@@ -60,6 +60,8 @@ def create_RNN_training_sequence_xy(x_seq, y_seq, sequence_length):
 def create_bc_training_and_validation(exp, spexp, device):
     """Creates training data for training and validation with the demonstrations specified in the exp/run. Caches the results into the input and target files specified in the exp/run. Remove those files to recalculate."""
 
+    exp.start_timer("data_preparation")
+
     input_path = pathlib.Path(exp.data_dir(), "training_input.pth")
     target_path = pathlib.Path(exp.data_dir(), "training_target.pth")
 
@@ -91,7 +93,7 @@ def create_bc_training_and_validation(exp, spexp, device):
                 targetlist.append(torch.from_numpy(anorm))
             inputlist_tensor = torch.stack(inputlist)
             targetlist_tensor = torch.stack(targetlist)
-            inputs, targets = create_RNN_training_sequence_xy(inputlist_tensor, targetlist_tensor, sequence_length=exp["sequence_lenght"])
+            inputs, targets = create_RNN_training_sequence_xy(inputlist_tensor, targetlist_tensor, sequence_length=exp["sequence_length"])
             all_demos_inputs.append(inputs)
             all_demos_targets.append(targets)
         inputs = torch.cat(all_demos_inputs)
@@ -113,10 +115,9 @@ def create_bc_training_and_validation(exp, spexp, device):
     # FIXME: why 1:training size???
     # retval["z_train"] = shuffled_inputs[1:training_size]
     # retval["a_train"] = shuffled_targets[1:training_size]
-    retval["z_train"] = shuffled_inputs[:training_size]
-    retval["a_train"] = shuffled_targets[:training_size]
-
-    retval["z_validation"] = shuffled_inputs[training_size:]
-    retval["a_validation"] = shuffled_targets[training_size:] 
-
+    retval["z_train"] = shuffled_inputs[:training_size].to(device)
+    retval["a_train"] = shuffled_targets[:training_size].to(device)
+    retval["z_validation"] = shuffled_inputs[training_size:].to(device)
+    retval["a_validation"] = shuffled_targets[training_size:].to(device) 
+    exp.end_timer("data_preparation")
     return retval

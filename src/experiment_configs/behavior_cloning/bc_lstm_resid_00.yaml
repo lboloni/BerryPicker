@@ -1,0 +1,22 @@
+# behavior cloning approach using the LSTMXYPredictor
+
+# information about the sp specified by the exp/run
+sp_experiment: 'sensorprocessing_conv_vae'
+sp_run: 'sp_vae_256'
+
+# controller type
+controller: "LSTMResidualController"
+controller_file: "controller.pth"
+controller_hidden_size: 32  
+
+
+# training - if commented out, falls back to the low default value
+# epochs: 1000
+
+# fall back to default if commented out
+# the training data in the demonstration / subrun / camera form 
+# training_data:
+#   - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
+# the test data in the demonstration / subrun form 
+# test_data:
+#  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
