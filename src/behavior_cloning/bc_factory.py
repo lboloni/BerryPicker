@@ -10,35 +10,32 @@ from bc_MLP import bc_MLP
 from bc_LSTM import bc_LSTM, bc_LSTM_Residual
 
 def create_bc_model(exp, spexp, device):
-    latent_size = spexp["latent_size"]
-    output_size = exp["control_size"]  # degrees of freedom in the robot
-
     if exp["controller"] == "bc_MLP":
         model = bc_MLP(exp, spexp)
-        model = model.to(device)
-        criterion = nn.MSELoss()  # Mean Squared Error for regression
-        criterion = criterion.to(device)
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
-        return model, criterion, optimizer
-
-    if exp["controller"] == "bc_LSTM":
-
-        # Instantiate model, loss function, and optimizer
+    elif exp["controller"] == "bc_LSTM":
         model = bc_LSTM(exp, spexp)
-        model = model.to(device)
+    elif exp["controller"] == "bc_LSTM_Residual":
+        model = bc_LSTM_Residual(exp, spexp)
+    else:
+        raise Exception(f"Unknown controller specified {exp['controller']}")    
+    model.to(device)
+    criterion = create_criterion(exp, device)
+    optimizer = create_optimizer(exp, model)
+    return model, criterion, optimizer
+
+
+def create_criterion(exp, device):
+    if exp["loss"] == "MSELoss":
         criterion = nn.MSELoss()  # Mean Squared Error for regression
         criterion = criterion.to(device)
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
-        return model, criterion, optimizer
+    else:
+        raise Exception("Loss function {exp['loss']} not implemented yet")
+    return criterion
 
-    if exp["controller"] == "LSTMResidualController":
-        hidden_size = exp["controller_hidden_size"] 
-        # Instantiate model, loss function, and optimizer
-        model = bc_LSTM_Residual(latent_size=latent_size, hidden_size=hidden_size, output_size = output_size)
-        model = model.to(device)
-        criterion = nn.MSELoss()  # Mean Squared Error for regression
-        criterion = criterion.to(device)
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
-        return model, criterion, optimizer
-
-    raise Exception(f"Unknown controller specified {exp['controller']}")
+def create_optimizer(exp, model):
+    if exp["optimizer"] == "Adam":
+        lr = exp["optimizer-lr"]
+        optimizer = optim.Adam(model.parameters(), lr=lr)
+    else:
+        raise Exception("Optimizer {exp['optimizer']} not implemented yet")
+    return optimizer

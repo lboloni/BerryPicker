@@ -8,6 +8,11 @@ sequence_length: 10
 # training epochs - low value, for debugging
 epochs: 10
 
+loss: "MSELoss"
+
+optimizer: "Adam"
+optimizer_lr: "0.001"
+
 # the training data in the demonstration / subrun / camera form 
 training_data:
   - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
