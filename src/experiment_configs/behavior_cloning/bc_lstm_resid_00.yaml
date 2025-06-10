@@ -1,14 +1,18 @@
-# behavior cloning approach using the LSTMXYPredictor
+name: "bc_lstm_resid_00"
 
 # information about the sp specified by the exp/run
 sp_experiment: 'sensorprocessing_conv_vae'
 sp_run: 'sp_vae_256'
 
 # controller type
-controller: "LSTMResidualController"
+controller: "bc_LSTM_Residual"
 controller_file: "controller.pth"
-controller_hidden_size: 32  
+hidden_size: 32  
 
+# the size
+control_size: 6
+# the lenght of the sequence created for the LSTM-type training
+sequence_lenght: 10
 
 # training - if commented out, falls back to the low default value
 # epochs: 1000

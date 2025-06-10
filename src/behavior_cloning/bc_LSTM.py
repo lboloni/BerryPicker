@@ -51,7 +51,6 @@ class bc_LSTM_Residual(nn.Module):
 
         self.input_size = spexp["latent_size"]
         self.output_size = exp["control_size"]  # deg. of freedom
-        self.num_layers = exp["num_layers"]
         self.hidden_size = exp["hidden_size"]
 
         self.lstm_1 = nn.LSTM(self.input_size, self.hidden_size, num_layers=1, batch_first=True)

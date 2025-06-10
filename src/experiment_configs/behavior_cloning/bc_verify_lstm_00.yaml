@@ -1,0 +1,11 @@
+# a list of demonstrations in the demo / subrun / camera form
+verification_data:
+  - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
+
+# information about the sp specified by the exp/run
+sp_experiment: 'sensorprocessing_conv_vae'
+sp_run: 'sp_vae_256'
+
+# the bc experiment, should have the saved model
+bc_experiment: 'behavior_cloning'
+bc_run: "bc_lstm_00"

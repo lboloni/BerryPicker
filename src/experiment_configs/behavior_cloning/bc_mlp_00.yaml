@@ -1,4 +1,5 @@
 # behavior cloning approach using an MLP
+name: "bc_mlp_00"
 
 # information about the sp specified by the exp/run
 sp_experiment: 'sensorprocessing_conv_vae'

@@ -34,7 +34,7 @@ def create_criterion(exp, device):
 
 def create_optimizer(exp, model):
     if exp["optimizer"] == "Adam":
-        lr = exp["optimizer-lr"]
+        lr = exp["optimizer_lr"]
         optimizer = optim.Adam(model.parameters(), lr=lr)
     else:
         raise Exception("Optimizer {exp['optimizer']} not implemented yet")

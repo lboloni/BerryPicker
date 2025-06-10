@@ -1,4 +1,5 @@
-# behavior cloning approach using the LSTMXYPredictor
+# behavior cloning approach using a simple 
+name: "bc_lstm_00"
 
 # information about the sp specified by the exp/run
 sp_experiment: 'sensorprocessing_conv_vae'

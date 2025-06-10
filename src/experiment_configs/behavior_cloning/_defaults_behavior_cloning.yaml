@@ -11,7 +11,7 @@ epochs: 10
 loss: "MSELoss"
 
 optimizer: "Adam"
-optimizer_lr: "0.001"
+optimizer_lr: 0.001
 
 # the training data in the demonstration / subrun / camera form 
 training_data:
