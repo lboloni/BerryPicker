@@ -12,7 +12,7 @@ controller_file: "controller.pth"
 # the size
 control_size: 6
 # set the sequence lenght to zero as we are training on x, a pairs
-sequence_lenght: 0
+sequence_length: 0
 
 hidden_layers: 2
 hidden_layer_1: 50
