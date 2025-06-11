@@ -1,0 +1,5 @@
+
+# these are the verification runs that will be integrated 
+bc_verification_runs:
+  - "bc_verify_lstm_00"
+  - "bc_verify_mlp_00"

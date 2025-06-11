@@ -231,7 +231,7 @@ class Config:
         #
         experiment_run_indep = pathlib.Path(current_directory, "experiment_configs", experiment_name, run_name + ".yaml")
         if not experiment_run_indep.exists():
-            raise Exception(f"Missing experiment system independent config file {experiment_run_indep}")
+            raise Exception(f"Missing experiment file\n {experiment_run_indep}")
         with experiment_run_indep.open("rt") as handle:
             indep_config = yaml.safe_load(handle)
         if indep_config == None:
