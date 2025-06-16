@@ -1,0 +1,5 @@
+# Configuration for the mixture density network
+num_gaussians: 5
+input_dim: 1
+output_dim: 1
+hidden_size: 128
