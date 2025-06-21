@@ -15,6 +15,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class MDN(nn.Module):
+    """The mixture density network (MDN) maps an input vector to a probability output. The probability is represented as a form of N gaussians, each with their own mean mu and standard dev sigma. There is a probability pi that the sampling will happen from one of the Gaussians.
+
+    For any specific input x we have a probability output. 
+    One way to get a specific output from this is to sample from the probability distribution. 
+
+    This module models this for a number of dimensions (described by output_dim). 
+    """
+
+
     def __init__(self, exp):
         super().__init__()
         self.num_gaussians = exp["num_gaussians"]
@@ -53,16 +62,30 @@ class MDN(nn.Module):
         return mu, sigma, pi
 
     def sample(self, num_samples, mu, sigma, pi):
-        """Pull num samples from a specific mixture of Gaussians described by mu, sigma, pi. First choosing the Gaussian, then sampling from that."""
-        mixture_idx = torch.multinomial(pi[i, 0], num_samples=num_samples, replacement=True)
-        # Collect the chosen mu and sigma for these samples
-        chosen_mu = mu[i, 0].gather(0, mixture_idx)
-        chosen_sigma = sigma[i, 0].gather(0, mixture_idx)
-        # Sample from the corresponding Gaussian
-        m_sample = torch.distributions.Normal(loc=chosen_mu, scale=chosen_sigma)
-        retval = m_sample.sample()
+        """
+        This function takes tensors of mu, sigma, pi, corresponding to a number of points
+        mu[points][output_size]
+        sigma[points][output_size]
+        pi[points][output_size]
+        
+        Pull num_samples from a specific mixture of Gaussians described by mu, sigma, pi. First choosing the Gaussian, then sampling from that. 
+        Returns a numpy array
+        retval[points][num_samples][output_size]
+        """
+        y_samples = []
+        # for i in range(X_test.shape[0]):        
+        for i in range(pi.shape[0]):        
+            mixture_idx = torch.multinomial(pi[i, 0], num_samples=num_samples, replacement=True)
+            # Collect the chosen mu and sigma for these samples
+            chosen_mu = mu[i, 0].gather(0, mixture_idx)
+            chosen_sigma = sigma[i, 0].gather(0, mixture_idx)
+            # Sample from the corresponding Gaussian
+            m_sample = torch.distributions.Normal(loc=chosen_mu, scale=chosen_sigma)
+            s = m_sample.sample()
+            #y_samples.append(s)
+            y_samples.append(s.numpy())
+        retval = np.array(y_samples)
         return retval
-
 
 
 def mdn_loss(y, mu, sigma, pi):

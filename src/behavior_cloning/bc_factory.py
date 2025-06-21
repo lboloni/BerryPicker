@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from bc_MLP import bc_MLP
 from bc_LSTM import bc_LSTM, bc_LSTM_Residual
+from bc_LSTM_MDN import bc_LSTM_MDN, mdn_loss
 
 def create_bc_model(exp, spexp, device):
     if exp["controller"] == "bc_MLP":
@@ -16,6 +17,8 @@ def create_bc_model(exp, spexp, device):
         model = bc_LSTM(exp, spexp)
     elif exp["controller"] == "bc_LSTM_Residual":
         model = bc_LSTM_Residual(exp, spexp)
+    elif exp["controller"] == "bc_LSTM_MDN":
+        model = bc_LSTM_MDN(exp, spexp)
     else:
         raise Exception(f"Unknown controller specified {exp['controller']}")    
     model.to(device)
@@ -28,6 +31,9 @@ def create_criterion(exp, device):
     if exp["loss"] == "MSELoss":
         criterion = nn.MSELoss()  # Mean Squared Error for regression
         criterion = criterion.to(device)
+    if exp["loss"] == "MDNLoss":
+        criterion == mdn_loss() 
+        # Note that this is a bit different in parameters
     else:
         raise Exception("Loss function {exp['loss']} not implemented yet")
     return criterion
