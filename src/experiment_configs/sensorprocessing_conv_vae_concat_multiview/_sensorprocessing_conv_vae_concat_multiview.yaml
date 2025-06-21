@@ -1,0 +1,22 @@
+training_data_dir: 'vae-training-data'
+json_template_name: 'conv-vae-config-default.json'
+
+model_name: 'VAE_Robot'
+model_dir: 'models'
+
+latent_size: 128
+epochs: 100
+save_period: 5
+
+
+
+# File names for proprioception training
+proprioception_input_file: 'train_inputs.pt'
+proprioception_target_file: 'train_targets.pt'
+proprioception_test_input_file: 'test_inputs.pt'
+proprioception_test_target_file: 'test_targets.pt'
+proprioception_mlp_model_file: 'proprioception_mlp.pth'
+
+# # Task names
+proprioception_testing_task: 'proprio_regressor_validation'
+proprioception_training_task: 'proprio_regressor_training'

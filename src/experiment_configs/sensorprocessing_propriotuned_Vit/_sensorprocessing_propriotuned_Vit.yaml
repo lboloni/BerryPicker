@@ -1,0 +1,11 @@
+latent_size: 128
+model_name: 'vit'
+
+proprioception_mlp_model_file: 'proprioception_mlp.pth'
+proprioception_input_file: 'train_inputs.pt'
+proprioception_target_file: 'train_targets.pt'
+proprioception_test_input_file: 'test_inputs.pt'
+proprioception_test_target_file: 'test_targets.pt'
+
+proprioception_training_task: 'proprioception-cluttered'
+proprioception_testing_task: 'proprioception-uncluttered'

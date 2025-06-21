@@ -1,0 +1,30 @@
+# This run creates a conv_vae encoding of width 128, planned for the
+# visual proprioception experiments
+
+latent_size: 256
+training_task: 'proprio_sp_training'
+epochs: 300
+num_views: 2
+fusion_type: "indiv_proj"  # Options: concat_proj, indiv_proj, attention, weighted_sum, gated
+
+
+
+
+# on tredy and szenes
+validation_task: 'proprio_sp_validation'
+validation_demo: '2024_10_26__16_23_22'
+
+# These values need to be added _after_ training because they
+# are created in an unpredictable location by the library
+
+# on lotzi-yoga
+# model_subdir: '0209_133250'
+# model_checkpoint: 'checkpoint-epoch10.pth'
+
+# on tredy
+#model_subdir: '0212_112115'
+#model_checkpoint: 'checkpoint-epoch200.pth'
+
+# on szenes
+model_subdir: '0314_014813'
+model_checkpoint: 'checkpoint-epoch300.pth'

@@ -1,0 +1,48 @@
+
+### New #################
+
+
+name: "sp_vit_large_transformer_multiview"
+model_type: "VisionTransformer6D"
+# Multi-view specifications
+num_views: 2  # Number of camera views
+fusion_type: "gated"  # Options: concat_proj, indiv_proj, attention, weighted_sum, gated
+
+# Model architecture parameters
+vit_model: "vit_l_16"  # Could be vit_b_16, vit_l_16, vit_h_14, etc.
+vit_weights: "DEFAULT"  # Use DEFAULT for the standard pretrained weights
+# vit_output_dim: 768
+vit_output_dim: 1024 # Output dimension of the base ViT Large Model
+# vit_output_dim:: 1280
+latent_size: 256       # Size of the latent embedding to generate
+image_size: 224        # Required input size for the ViT model
+loss: "MSE"
+# Training parameters
+batch_size: 32
+learning_rate: 0.0001
+freeze_feature_extractor: true  # Whether to freeze the ViT backbone during training
+epochs: 300
+batch_size: 32
+proprio_step_1: 64         # For final MLP
+proprio_step_2: 64
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+# File paths
+encoding_size: 256
+weight_decay: 0.01
+proprioception_input_file: train_inputs.pt
+proprioception_target_file: train_targets.pt
+proprioception_test_input_file: test_inputs.pt
+proprioception_test_target_file: test_targets.pt
+
+# Task names
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'
+
+# Output parameters for regression
+output_size: 6  # Number of DoF for the robot position
+resume: null
+use_6d_token: false
+# Note: This configuration is required for the sp_vit.py module.
+# All values (including 128 for latent_size and 224 for image_size)
+# are specified here and not hardcoded in the implementation.

@@ -1,0 +1,23 @@
+# resnet-50 00
+name : 'resnet-50-128'
+
+latent_size: 128
+
+
+reductor_step_1: 512
+proprio_step_1: 64
+proprio_step_2: 16
+output_size: 6
+
+model: 'ResNetProprioTunedRegression_multiview'
+loss: 'MSELoss' # alternatively it could be L1Loss
+epochs: 300
+learning_rate: 0.001
+batch_size: 32
+# batch_size: 1
+num_views: 2
+
+freeze_feature_extractor: True
+
+proprioception_training_task: 'proprio_sp_training'
+proprioception_testing_task: 'proprio_sp_validation'

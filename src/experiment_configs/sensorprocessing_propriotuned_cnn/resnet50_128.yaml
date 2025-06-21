@@ -1,5 +1,5 @@
 class: "ResNetProprioTunedSensorProcessing"
-# resnet-50 00 
+# resnet-50 00
 name : 'resnet-50-128'
 
 # image_size: [64, 64]
@@ -21,12 +21,24 @@ batch_size: 32
 
 freeze_feature_extractor: True
 
-# the training data in the demonstration / subrun / camera form 
+# Dr. Boloni's setup
+# the training data in the demonstration / subrun / camera form
+# training_data:
+#   - ["freeform", "2024_12_26__16_40_20", "dev2"]
+#   - ["freeform", "2024_12_26__16_44_06", "dev2"]
+
+# # the testing data in the demonstration / subrun / camera form
+# testing_data:
+#   - ["freeform", "2024_12_26__16_40_20", "dev2"]
+
+
+# Sahara's Setup
+# the training data in the demonstration / subrun / camera form
 training_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
-  - ["freeform", "2024_12_26__16_44_06", "dev2"]
+  - ["freeform", "2025_03_08__14_15_53", "dev2"]
+  - ["freeform", "2025_03_08__14_16_57", "dev2"]
 
 # the testing data in the demonstration / subrun / camera form
 testing_data:
-  - ["freeform", "2024_12_26__16_40_20", "dev2"]
+  - ["freeform", "2025_03_08__14_19_12", "dev2"]
 

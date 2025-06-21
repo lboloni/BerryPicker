@@ -1,0 +1,10 @@
+training_data_dir: 'vae-training-data'
+json_template_name: 'conv-vae-config-default.json'
+
+model_name: 'VAE_Robot'
+model_dir: 'models'
+
+latent_size: 128
+epochs: 100
+save_period: 5
+num_views: 2

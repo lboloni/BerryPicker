@@ -1,0 +1,55 @@
+# This run creates a conv_vae encoding of width 128, planned for the
+# visual proprioception experiments
+
+latent_size: 128
+training_task: 'proprio_sp_training'
+epochs: 300
+num_views: 2  # Number of camera views
+fusion_type: "indiv_proj"  # Options: concat_proj, indiv_proj, attention, weighted_sum, gated
+
+
+
+
+# on tredy and szenes
+validation_task: 'proprio_sp_validation'
+validation_demo: '2024_10_26__16_23_22'
+
+# These values need to be added _after_ training because they
+# are created in an unpredictable location by the library
+
+# on lotzi-yoga
+# model_subdir: '0209_133250'
+# model_checkpoint: 'checkpoint-epoch10.pth'
+
+# on tredy
+#model_subdir: '0212_112115'
+#model_checkpoint: 'checkpoint-epoch200.pth'
+
+# on szenes
+model_subdir: '0314_003916'
+model_checkpoint: 'checkpoint-epoch300.pth'
+output_size: 6
+
+
+
+# Encoder model configuration
+encoder_model_names:
+  - "VAE_Robot_View1"
+  - "VAE_Robot_View2"
+encoder_model_subdirs:
+  - "0505_024152"  # Empty string for first view with no subdirectory
+  - "0505_030825"  # Subdirectory for second view matching your file structure
+encoder_model_checkpoints:
+  - "checkpoint-epoch300.pth"
+  - "checkpoint-epoch300.pth"
+
+
+
+data_dir: "/home/ssheikholeslami/SaharaBerryPickerData/experiment_data"
+# Directory structure details - important for correct path construction
+model_dir: "models"  # Leave empty because models are directly in proprio_128_multiview
+
+# Output files
+proprioception_input_file: "proprioception_mlp_inputs.pt"
+proprioception_target_file: "proprioception_mlp_targets.pt"
+proprioception_mlp_model_file: "proprioception_mlp.pth"

@@ -1,0 +1,61 @@
+# This run creates a conv_vae encoding of width 128, planned for the
+# visual proprioception experiments
+
+latent_size: 128
+
+
+image_size: 128
+training_task: 'proprio_sp_training'
+epochs: 300
+stack_mode: 'width'
+
+
+# on tredy and szenes
+validation_task: 'proprio_sp_validation'
+validation_demo: '2025_03_08__14_29_07'
+
+
+# Add multi-view specific parameters
+# Adaptive multi-view parameters
+image_size: 128  # Target size for concatenated images
+num_views: 2  # Maximum number of views to use
+min_views_required: 1  # Minimum views required (allows single-view if that's all we have)
+
+
+# These values need to be added _after_ training because they
+# are created in an unpredictable location by the library
+
+# on lotzi-yoga
+# model_subdir: '0209_133250'
+# model_checkpoint: 'checkpoint-epoch10.pth'
+
+# on tredy
+#model_subdir: '0212_112115'
+#model_checkpoint: 'checkpoint-epoch200.pth'
+
+# on Sahara
+model_subdir: '0507_051054'
+model_checkpoint: 'checkpoint-epoch300.pth'
+encoding_size: 128
+output_size: 6
+
+# File names for proprioception training
+proprioception_input_file: 'train_inputs.pt'
+proprioception_target_file: 'train_targets.pt'
+proprioception_test_input_file: 'test_inputs.pt'
+proprioception_test_target_file: 'test_targets.pt'
+proprioception_mlp_model_file: 'proprioception_mlp.pth'
+
+# Task names
+proprioception_testing_task: 'proprio_regressor_validation'
+proprioception_training_task: 'proprio_regressor_training'
+
+
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+loss: "MSE"
+num_views: 2  # Number of camera views
+stack_mode: 'width'
+
+# The number of epochs the MLP is supposed to be trained
+epochs: 1000
