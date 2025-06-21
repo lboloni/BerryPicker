@@ -1,0 +1,31 @@
+name: "bc_lstm_mdn_00"
+
+# information about the sp specified by the exp/run
+sp_experiment: 'sensorprocessing_conv_vae'
+sp_run: 'sp_vae_256'
+
+mdn_experiment: "behavior_cloning"
+mdn_run: "mdn_for_bc_00"
+
+# controller type
+controller: "bc_LSTM_MDN"
+controller_file: "controller.pth"
+hidden_size: 32  
+
+# the size
+control_size: 6
+# the lenght of the sequence created for the LSTM-type training
+sequence_lenght: 10
+
+# training - if commented out, falls back to the low default value
+# epochs: 1000
+
+loss: "MDNLoss"
+
+# fall back to default if commented out
+# the training data in the demonstration / subrun / camera form 
+# training_data:
+#   - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
+# the test data in the demonstration / subrun form 
+# test_data:
+#  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]

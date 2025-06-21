@@ -71,6 +71,8 @@ class MDN(nn.Module):
         Pull num_samples from a specific mixture of Gaussians described by mu, sigma, pi. First choosing the Gaussian, then sampling from that. 
         Returns a numpy array
         retval[points][num_samples][output_size]
+
+        If predictability is needed, set the torch.manual_seed(seed) before calling this function.
         """
         y_samples = []
         # for i in range(X_test.shape[0]):        

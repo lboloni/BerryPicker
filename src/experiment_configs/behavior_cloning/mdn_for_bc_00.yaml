@@ -1,0 +1,5 @@
+# Configuration for the mixture density network
+num_gaussians: 5
+input_dim: 32 # should be the same as the hidden size in the bc
+output_dim: 6
+hidden_size: 32

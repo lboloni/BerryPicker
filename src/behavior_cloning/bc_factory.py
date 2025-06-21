@@ -31,11 +31,12 @@ def create_criterion(exp, device):
     if exp["loss"] == "MSELoss":
         criterion = nn.MSELoss()  # Mean Squared Error for regression
         criterion = criterion.to(device)
-    if exp["loss"] == "MDNLoss":
+    elif exp["loss"] == "MDNLoss":
         criterion == mdn_loss() 
+        criterion = criterion.to(device)
         # Note that this is a bit different in parameters
     else:
-        raise Exception("Loss function {exp['loss']} not implemented yet")
+        raise Exception(f"Loss function {exp['loss']} not implemented yet")
     return criterion
 
 def create_optimizer(exp, model):

@@ -36,8 +36,8 @@ class bc_LSTM_MDN(nn.Module):
 
         self.lstm_3 = nn.LSTM(self.hidden_size, self.hidden_size, num_layers=1, batch_first=True)
 
-        experiment = exp["exp_mdn"]
-        run = exp["run_mdn"]
+        experiment = exp["mdn_experiment"]
+        run = exp["mdn_run"]
         exp_mdn = Config().get_experiment(experiment, run)
         self.mdn = MDN(exp_mdn)
 
@@ -65,4 +65,7 @@ class bc_LSTM_MDN(nn.Module):
         """Forwards through the model, and then performs a sample from the output, returning a single value. 
         FIXME: we need some way to control the random seed.
         """
-        
+        mu, sigma, pi = self.mdn(x)
+        samples = self.mdn.sample(1, mu, sigma, pi)
+        print(samples.shape)
+        return samples[0]

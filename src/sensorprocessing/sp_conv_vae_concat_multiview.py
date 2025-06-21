@@ -15,7 +15,10 @@ import torch.nn.functional as F
 import numpy as np
 from typing import List, Union, Optional
 from sensorprocessing.sp_conv_vae import ConvVaeSensorProcessing as _SingleViewSP
-from settings import Config
+
+from exp_run_config import Config
+Config.PROJECTNAME = "BerryPicker"
+
 from typing import List, Union
 
 class ConcatConvVaeSensorProcessing(_SingleViewSP):
