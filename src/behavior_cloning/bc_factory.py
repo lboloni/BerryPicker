@@ -32,8 +32,8 @@ def create_criterion(exp, device):
         criterion = nn.MSELoss()  # Mean Squared Error for regression
         criterion = criterion.to(device)
     elif exp["loss"] == "MDNLoss":
-        criterion == mdn_loss() 
-        criterion = criterion.to(device)
+        criterion = mdn_loss 
+        # criterion = criterion.to(device)
         # Note that this is a bit different in parameters
     else:
         raise Exception(f"Loss function {exp['loss']} not implemented yet")

@@ -51,13 +51,10 @@ class bc_LSTM_MDN(nn.Module):
         residual = out_2
         out_3, _ = self.lstm_3(out_2)
         out_3 = out_3 + residual
-
-        mu, sigma, pi = self.mdn(out_3)
-
         # LSTM output shape: [batch_size, sequence_length, hidden_size]
         # out = self.fc(out_3[:, -1, :])  # Take last time step output and pass through the fully connected layer
-
-        # FIXME: we need the probabilistic output here, but we also need a sampling function. 
+        out = out_3[:, -1, :]
+        mu, sigma, pi = self.mdn(out)
 
         return mu, sigma, pi  # Predicted next vector
     
@@ -65,7 +62,8 @@ class bc_LSTM_MDN(nn.Module):
         """Forwards through the model, and then performs a sample from the output, returning a single value. 
         FIXME: we need some way to control the random seed.
         """
-        mu, sigma, pi = self.mdn(x)
+        mu, sigma, pi = self.forward(x)
         samples = self.mdn.sample(1, mu, sigma, pi)
-        print(samples.shape)
-        return samples[0]
+        #print(samples.shape)
+        #return samples[0]
+        return torch.tensor(samples[0]).to(x.device)

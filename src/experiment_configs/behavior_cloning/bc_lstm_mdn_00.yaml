@@ -20,7 +20,9 @@ sequence_lenght: 10
 # training - if commented out, falls back to the low default value
 # epochs: 1000
 
-loss: "MDNLoss"
+# this model also uses the MSELoss for validation, although not for training
+loss: "MSELoss"
+# loss: "MDNLoss"
 
 # fall back to default if commented out
 # the training data in the demonstration / subrun / camera form 
