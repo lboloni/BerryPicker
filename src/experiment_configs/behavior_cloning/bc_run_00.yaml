@@ -5,3 +5,7 @@ run_robot_controller: "robot_position_controller"
 
 exp_camera_controller: "controllers"
 run_camera_controller: "camera_cam0_controller"
+
+exp_bc: "behavior_cloning"
+run_bc: "bc_mlp_00"
+
