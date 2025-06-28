@@ -7,6 +7,7 @@ sequence_length: 10
 
 # training epochs - low value, for debugging
 epochs: 10
+batch_size: 64
 
 exp_robot: "robot_al5d"
 run_robot: "position_controller_00"

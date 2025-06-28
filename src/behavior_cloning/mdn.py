@@ -92,51 +92,16 @@ class MDN(nn.Module):
         retval = np.array(y_samples)
         return retval
 
-
-    def sample_0(self, num_samples, mu, sigma, pi):
-        """
-        FIXME: this is only sampling from the first dimension
-        of the output, but for multiple values - this is not good.
-        The points is actually something like the batch thingy.
-
-        This function takes tensors of mu, sigma, pi, corresponding to a number of points
-        mu[points][output_size]
-        sigma[points][output_size]
-        pi[points][output_size]
-        
-        Pull num_samples from a specific mixture of Gaussians described by mu, sigma, pi. First choosing the Gaussian, then sampling from that. 
-        Returns a numpy array
-        retval[points][num_samples][output_size]
-        FIXME: this doesn't look the case
-
-        If predictability is needed, set the torch.manual_seed(seed) before calling this function.
-        """
-        y_samples = []
-        # for i in range(X_test.shape[0]):        
-        for i in range(pi.shape[0]):        
-            mixture_idx = torch.multinomial(pi[i, 0], num_samples=num_samples, replacement=True)
-            # Collect the chosen mu and sigma for these samples
-            chosen_mu = mu[i, 0].gather(0, mixture_idx)
-            chosen_sigma = sigma[i, 0].gather(0, mixture_idx)
-            # Sample from the corresponding Gaussian
-            m_sample = torch.distributions.Normal(loc=chosen_mu, scale=chosen_sigma)
-            s = m_sample.sample()
-            #y_samples.append(s)
-            y_samples.append(s.cpu().numpy())
-        retval = np.array(y_samples)
-        return retval
-
-
     def sample(self, num_samples, mu, sigma, pi):
         """
-        This function takes tensors of mu, sigma, pi, corresponding to a number of points
-        mu[points][output_size]
-        sigma[points][output_size]
-        pi[points][output_size]
+        This function takes tensors of mu, sigma, pi
+        mu[batchsize=1][output_size]
+        sigma[batchsize=1][output_size]
+        pi[batchsize=1][output_size]
         
         Pull num_samples from a specific mixture of Gaussians described by mu, sigma, pi. First choosing the Gaussian, then sampling from that. 
         Returns a numpy array
-        retval[points][num_samples][output_size]
+        retval[num_samples][output_size]
 
         If predictability is needed, set the torch.manual_seed(seed) before calling this function.
         """

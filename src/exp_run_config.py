@@ -301,7 +301,8 @@ class Config:
         experiment_directory = pathlib.Path(self.values["experiment_system_dependent_dir"])
         experiment_sys_dep = pathlib.Path(experiment_directory, experiment_name, run_name + "_sysdep.yaml")
         if not experiment_sys_dep.exists():
-            self.__log(f"No system dependent experiment file\n\t {experiment_sys_dep},\n\t that is ok, proceeding.")
+            # don't log this, too common
+            # self.__log(f"No system dependent experiment file\n\t {experiment_sys_dep},\n\t that is ok, proceeding.")
             exp_config = indep_config
         else: 
             with experiment_sys_dep.open("rt") as handle:
@@ -320,7 +321,7 @@ class Config:
         exp_config[Config.SUBRUN_NAME] = subrun_name
 
         if creation_style == "exist-ok":
-            # it is ok if the directory exists, but then we don't measure time
+            # it is ok if the directory exists, but then we don't measure time 
             # or save the values
             exp = Experiment(exp_config)
             if not data_dir.exists():

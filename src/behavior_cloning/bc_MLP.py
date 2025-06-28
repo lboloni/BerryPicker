@@ -17,6 +17,7 @@ class bc_MLP(nn.Module):
 
     def __init__(self, exp, exp_sp):
         super().__init__()
+        self.stochastic = False
 
         self.input_size = exp_sp["latent_size"]
         self.output_size = exp["control_size"]  # deg. of freedom

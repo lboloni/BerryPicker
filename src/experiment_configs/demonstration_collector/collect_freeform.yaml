@@ -5,7 +5,14 @@ demonstration_name: "freeform"
 
 primary_controller: "keyboard"
 
-robot_controller: "robot_position_controller"
-camera_controller: "camera_cam0_controller"
-keyboard_controller: "keyboard_controller"
-gamepad_controller: "gamepad_x360_controller"
+exp_robot_controller: "controllers"
+run_robot_controller: "robot_position_controller"
+
+exp_camera_controller: "controllers"
+run_camera_controller: "camera_cam0_controller"
+
+exp_keyboard_controller: "controllers"
+run_keyboard_controller: "keyboard_controller"
+
+exp_gamepad_controller: "controllers"
+run_gamepad_controller: "gamepad_x360_controller"

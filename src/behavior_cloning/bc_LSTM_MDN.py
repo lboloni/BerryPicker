@@ -25,6 +25,7 @@ class bc_LSTM_MDN(nn.Module):
     """
     def __init__(self, exp, exp_sp):
         super().__init__()
+        self.stochastic = True
 
         self.input_size = exp_sp["latent_size"]
         self.output_size = exp["control_size"]  # deg. of freedom
@@ -53,12 +54,11 @@ class bc_LSTM_MDN(nn.Module):
         # out = self.fc(out_3[:, -1, :])  # Take last time step output and pass through the fully connected layer
         out = out_3[:, -1, :]
         mu, sigma, pi = self.mdn(out)
-
         return mu, sigma, pi  # Predicted next vector
     
     def forward_and_sample(self, x):
         """Forwards through the model, and then performs a sample from the output, returning a single value. 
-        FIXME: we need some way to control the random seed.
+        The random seed is the torch, one can set it with torch.manual_seed
         """
         mu, sigma, pi = self.forward(x)
         samples = self.mdn.sample(1, mu, sigma, pi)

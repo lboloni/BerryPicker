@@ -98,6 +98,11 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
             all_demos_targets_list.append(all_demos_targets_tensor)
         all_demos_inputs_tensor = torch.cat(all_demos_inputs_list)
         all_demos_targets_tensor = torch.cat(all_demos_targets_list)
+        # shuffle
+        perm = torch.randperm(all_demos_inputs_tensor.size(0))
+        all_demos_inputs_tensor = all_demos_inputs_tensor[perm]
+        all_demos_targets_tensor = all_demos_targets_tensor[perm]
+        # save
         torch.save(all_demos_inputs_tensor, input_path)
         torch.save(all_demos_targets_tensor, target_path)
     else: # just load the cached data

@@ -18,6 +18,8 @@ control_size: 6
 sequence_lenght: 10
 
 # training - if commented out, falls back to the low default value
+# epochs: 40
+# batch_size: 32
 # epochs: 1000
 
 # this model also uses the MSELoss for validation, although not for training
