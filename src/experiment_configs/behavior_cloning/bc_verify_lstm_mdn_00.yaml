@@ -1,6 +1,6 @@
 # a list of demonstrations in the demo / subrun / camera form
 verification_data:
-  - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
 
 # information about the sp specified by the exp/run
 exp_sp: 'sensorprocessing_conv_vae'

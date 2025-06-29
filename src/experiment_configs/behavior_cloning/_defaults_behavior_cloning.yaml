@@ -17,14 +17,27 @@ loss: "MSELoss"
 optimizer: "Adam"
 optimizer_lr: 0.001
 
+# # the training data in the demonstration / subrun / camera form 
+# training_data:
+#   - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
+#   - ["random-both-cameras", "2025_03_08__14_16_57" , "dev2"]
+#   - ["random-both-cameras", "2025_03_08__14_19_12" , "dev2"]
+#   - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
+
+# # the test data in the demonstration / subrun form 
+# test_data:
+#   - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
+#   - ["random-both-cameras", "2025_03_08__14_24_52" , "dev2"]
+
 # the training data in the demonstration / subrun / camera form 
 training_data:
-  - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_16_57" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_19_12" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
 
-# the test data in the demonstration / subrun form 
-test_data:
-  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_24_52" , "dev2"]
+
+# the validation data in the demonstration / subrun form 
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52" , "dev2"]

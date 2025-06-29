@@ -217,6 +217,7 @@ class Demonstration:
             self.videocap[camera] = cap
         else:
             cap = self.videocap[camera]
+            cap.set(cv2.CAP_PROP_POS_FRAMES, i) 
         ret, frame = cap.read()
         if ret:
             # CV2 reads by default in BGR... 
