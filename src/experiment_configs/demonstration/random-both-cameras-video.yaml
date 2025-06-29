@@ -1,0 +1,12 @@
+# a series of demonstrations recorded in March 2025, where the AL5D robot is moving randomly, and it is recorded with two cameras
+name: "random-both-cameras-video"
+
+cameras:
+  dev2:
+    fps: 10
+    width: 256
+    height: 256
+  dev3:
+    fps: 10
+    width: 256
+    height: 256

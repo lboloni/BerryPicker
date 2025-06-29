@@ -159,6 +159,7 @@ class Demonstration:
 
     def _move_to_video_per_camera(self, cam, delete_img_files = False):
         """Move the content of a specific camera into video"""
+        print(f"move to video per camera {cam}")
         if cam in self.exp["cameras"]:
             params = self.exp["cameras"][cam]
         else:
@@ -169,7 +170,7 @@ class Demonstration:
         if not video_path.exists():
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter(video_path, fourcc, params["fps"], (params["width"], params["height"]))
-            for i in range(self.maxsteps):
+            for i in range(self.metadata["maxsteps"]):
                 img_path = self.get_image_path(i, camera=cam)
                 image_paths.append(img_path)
                 frame = cv2.imread(str(img_path))
