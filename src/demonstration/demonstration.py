@@ -164,7 +164,7 @@ class Demonstration:
             params = self.exp["cameras"][cam]
         else:
             params = self.exp["cameras"]["all"]
-        video_path = self.get_video_path()
+        video_path = self.get_video_path(camera=cam)
         image_paths = []
         # Initialize video writer
         if not video_path.exists():
@@ -192,7 +192,7 @@ class Demonstration:
         if self.metadata["stored_as_images"]:
             return self.get_image_from_imagefile(i, device=device, camera=camera, transform=transform)
         else:
-            return self.get_image_from_video(i, device=device, camera=camera, cache=True)
+            return self.get_image_from_video(i, device=device, camera=camera, transform=transform, cache=True)
 
     def write_image(self, i, filepath, camera=None, transform=None):
         """Writes the specified image to a jpg file in filepath. This 
