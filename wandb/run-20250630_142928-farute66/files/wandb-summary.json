@@ -1,0 +1,1 @@
+{"val_leaves_acc":0,"epoch":30,"_step":29,"train_leaves_acc":100,"train_diseased_acc":100,"_runtime":1057.9601294,"train_exact_acc":100,"val_exact_acc":0,"train_loss":0.0028605079951375956,"_wandb":{"runtime":1057},"_timestamp":1.7513092267805867e+09,"val_diseased_acc":50,"val_loss":34.290401458740234}

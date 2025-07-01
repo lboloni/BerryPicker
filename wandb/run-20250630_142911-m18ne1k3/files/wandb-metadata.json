@@ -1,0 +1,43 @@
+{
+  "os":  "Windows-10-10.0.19043-SP0",
+  "python":  "CPython 3.9.21",
+  "startedAt":  "2025-06-30T18:29:11.716758Z",
+  "program":  "C:\\Users\\abmst\\Documents\\projects\\BerryPicker\\anthony_leaf\\videos\\video_classifier.py",
+  "codePath":  "anthony_leaf\\videos\\video_classifier.py",
+  "git":  {
+    "remote":  "https://github.com/lboloni/BerryPicker.git",
+    "commit":  "c0b34dd9715dc5c96ae54db3261a919f55ecb183"
+  },
+  "email":  "anthony.i.bilic@gmail.com",
+  "root":  "C:\\Users\\abmst\\Documents\\projects\\BerryPicker",
+  "host":  "DESKTOP-87KOAU6",
+  "executable":  "c:\\Users\\abmst\\anaconda3\\envs\\berry\\python.exe",
+  "codePathLocal":  "anthony_leaf\\videos\\video_classifier.py",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "gpu":  "NVIDIA GeForce RTX 2060",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "498972213248",
+      "used":  "463355150336"
+    }
+  },
+  "memory":  {
+    "total":  "68644446208"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  16
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 2060",
+      "memoryTotal":  "6442450944",
+      "cudaCores":  1920,
+      "architecture":  "Turing",
+      "uuid":  "GPU-85ad71eb-009d-4dad-9fe4-6402fdea7829"
+    }
+  ],
+  "cudaVersion":  "12.9"
+}
