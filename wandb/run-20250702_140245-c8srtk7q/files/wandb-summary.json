@@ -1,0 +1,1 @@
+{"Train Acc":1,"GPU Memory MB":3132.123046875,"_wandb":{"runtime":71},"epoch":36,"_step":36,"Train Loss":0.0013495889901605552,"_runtime":71,"Val Loss":3.4632680382761922,"Best Val Acc":0.7342657342657343,"Best Epoch":11,"_timestamp":1.7514794365898054e+09,"Val Acc":0.6993006993006993,"Epoch Time (s)":1.8597321510314941}

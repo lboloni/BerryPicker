@@ -1,0 +1,64 @@
+{
+  "os":  "Linux-5.15.0-1049-oracle-x86_64-with-glibc2.31",
+  "python":  "CPython 3.9.23",
+  "startedAt":  "2025-07-02T18:08:53.268761Z",
+  "args":  [
+    "--wandb"
+  ],
+  "program":  "/home/anthony/BerryPicker/anthony_leaf/video_classifier.py",
+  "codePath":  "anthony_leaf/video_classifier.py",
+  "codePathLocal":  "anthony_leaf/video_classifier.py",
+  "git":  {
+    "remote":  "https://github.com/lboloni/BerryPicker.git",
+    "commit":  "7d7e2a1e4c8bad2d674c040995bdecf020549c7d"
+  },
+  "email":  "anthony.i.bilic@gmail.com",
+  "root":  "/home/anthony/BerryPicker",
+  "host":  "lambda-quad",
+  "executable":  "/home/anthony/miniconda3/envs/berry/bin/python",
+  "cpu_count":  32,
+  "cpu_count_logical":  64,
+  "gpu":  "NVIDIA RTX A5000",
+  "gpu_count":  4,
+  "disk":  {
+    "/":  {
+      "total":  "3936290357248",
+      "used":  "2453611159552"
+    }
+  },
+  "memory":  {
+    "total":  "270058172416"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA RTX A5000",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  8192,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-3f1401fd-0fe4-87a3-a9f1-1166a0f4396f"
+    },
+    {
+      "name":  "NVIDIA RTX A5000",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  8192,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-a48a9ef4-ed36-747e-b001-5909a0cbd928"
+    },
+    {
+      "name":  "NVIDIA RTX A5000",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  8192,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-ac10e628-a6f0-d65b-2676-1352022f7360"
+    },
+    {
+      "name":  "NVIDIA RTX A5000",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  8192,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-2f13ec23-4d76-6dbc-5261-c820df2f4415"
+    }
+  ],
+  "cudaVersion":  "11.7",
+  "writerId":  "340jk7s976vo05cvd4acwafs6jmjyai8"
+}

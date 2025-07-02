@@ -1,0 +1,85 @@
+_wandb:
+    value:
+        cli_version: 0.21.0
+        e:
+            45t0i4x98yo91iuzdij2bpo83bqfja03:
+                args:
+                    - --wandb
+                codePath: anthony_leaf/video_classifier.py
+                codePathLocal: anthony_leaf/video_classifier.py
+                cpu_count: 32
+                cpu_count_logical: 64
+                cudaVersion: "11.7"
+                disk:
+                    /:
+                        total: "3936290357248"
+                        used: "2453610364928"
+                email: anthony.i.bilic@gmail.com
+                executable: /home/anthony/miniconda3/envs/berry/bin/python
+                git:
+                    commit: 7d7e2a1e4c8bad2d674c040995bdecf020549c7d
+                    remote: https://github.com/lboloni/BerryPicker.git
+                gpu: NVIDIA RTX A5000
+                gpu_count: 4
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 8192
+                      memoryTotal: "25757220864"
+                      name: NVIDIA RTX A5000
+                      uuid: GPU-3f1401fd-0fe4-87a3-a9f1-1166a0f4396f
+                    - architecture: Ampere
+                      cudaCores: 8192
+                      memoryTotal: "25757220864"
+                      name: NVIDIA RTX A5000
+                      uuid: GPU-a48a9ef4-ed36-747e-b001-5909a0cbd928
+                    - architecture: Ampere
+                      cudaCores: 8192
+                      memoryTotal: "25757220864"
+                      name: NVIDIA RTX A5000
+                      uuid: GPU-ac10e628-a6f0-d65b-2676-1352022f7360
+                    - architecture: Ampere
+                      cudaCores: 8192
+                      memoryTotal: "25757220864"
+                      name: NVIDIA RTX A5000
+                      uuid: GPU-2f13ec23-4d76-6dbc-5261-c820df2f4415
+                host: lambda-quad
+                memory:
+                    total: "270058172416"
+                os: Linux-5.15.0-1049-oracle-x86_64-with-glibc2.31
+                program: /home/anthony/BerryPicker/anthony_leaf/video_classifier.py
+                python: CPython 3.9.23
+                root: /home/anthony/BerryPicker
+                startedAt: "2025-07-02T18:02:45.680295Z"
+                writerId: 45t0i4x98yo91iuzdij2bpo83bqfja03
+        m: []
+        python_version: 3.9.23
+        t:
+            "1":
+                - 1
+                - 41
+            "2":
+                - 1
+                - 41
+            "3":
+                - 13
+                - 16
+            "4": 3.9.23
+            "5": 0.21.0
+            "8":
+                - 2
+            "12": 0.21.0
+            "13": linux-x86_64
+architecture:
+    value: VideoCNN3D
+batch_size:
+    value: 1
+early_stopping_patience:
+    value: 25
+epochs:
+    value: 500
+loss:
+    value: BCE
+lr:
+    value: 0.001
+optimizer:
+    value: Adam

@@ -1,0 +1,1 @@
+{"_step":33,"Val Loss":268.7851253056026,"Val Acc":0.6643356643356644,"Best Val Acc":0.7552447552447552,"Epoch Time (s)":1.9189295768737793,"Train Acc":0.996875,"Best Epoch":8,"GPU Memory MB":3132.123046875,"epoch":33,"_wandb":{"runtime":86},"_runtime":86,"Train Loss":2.3618219513446093,"_timestamp":1.7514798189500213e+09}

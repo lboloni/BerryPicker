@@ -1,0 +1,1 @@
+{"Best Val Acc":0.7342657342657343,"_runtime":43,"_wandb":{"runtime":43},"epoch":21,"Train Loss":0.07753994052181952,"Val Loss":1.44201693001327,"_timestamp":1.751476603719048e+09,"Train Acc":0.98125,"Val Acc":0.6853146853146853,"Best Epoch":11,"_step":21}
