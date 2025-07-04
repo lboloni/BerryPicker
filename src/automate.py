@@ -1,20 +1,17 @@
 import pathlib
 import papermill as pm
 
-import os
-print(os.getcwd())
+ext_path = pathlib.Path(Config()["experiment_external"])
 
-params = {"run": "sp_vae_256"}
-params["external_path"] = r"C:\Users\lboloni\Documents\Code\_TempData\BerryPicker-2\experiments"
-#params["data_path"] = r"C:\Users\lboloni\Documents\Code\_TempData\BerryPicker-2\data"
+params = {}
+params["run"] = "sp_vae_256"
+params["external_path"] = str(pathlib.Path(ext_path, "_automate").resolve())
 params["epochs"] = 10
 
-output = pathlib.Path(r"C:\Users\lboloni\Documents\Code\_TempData\BerryPicker-2\automation_output", "sensorprocessing_Train-Conv-VAE-output.ipynb")
+print(params["external_path"])
 
-# also set epochs from here.
-# and use them from there
-
-# FIXME: the output.ipynb should actually go into the data dir, or something...
+output_path = pathlib.Path(ext_path, "_automation_output")
+output = pathlib.Path(output_path, "Train-Conv-VAE-output.ipynb")
 
 try:
    pm.execute_notebook(
@@ -25,9 +22,3 @@ try:
    )
 except Exception as e:
    print(f"There was an exception {e}")
-
-# pm.execute_notebook(
-#    'sensorprocessing/Train-Conv-VAE.ipynb',
-#    'output.ipynb',
-#    parameters=dict(run="sp_vae_256")
-# )
