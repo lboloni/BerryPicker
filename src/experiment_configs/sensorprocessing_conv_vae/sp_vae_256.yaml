@@ -1,7 +1,7 @@
 # This run creates a conv_vae encoding of width 128, planned for the 
 # visual proprioception experiments
 
-class: "ConvVaeSensorProcessing"
+# class: "ConvVaeSensorProcessing"
 
 latent_size: 256
 
@@ -9,7 +9,7 @@ latent_size: 256
 # image_size: [64, 64]
 
 # If this is commented out, fall back the low default training
-epochs: 100
+# epochs: 100
 
 # the training and validation data: take it from the defaults 
 

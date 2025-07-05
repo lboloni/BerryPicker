@@ -241,7 +241,7 @@ class Demonstration:
         self.metadata["stored_as_images"] = not delete_img_files
         self.metadata["stored_as_video"] = True
         self.save_metadata()
-        print("*** Demonstration***: moving to video done")
+        print("***Demonstration***: moving to video done")
 
     def get_image_path(self, i, camera=None):
         """Returns the path to the image, if the demo is stored as independent image files."""

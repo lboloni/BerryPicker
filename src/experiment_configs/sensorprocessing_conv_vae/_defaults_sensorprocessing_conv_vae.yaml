@@ -1,8 +1,9 @@
 training_data_dir: 'vae-training-data'
 json_template_name: 'conv-vae-config-default.json'
-
 model_name: 'VAE_Robot'
 model_dir: 'models'
+
+class: "ConvVaeSensorProcessing"
 
 # the library enforces 64 x 64
 image_size: [64, 64]
@@ -12,17 +13,17 @@ save_period: 5
 
 # Default training data
 
-# # the training data in the demonstration / subrun / camera form 
+# the training data in the demonstration / subrun / camera form 
 training_data:
-  - ["random-both-cameras", "2025_03_08__14_15_53" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_16_57" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_19_12" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
 
-
-# # the validation data in the demonstration / subrun form 
+# the validation data in the demonstration / subrun form 
 validation_data:
-  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
-  - ["random-both-cameras", "2025_03_08__14_24_52" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_23_19" , "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52" , "dev2"]
+
 
 
