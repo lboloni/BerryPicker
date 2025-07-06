@@ -1,0 +1,2648 @@
+[
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0096.json",
+    "label": "1",
+    "points": [
+      [
+        753.8461538461538,
+        1446.153846153846
+      ],
+      [
+        432.30769230769226,
+        952.3076923076923
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0285.json",
+    "label": "1",
+    "points": [
+      [
+        610.7692307692307,
+        1081.5384615384614
+      ],
+      [
+        187.6923076923077,
+        804.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0076.json",
+    "label": "1",
+    "points": [
+      [
+        606.1538461538461,
+        1212.3076923076922
+      ],
+      [
+        295.38461538461536,
+        643.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0140.json",
+    "label": "1",
+    "points": [
+      [
+        813.8461538461537,
+        1132.3076923076922
+      ],
+      [
+        496.9230769230769,
+        809.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0204.json",
+    "label": "0",
+    "points": [
+      [
+        806.1538461538461,
+        1143.0769230769229
+      ],
+      [
+        473.8461538461538,
+        733.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0174.json",
+    "label": "1",
+    "points": [
+      [
+        806.1538461538461,
+        1069.230769230769
+      ],
+      [
+        506.1538461538461,
+        570.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0122.json",
+    "label": "0",
+    "points": [
+      [
+        735.3846153846154,
+        1010.7692307692308
+      ],
+      [
+        236.92307692307693,
+        690.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0315.json",
+    "label": "0",
+    "points": [
+      [
+        789.2307692307692,
+        1150.7692307692307
+      ],
+      [
+        369.23076923076917,
+        750.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0226.json",
+    "label": "1",
+    "points": [
+      [
+        683.076923076923,
+        1255.3846153846152
+      ],
+      [
+        284.61538461538464,
+        838.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0188.json",
+    "label": "0",
+    "points": [
+      [
+        786.1538461538461,
+        1170.7692307692307
+      ],
+      [
+        204.6153846153846,
+        847.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0002.json",
+    "label": "1",
+    "points": [
+      [
+        746.1538461538461,
+        1355.3846153846152
+      ],
+      [
+        380.0,
+        772.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0048.json",
+    "label": "0",
+    "points": [
+      [
+        532.3076923076923,
+        1306.153846153846
+      ],
+      [
+        227.6923076923077,
+        784.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0239.json",
+    "label": "0",
+    "points": [
+      [
+        678.4615384615385,
+        1153.8461538461538
+      ],
+      [
+        158.46153846153848,
+        781.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0025.json",
+    "label": "0",
+    "points": [
+      [
+        706.1538461538461,
+        1470.7692307692307
+      ],
+      [
+        369.23076923076917,
+        953.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0108.json",
+    "label": "0",
+    "points": [
+      [
+        578.4615384615385,
+        1196.923076923077
+      ],
+      [
+        289.23076923076917,
+        613.8461538461539
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0014.json",
+    "label": "0",
+    "points": [
+      [
+        856.9230769230768,
+        1138.4615384615383
+      ],
+      [
+        335.38461538461536,
+        775.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0255.json",
+    "label": "0",
+    "points": [
+      [
+        823.076923076923,
+        1343.0769230769229
+      ],
+      [
+        443.0769230769231,
+        776.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8670/frame_0300.json",
+    "label": "0",
+    "points": [
+      [
+        813.8461538461537,
+        1200.0
+      ],
+      [
+        326.1538461538461,
+        916.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0274.json",
+    "label": "0",
+    "points": [
+      [
+        835.3846153846154,
+        1389.230769230769
+      ],
+      [
+        253.84615384615384,
+        844.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0317.json",
+    "label": "1",
+    "points": [
+      [
+        872.3076923076923,
+        1156.923076923077
+      ],
+      [
+        195.3846153846154,
+        744.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0184.json",
+    "label": "0",
+    "points": [
+      [
+        680.0,
+        1020.0000000000001
+      ],
+      [
+        289.23076923076917,
+        646.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0027.json",
+    "label": "0",
+    "points": [
+      [
+        823.076923076923,
+        1075.3846153846152
+      ],
+      [
+        229.23076923076925,
+        772.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0140.json",
+    "label": "1",
+    "points": [
+      [
+        826.1538461538461,
+        1236.923076923077
+      ],
+      [
+        315.38461538461536,
+        926.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0000.json",
+    "label": "1",
+    "points": [
+      [
+        720.0,
+        1347.6923076923076
+      ],
+      [
+        380.0,
+        816.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0099.json",
+    "label": "0",
+    "points": [
+      [
+        890.7692307692308,
+        1067.6923076923076
+      ],
+      [
+        472.30769230769226,
+        683.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0289.json",
+    "label": "0",
+    "points": [
+      [
+        667.6923076923076,
+        1353.8461538461538
+      ],
+      [
+        323.0769230769231,
+        555.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0238.json",
+    "label": "1",
+    "points": [
+      [
+        907.6923076923077,
+        1344.6153846153845
+      ],
+      [
+        349.23076923076917,
+        850.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0073.json",
+    "label": "1",
+    "points": [
+      [
+        716.9230769230769,
+        1112.3076923076922
+      ],
+      [
+        358.46153846153845,
+        721.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0201.json",
+    "label": "0",
+    "points": [
+      [
+        638.4615384615385,
+        893.8461538461538
+      ],
+      [
+        270.7692307692307,
+        543.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0045.json",
+    "label": "0",
+    "points": [
+      [
+        587.6923076923076,
+        1316.923076923077
+      ],
+      [
+        0.0,
+        939.4171945701357
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0250.json",
+    "label": "0",
+    "points": [
+      [
+        815.3846153846154,
+        1180.0
+      ],
+      [
+        301.53846153846155,
+        761.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0129.json",
+    "label": "1",
+    "points": [
+      [
+        815.3846153846154,
+        1267.6923076923076
+      ],
+      [
+        484.6153846153845,
+        704.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0014.json",
+    "label": "0",
+    "points": [
+      [
+        604.6153846153845,
+        1367.6923076923076
+      ],
+      [
+        221.53846153846152,
+        735.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0303.json",
+    "label": "0",
+    "points": [
+      [
+        870.7692307692308,
+        1146.153846153846
+      ],
+      [
+        309.23076923076917,
+        596.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0084.json",
+    "label": "0",
+    "points": [
+      [
+        749.2307692307692,
+        1281.5384615384614
+      ],
+      [
+        115.38461538461539,
+        849.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0171.json",
+    "label": "0",
+    "points": [
+      [
+        589.2307692307692,
+        1303.0769230769229
+      ],
+      [
+        340.0,
+        689.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0225.json",
+    "label": "0",
+    "points": [
+      [
+        893.8461538461537,
+        1236.923076923077
+      ],
+      [
+        312.30769230769226,
+        906.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8677/frame_0155.json",
+    "label": "1",
+    "points": [
+      [
+        835.3846153846154,
+        1261.5384615384614
+      ],
+      [
+        520.0,
+        763.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0096.json",
+    "label": "0",
+    "points": [
+      [
+        658.4615384615385,
+        749.2307692307693
+      ],
+      [
+        164.6153846153846,
+        1167.6923076923076
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0295.json",
+    "label": "1",
+    "points": [
+      [
+        443.0769230769231,
+        550.7692307692308
+      ],
+      [
+        0.0,
+        1182.0203892493048
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0053.json",
+    "label": "1",
+    "points": [
+      [
+        786.1538461538461,
+        996.9230769230769
+      ],
+      [
+        478.46153846153845,
+        598.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0144.json",
+    "label": "1",
+    "points": [
+      [
+        703.076923076923,
+        1356.923076923077
+      ],
+      [
+        344.61538461538464,
+        873.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0196.json",
+    "label": "1",
+    "points": [
+      [
+        720.0,
+        1150.7692307692307
+      ],
+      [
+        212.3076923076923,
+        773.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0219.json",
+    "label": "0",
+    "points": [
+      [
+        713.8461538461538,
+        1379.9999999999998
+      ],
+      [
+        415.38461538461536,
+        749.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0238.json",
+    "label": "1",
+    "points": [
+      [
+        630.7692307692307,
+        1373.8461538461538
+      ],
+      [
+        292.30769230769226,
+        832.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0001.json",
+    "label": "1",
+    "points": [
+      [
+        753.8461538461538,
+        1455.3846153846152
+      ],
+      [
+        456.9230769230769,
+        980.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0159.json",
+    "label": "0",
+    "points": [
+      [
+        658.4615384615385,
+        1299.9999999999998
+      ],
+      [
+        253.84615384615384,
+        804.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0320.json",
+    "label": "0",
+    "points": [
+      [
+        824.6153846153846,
+        687.6923076923077
+      ],
+      [
+        390.7692307692307,
+        1135.3846153846152
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0030.json",
+    "label": "0",
+    "points": [
+      [
+        815.3846153846154,
+        1052.3076923076922
+      ],
+      [
+        226.15384615384616,
+        786.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0254.json",
+    "label": "0",
+    "points": [
+      [
+        569.2307692307692,
+        1443.0769230769229
+      ],
+      [
+        203.07692307692307,
+        878.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0019.json",
+    "label": "0",
+    "points": [
+      [
+        633.8461538461538,
+        1224.6153846153845
+      ],
+      [
+        292.30769230769226,
+        629.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0132.json",
+    "label": "0",
+    "points": [
+      [
+        676.9230769230769,
+        1230.7692307692307
+      ],
+      [
+        216.92307692307693,
+        926.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0087.json",
+    "label": "1",
+    "points": [
+      [
+        629.2307692307692,
+        995.3846153846154
+      ],
+      [
+        218.46153846153848,
+        618.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0108.json",
+    "label": "0",
+    "points": [
+      [
+        853.8461538461537,
+        1027.6923076923076
+      ],
+      [
+        469.23076923076917,
+        646.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0337.json",
+    "label": "0",
+    "points": [
+      [
+        704.6153846153845,
+        1040.0
+      ],
+      [
+        101.53846153846152,
+        627.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0208.json",
+    "label": "0",
+    "points": [
+      [
+        741.5384615384615,
+        1261.5384615384614
+      ],
+      [
+        215.3846153846154,
+        813.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0180.json",
+    "label": "0",
+    "points": [
+      [
+        772.3076923076923,
+        1476.923076923077
+      ],
+      [
+        184.6153846153846,
+        1013.8461538461539
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8673/frame_0271.json",
+    "label": "0",
+    "points": [
+      [
+        646.1538461538461,
+        1196.923076923077
+      ],
+      [
+        90.7692307692308,
+        840.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0212.json",
+    "label": "0",
+    "points": [
+      [
+        624.6153846153845,
+        1316.923076923077
+      ],
+      [
+        243.07692307692307,
+        680.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0313.json",
+    "label": "0",
+    "points": [
+      [
+        921.5384615384615,
+        1172.3076923076922
+      ],
+      [
+        378.46153846153845,
+        689.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0143.json",
+    "label": "1",
+    "points": [
+      [
+        626.1538461538461,
+        1209.230769230769
+      ],
+      [
+        333.8461538461538,
+        732.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0332.json",
+    "label": "1",
+    "points": [
+      [
+        803.076923076923,
+        1010.7692307692308
+      ],
+      [
+        287.6923076923076,
+        741.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0235.json",
+    "label": "0",
+    "points": [
+      [
+        760.0,
+        1252.3076923076922
+      ],
+      [
+        23.076923076923066,
+        816.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0016.json",
+    "label": "0",
+    "points": [
+      [
+        695.3846153846154,
+        1486.153846153846
+      ],
+      [
+        370.7692307692307,
+        896.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0123.json",
+    "label": "0",
+    "points": [
+      [
+        833.8461538461537,
+        1070.7692307692307
+      ],
+      [
+        512.3076923076923,
+        486.15384615384613
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0176.json",
+    "label": "1",
+    "points": [
+      [
+        600.0,
+        1238.4615384615383
+      ],
+      [
+        60.00000000000003,
+        643.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0060.json",
+    "label": "1",
+    "points": [
+      [
+        770.7692307692307,
+        1316.923076923077
+      ],
+      [
+        507.6923076923076,
+        838.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0190.json",
+    "label": "0",
+    "points": [
+      [
+        867.6923076923077,
+        1475.3846153846152
+      ],
+      [
+        400.0,
+        735.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0264.json",
+    "label": "1",
+    "points": [
+      [
+        612.3076923076923,
+        1298.4615384615383
+      ],
+      [
+        207.6923076923077,
+        673.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0030.json",
+    "label": "0",
+    "points": [
+      [
+        613.8461538461538,
+        996.9230769230769
+      ],
+      [
+        172.3076923076923,
+        638.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0048.json",
+    "label": "1",
+    "points": [
+      [
+        763.076923076923,
+        1327.6923076923076
+      ],
+      [
+        427.6923076923076,
+        775.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0296.json",
+    "label": "0",
+    "points": [
+      [
+        803.076923076923,
+        1175.3846153846152
+      ],
+      [
+        30.769230769230802,
+        723.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0296.json",
+    "label": "0",
+    "points": [
+      [
+        866.1538461538461,
+        1584.6153846153845
+      ],
+      [
+        204.6153846153846,
+        1250.7692307692307
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0250.json",
+    "label": "0",
+    "points": [
+      [
+        741.5384615384615,
+        1383.0769230769229
+      ],
+      [
+        363.0769230769231,
+        795.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0003.json",
+    "label": "0",
+    "points": [
+      [
+        689.2307692307692,
+        1056.923076923077
+      ],
+      [
+        329.23076923076917,
+        696.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0111.json",
+    "label": "1",
+    "points": [
+      [
+        726.1538461538461,
+        1150.7692307692307
+      ],
+      [
+        418.46153846153845,
+        527.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0075.json",
+    "label": "1",
+    "points": [
+      [
+        753.8461538461538,
+        1147.6923076923076
+      ],
+      [
+        160.00000000000003,
+        816.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8672/frame_0155.json",
+    "label": "0",
+    "points": [
+      [
+        727.6923076923076,
+        1053.8461538461538
+      ],
+      [
+        236.92307692307693,
+        709.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0150.json",
+    "label": "0",
+    "points": [
+      [
+        715.3846153846154,
+        1301.5384615384614
+      ],
+      [
+        333.8461538461538,
+        884.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0000.json",
+    "label": "0",
+    "points": [
+      [
+        696.9230769230769,
+        1461.5384615384614
+      ],
+      [
+        430.7692307692307,
+        993.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0374.json",
+    "label": "0",
+    "points": [
+      [
+        756.9230769230769,
+        1093.8461538461538
+      ],
+      [
+        436.9230769230769,
+        776.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0093.json",
+    "label": "1",
+    "points": [
+      [
+        743.076923076923,
+        1193.8461538461538
+      ],
+      [
+        520.0,
+        789.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0224.json",
+    "label": "0",
+    "points": [
+      [
+        723.076923076923,
+        1216.923076923077
+      ],
+      [
+        438.46153846153845,
+        767.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0077.json",
+    "label": "1",
+    "points": [
+      [
+        729.2307692307692,
+        1293.8461538461538
+      ],
+      [
+        429.23076923076917,
+        786.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0020.json",
+    "label": "0",
+    "points": [
+      [
+        640.0,
+        1067.6923076923076
+      ],
+      [
+        326.1538461538461,
+        721.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0119.json",
+    "label": "0",
+    "points": [
+      [
+        698.4615384615385,
+        1276.923076923077
+      ],
+      [
+        275.38461538461536,
+        801.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0036.json",
+    "label": "0",
+    "points": [
+      [
+        743.076923076923,
+        1030.7692307692307
+      ],
+      [
+        440.0,
+        776.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0166.json",
+    "label": "0",
+    "points": [
+      [
+        813.8461538461537,
+        1095.3846153846152
+      ],
+      [
+        163.07692307692307,
+        792.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0302.json",
+    "label": "1",
+    "points": [
+      [
+        783.076923076923,
+        1236.923076923077
+      ],
+      [
+        446.1538461538461,
+        763.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0294.json",
+    "label": "0",
+    "points": [
+      [
+        586.1538461538461,
+        1370.7692307692307
+      ],
+      [
+        298.46153846153845,
+        783.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0273.json",
+    "label": "0",
+    "points": [
+      [
+        741.5384615384615,
+        1210.7692307692307
+      ],
+      [
+        241.53846153846152,
+        773.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0132.json",
+    "label": "1",
+    "points": [
+      [
+        724.6153846153845,
+        1319.9999999999998
+      ],
+      [
+        364.61538461538464,
+        781.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0252.json",
+    "label": "1",
+    "points": [
+      [
+        869.2307692307692,
+        1152.3076923076922
+      ],
+      [
+        470.7692307692307,
+        783.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0334.json",
+    "label": "1",
+    "points": [
+      [
+        707.6923076923076,
+        900.0
+      ],
+      [
+        413.8461538461538,
+        487.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0352.json",
+    "label": "0",
+    "points": [
+      [
+        732.3076923076923,
+        1118.4615384615383
+      ],
+      [
+        215.3846153846154,
+        750.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0208.json",
+    "label": "0",
+    "points": [
+      [
+        681.5384615384615,
+        1266.153846153846
+      ],
+      [
+        404.6153846153845,
+        784.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8668/frame_0059.json",
+    "label": "1",
+    "points": [
+      [
+        743.076923076923,
+        1249.230769230769
+      ],
+      [
+        238.46153846153848,
+        961.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0184.json",
+    "label": "0",
+    "points": [
+      [
+        1016.9230769230768,
+        1044.6153846153845
+      ],
+      [
+        306.1538461538461,
+        521.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0102.json",
+    "label": "0",
+    "points": [
+      [
+        543.0769230769231,
+        1344.6153846153845
+      ],
+      [
+        141.53846153846152,
+        570.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0000.json",
+    "label": "0",
+    "points": [
+      [
+        813.8461538461537,
+        1140.0
+      ],
+      [
+        209.23076923076925,
+        796.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0237.json",
+    "label": "1",
+    "points": [
+      [
+        621.5384615384615,
+        1170.7692307692307
+      ],
+      [
+        327.6923076923076,
+        706.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0012.json",
+    "label": "1",
+    "points": [
+      [
+        716.9230769230769,
+        1299.9999999999998
+      ],
+      [
+        420.0,
+        721.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0288.json",
+    "label": "0",
+    "points": [
+      [
+        892.3076923076923,
+        1118.4615384615383
+      ],
+      [
+        320.0,
+        723.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0168.json",
+    "label": "1",
+    "points": [
+      [
+        749.2307692307692,
+        1281.5384615384614
+      ],
+      [
+        350.7692307692307,
+        600.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0081.json",
+    "label": "0",
+    "points": [
+      [
+        803.076923076923,
+        1278.4615384615383
+      ],
+      [
+        141.53846153846152,
+        893.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0195.json",
+    "label": "1",
+    "points": [
+      [
+        758.4615384615385,
+        1321.5384615384614
+      ],
+      [
+        332.30769230769226,
+        692.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0034.json",
+    "label": "0",
+    "points": [
+      [
+        664.6153846153845,
+        1240.0
+      ],
+      [
+        193.84615384615384,
+        1001.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0275.json",
+    "label": "0",
+    "points": [
+      [
+        672.3076923076923,
+        1255.3846153846152
+      ],
+      [
+        183.07692307692307,
+        578.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0048.json",
+    "label": "1",
+    "points": [
+      [
+        819.9999999999999,
+        1386.153846153846
+      ],
+      [
+        329.23076923076917,
+        935.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0153.json",
+    "label": "0",
+    "points": [
+      [
+        707.6923076923076,
+        1129.230769230769
+      ],
+      [
+        113.84615384615384,
+        584.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0252.json",
+    "label": "0",
+    "points": [
+      [
+        598.4615384615385,
+        1379.9999999999998
+      ],
+      [
+        150.7692307692308,
+        664.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0130.json",
+    "label": "1",
+    "points": [
+      [
+        183.07692307692307,
+        626.1538461538462
+      ],
+      [
+        912.3076923076923,
+        1116.923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0304.json",
+    "label": "1",
+    "points": [
+      [
+        687.6923076923076,
+        1189.230769230769
+      ],
+      [
+        47.69230769230771,
+        710.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0117.json",
+    "label": "0",
+    "points": [
+      [
+        852.3076923076923,
+        1175.3846153846152
+      ],
+      [
+        341.53846153846155,
+        587.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0225.json",
+    "label": "0",
+    "points": [
+      [
+        861.5384615384615,
+        1404.6153846153845
+      ],
+      [
+        303.0769230769231,
+        767.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8675/frame_0062.json",
+    "label": "1",
+    "points": [
+      [
+        656.9230769230769,
+        1315.3846153846152
+      ],
+      [
+        156.92307692307693,
+        863.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0074.json",
+    "label": "1",
+    "points": [
+      [
+        630.7692307692307,
+        1210.7692307692307
+      ],
+      [
+        367.6923076923076,
+        740.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0099.json",
+    "label": "0",
+    "points": [
+      [
+        613.8461538461538,
+        1229.230769230769
+      ],
+      [
+        204.6153846153846,
+        538.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0289.json",
+    "label": "1",
+    "points": [
+      [
+        669.2307692307692,
+        1316.923076923077
+      ],
+      [
+        133.84615384615384,
+        856.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0276.json",
+    "label": "0",
+    "points": [
+      [
+        535.3846153846154,
+        1224.6153846153845
+      ],
+      [
+        172.3076923076923,
+        600.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0034.json",
+    "label": "0",
+    "points": [
+      [
+        818.4615384615385,
+        1106.153846153846
+      ],
+      [
+        404.6153846153845,
+        640.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0016.json",
+    "label": "1",
+    "points": [
+      [
+        746.1538461538461,
+        1127.6923076923076
+      ],
+      [
+        427.6923076923076,
+        658.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0186.json",
+    "label": "0",
+    "points": [
+      [
+        729.2307692307692,
+        1147.6923076923076
+      ],
+      [
+        132.3076923076923,
+        790.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0086.json",
+    "label": "0",
+    "points": [
+      [
+        675.3846153846154,
+        1286.153846153846
+      ],
+      [
+        230.76923076923075,
+        869.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0230.json",
+    "label": "1",
+    "points": [
+      [
+        649.2307692307692,
+        1160.0
+      ],
+      [
+        315.38461538461536,
+        695.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0002.json",
+    "label": "0",
+    "points": [
+      [
+        755.3846153846154,
+        1213.8461538461538
+      ],
+      [
+        244.6153846153846,
+        895.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0175.json",
+    "label": "0",
+    "points": [
+      [
+        729.2307692307692,
+        1149.230769230769
+      ],
+      [
+        140.00000000000003,
+        783.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0253.json",
+    "label": "0",
+    "points": [
+      [
+        783.076923076923,
+        1112.3076923076922
+      ],
+      [
+        364.61538461538464,
+        735.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0148.json",
+    "label": "0",
+    "points": [
+      [
+        803.076923076923,
+        1401.5384615384614
+      ],
+      [
+        450.7692307692307,
+        866.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0133.json",
+    "label": "0",
+    "points": [
+      [
+        660.0,
+        1195.3846153846152
+      ],
+      [
+        161.53846153846152,
+        823.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0050.json",
+    "label": "1",
+    "points": [
+      [
+        783.076923076923,
+        1258.4615384615383
+      ],
+      [
+        506.1538461538461,
+        607.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0202.json",
+    "label": "1",
+    "points": [
+      [
+        536.9230769230769,
+        1250.7692307692307
+      ],
+      [
+        4.615384615384613,
+        684.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0120.json",
+    "label": "1",
+    "points": [
+      [
+        644.6153846153845,
+        1287.6923076923076
+      ],
+      [
+        253.84615384615384,
+        826.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8671/frame_0243.json",
+    "label": "0",
+    "points": [
+      [
+        672.3076923076923,
+        1035.3846153846152
+      ],
+      [
+        147.6923076923077,
+        716.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0209.json",
+    "label": "1",
+    "points": [
+      [
+        787.6923076923077,
+        961.5384615384615
+      ],
+      [
+        278.46153846153845,
+        512.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0164.json",
+    "label": "1",
+    "points": [
+      [
+        746.1538461538461,
+        1263.0769230769229
+      ],
+      [
+        289.23076923076917,
+        826.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0049.json",
+    "label": "0",
+    "points": [
+      [
+        729.2307692307692,
+        1279.9999999999998
+      ],
+      [
+        435.38461538461536,
+        692.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0000.json",
+    "label": "1",
+    "points": [
+      [
+        761.5384615384615,
+        1144.6153846153845
+      ],
+      [
+        292.30769230769226,
+        875.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0126.json",
+    "label": "0",
+    "points": [
+      [
+        915.3846153846154,
+        1260.0
+      ],
+      [
+        350.7692307692307,
+        896.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0276.json",
+    "label": "1",
+    "points": [
+      [
+        727.6923076923076,
+        941.5384615384615
+      ],
+      [
+        310.7692307692307,
+        347.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0231.json",
+    "label": "0",
+    "points": [
+      [
+        616.9230769230769,
+        1232.3076923076922
+      ],
+      [
+        261.53846153846155,
+        583.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0185.json",
+    "label": "0",
+    "points": [
+      [
+        755.3846153846154,
+        1281.5384615384614
+      ],
+      [
+        130.7692307692308,
+        698.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0296.json",
+    "label": "0",
+    "points": [
+      [
+        663.076923076923,
+        1107.6923076923076
+      ],
+      [
+        -1.1368683772161603e-13,
+        682.9563984402694
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0310.json",
+    "label": "0",
+    "points": [
+      [
+        933.8461538461537,
+        1140.0
+      ],
+      [
+        506.1538461538461,
+        670.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0015.json",
+    "label": "1",
+    "points": [
+      [
+        733.8461538461538,
+        1200.0
+      ],
+      [
+        453.8461538461538,
+        689.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0031.json",
+    "label": "1",
+    "points": [
+      [
+        807.6923076923077,
+        1267.6923076923076
+      ],
+      [
+        547.6923076923076,
+        830.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0109.json",
+    "label": "1",
+    "points": [
+      [
+        721.5384615384615,
+        1120.0
+      ],
+      [
+        298.46153846153845,
+        661.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0075.json",
+    "label": "0",
+    "points": [
+      [
+        433.8461538461538,
+        530.7692307692308
+      ],
+      [
+        823.076923076923,
+        840.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0151.json",
+    "label": "0",
+    "points": [
+      [
+        604.6153846153845,
+        1241.5384615384614
+      ],
+      [
+        240.00000000000003,
+        638.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0097.json",
+    "label": "0",
+    "points": [
+      [
+        683.076923076923,
+        1135.3846153846152
+      ],
+      [
+        167.6923076923077,
+        720.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0063.json",
+    "label": "0",
+    "points": [
+      [
+        635.3846153846154,
+        935.3846153846154
+      ],
+      [
+        193.84615384615384,
+        520.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8674/frame_0243.json",
+    "label": "1",
+    "points": [
+      [
+        683.076923076923,
+        1223.0769230769229
+      ],
+      [
+        358.46153846153845,
+        670.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0213.json",
+    "label": "0",
+    "points": [
+      [
+        721.5384615384615,
+        1055.3846153846152
+      ],
+      [
+        449.23076923076917,
+        629.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0285.json",
+    "label": "1",
+    "points": [
+      [
+        770.7692307692307,
+        1176.923076923077
+      ],
+      [
+        432.30769230769226,
+        690.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0078.json",
+    "label": "0",
+    "points": [
+      [
+        749.2307692307692,
+        1070.7692307692307
+      ],
+      [
+        476.9230769230769,
+        696.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0164.json",
+    "label": "0",
+    "points": [
+      [
+        695.3846153846154,
+        1150.7692307692307
+      ],
+      [
+        338.46153846153845,
+        746.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0335.json",
+    "label": "1",
+    "points": [
+      [
+        843.076923076923,
+        1153.8461538461538
+      ],
+      [
+        492.30769230769226,
+        766.1538461538462
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0237.json",
+    "label": "0",
+    "points": [
+      [
+        595.3846153846154,
+        1135.3846153846152
+      ],
+      [
+        166.15384615384616,
+        735.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0144.json",
+    "label": "0",
+    "points": [
+      [
+        606.1538461538461,
+        1281.5384615384614
+      ],
+      [
+        163.07692307692307,
+        904.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0131.json",
+    "label": "1",
+    "points": [
+      [
+        664.6153846153845,
+        1227.6923076923076
+      ],
+      [
+        330.7692307692307,
+        692.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0021.json",
+    "label": "0",
+    "points": [
+      [
+        618.4615384615385,
+        1167.6923076923076
+      ],
+      [
+        347.6923076923076,
+        741.5384615384615
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0001.json",
+    "label": "1",
+    "points": [
+      [
+        772.3076923076923,
+        1352.3076923076922
+      ],
+      [
+        329.23076923076917,
+        1063.0769230769229
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0321.json",
+    "label": "0",
+    "points": [
+      [
+        592.3076923076923,
+        1132.3076923076922
+      ],
+      [
+        161.53846153846152,
+        749.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0061.json",
+    "label": "1",
+    "points": [
+      [
+        656.9230769230769,
+        915.3846153846154
+      ],
+      [
+        316.9230769230769,
+        750.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0354.json",
+    "label": "0",
+    "points": [
+      [
+        760.0,
+        1092.3076923076922
+      ],
+      [
+        449.23076923076917,
+        787.6923076923077
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0092.json",
+    "label": "0",
+    "points": [
+      [
+        653.8461538461538,
+        1073.8461538461538
+      ],
+      [
+        286.1538461538461,
+        744.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0254.json",
+    "label": "1",
+    "points": [
+      [
+        850.7692307692308,
+        1149.230769230769
+      ],
+      [
+        458.46153846153845,
+        693.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0036.json",
+    "label": "0",
+    "points": [
+      [
+        713.8461538461538,
+        1155.3846153846152
+      ],
+      [
+        249.23076923076925,
+        900.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0114.json",
+    "label": "0",
+    "points": [
+      [
+        701.5384615384615,
+        1176.923076923077
+      ],
+      [
+        260.0,
+        893.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0273.json",
+    "label": "0",
+    "points": [
+      [
+        550.7692307692307,
+        1229.230769230769
+      ],
+      [
+        249.23076923076917,
+        667.6923076923076
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8669/frame_0199.json",
+    "label": "0",
+    "points": [
+      [
+        793.8461538461537,
+        1153.8461538461538
+      ],
+      [
+        490.7692307692307,
+        670.7692307692308
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0285.json",
+    "label": "1",
+    "points": [
+      [
+        632.3076923076923,
+        1109.230769230769
+      ],
+      [
+        313.8461538461538,
+        789.2307692307693
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0318.json",
+    "label": "1",
+    "points": [
+      [
+        692.3076923076923,
+        1033.8461538461538
+      ],
+      [
+        378.46153846153845,
+        552.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0340.json",
+    "label": "0",
+    "points": [
+      [
+        736.9230769230769,
+        1032.3076923076922
+      ],
+      [
+        335.38461538461536,
+        716.9230769230769
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0224.json",
+    "label": "0",
+    "points": [
+      [
+        772.3076923076923,
+        1266.153846153846
+      ],
+      [
+        432.30769230769226,
+        675.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0363.json",
+    "label": "0",
+    "points": [
+      [
+        780.0,
+        938.4615384615385
+      ],
+      [
+        406.1538461538461,
+        738.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0418.json",
+    "label": "1",
+    "points": [
+      [
+        660.0,
+        1143.0769230769229
+      ],
+      [
+        383.0769230769231,
+        660.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0268.json",
+    "label": "1",
+    "points": [
+      [
+        595.3846153846154,
+        1227.6923076923076
+      ],
+      [
+        340.0,
+        763.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0201.json",
+    "label": "0",
+    "points": [
+      [
+        763.076923076923,
+        1135.3846153846152
+      ],
+      [
+        416.9230769230769,
+        660.0
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0136.json",
+    "label": "0",
+    "points": [
+      [
+        693.8461538461538,
+        1227.6923076923076
+      ],
+      [
+        343.0769230769231,
+        703.0769230769231
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0249.json",
+    "label": "1",
+    "points": [
+      [
+        784.6153846153846,
+        1264.6153846153845
+      ],
+      [
+        512.3076923076923,
+        804.6153846153846
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0077.json",
+    "label": "0",
+    "points": [
+      [
+        515.3846153846154,
+        1203.0769230769229
+      ],
+      [
+        15.384615384615387,
+        775.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0185.json",
+    "label": "0",
+    "points": [
+      [
+        690.7692307692307,
+        1140.0
+      ],
+      [
+        373.8461538461538,
+        655.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0006.json",
+    "label": "1",
+    "points": [
+      [
+        705.1515151515152,
+        1518.3333333333335
+      ],
+      [
+        376.3636363636365,
+        980.4545454545454
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0029.json",
+    "label": "0",
+    "points": [
+      [
+        695.3846153846154,
+        1283.0769230769229
+      ],
+      [
+        372.30769230769226,
+        718.4615384615385
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0116.json",
+    "label": "1",
+    "points": [
+      [
+        756.9230769230769,
+        1166.153846153846
+      ],
+      [
+        476.9230769230769,
+        675.3846153846154
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0047.json",
+    "label": "0",
+    "points": [
+      [
+        707.6923076923076,
+        1018.4615384615385
+      ],
+      [
+        393.8461538461538,
+        592.3076923076924
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0157.json",
+    "label": "0",
+    "points": [
+      [
+        673.8461538461538,
+        1070.7692307692307
+      ],
+      [
+        410.7692307692307,
+        713.8461538461538
+      ]
+    ]
+  },
+  {
+    "path": "/data/breast-cancer/leaf_vids/frames/IMG_8667/frame_0393.json",
+    "label": "0",
+    "points": [
+      [
+        641.5384615384615,
+        1253.8461538461538
+      ],
+      [
+        366.1538461538461,
+        690.7692307692308
+      ]
+    ]
+  }
+]
