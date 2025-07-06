@@ -6,4 +6,4 @@ model = YOLO("yolo11n.pt")  # load a pretrained model (recommended for training)
 model = YOLO("yolo11n.yaml").load("yolo11n.pt")  # build from YAML and transfer weights
 
 # Train the model
-results = model.train(data="/home/anthony/BerryPicker/anthony_leaf/leafbox.yaml", epochs=100, imgsz=640)
+results = model.train(data="/home/anthony/BerryPicker/anthony_leaf/yolo/leafbox.yaml", epochs=100, imgsz=640)
