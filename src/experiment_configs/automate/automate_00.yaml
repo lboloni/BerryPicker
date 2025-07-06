@@ -3,14 +3,17 @@ exps_to_run:
     notebook: 'sensorprocessing/Train-Conv-VAE.ipynb'
     params:
       run: "sp_vae_256"
+      creation_style: "discard-old"
       epochs: 10
   - name: "ConvVAE_128"
     notebook: 'sensorprocessing/Train-Conv-VAE.ipynb'
     params:
       run: "sp_vae_128"
+      # creation_style: "discard-old"
       epochs: 10
   - name: "ResNet50_128"
     notebook: 'sensorprocessing/Train-ProprioTuned-CNN.ipynb'
     params:
       run: "resnet50_128"
+      # creation_style: "discard-old"
       epochs: 10

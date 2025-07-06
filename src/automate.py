@@ -1,8 +1,11 @@
 from exp_run_config import Config, Experiment
 Config.PROJECTNAME = "BerryPicker"
 
+import sys
+import yaml
 import pathlib
 import papermill as pm
+from tqdm import tqdm
 
 def automate_exprun(notebook, name, params):
    """Automates the execution of a notebook. It is assumed that in the notebook there is cell tagged "parameters", and in general that the notebook is idempotent."""
@@ -26,11 +29,20 @@ def automate_exprun(notebook, name, params):
    except Exception as e:
       print(f"There was an exception {e}")
 
-experiment = "automate"
-run = "automate_00"
-exp = Config().get_experiment(experiment, run)
+if len(sys.argv) < 2:
+   experiment = "automate"
+   run = "automate_00"
+   exp = Config().get_experiment(experiment, run)
+else:
+   yaml_path = pathlib.Path(sys.argv[1])
+   if not yaml_path.is_file():
+      print(f"Error: File '{yaml_path}' does not exist.")
+      sys.exit(1)
+   # Load the YAML file into a dictionary
+   with open(yaml_path, 'r') as f:
+      exp = yaml.safe_load(f)      
 
-for item in exp["exps_to_run"]:
+for item in tqdm(exp["exps_to_run"]):
     print(f"***Automating {item['name']}")
     #notebook = params["notebook"]
     automate_exprun(item["notebook"], item["name"], item["params"])
