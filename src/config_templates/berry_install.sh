@@ -12,6 +12,7 @@ git clone https://github.com/julian-8897/Conv-VAE-PyTorch
 # create the data dirs
 mkdir -p ~/WORK/BerryPicker/data
 
+
 # create the config
 mkdir -p ~/WORK/BerryPicker/cfg
 cd ~/WORK/BerryPicker/cfg

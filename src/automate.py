@@ -16,7 +16,7 @@ def automate_exprun(notebook, name, params):
    output_path = pathlib.Path(ext_path, "_automation_output")
    output_filename = f"{notebook_path.stem}_{name}_output{ notebook_path.suffix}"
    output = pathlib.Path(output_path, notebook_path.parent, output_filename)
-   output.parent.mkdir(exist_ok=True)
+   output.parent.mkdir(exist_ok=True, parents=True)
    print(output)
 
    try:
