@@ -32,7 +32,7 @@ def automate_exprun(notebook, name, params):
 if len(sys.argv) < 2:
    print("No argument passed, running automate_00")
    experiment = "automate"
-   run = "automate_00"
+   run = "automate_short"
    exp = Config().get_experiment(experiment, run)
 else:
    print(f"Running script {sys.argv[1]}")
