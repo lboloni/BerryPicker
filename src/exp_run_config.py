@@ -152,7 +152,7 @@ class Config:
                 main_config = yaml.safe_load(handle)
             configpath = main_config["configpath"]
             Config.__log(f"Loading machine-specific config file:\n\t{configpath}")
-            configpath = pathlib.Path(configpath)
+            configpath = pathlib.Path(configpath).expanduser().resolve()
             if not configpath.exists():
                 raise Exception(f"Missing machine-specific config file:\n\t {configpath}")
             with configpath.open("rt") as handle:
