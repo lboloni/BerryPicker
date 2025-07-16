@@ -25,4 +25,8 @@ mkdir -p ~/WORK/BerryPicker/vm
 cd ~/WORK/BerryPicker/vm
 python -m venv berrypickervenv
 source berrypickervenv/bin/activate
-pip install pyyaml papermill numpy pyserial
+pip install pyyaml papermill numpy pyserial opencv-python
+pip install approxeng.input
+
+# install the script for approxeng
+cp ~/WORK/BerryPicker/src/BerryPicker/src/config_templates/microsoft_xbox_360_pad_v1118_p654.yaml ~/.approxeng.input/

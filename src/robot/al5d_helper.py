@@ -46,22 +46,22 @@ class RobotHelper:
         return int(pulse), constrained
 
     @staticmethod
-    def servo_angle_to_pulse(exp: Experiment, servo, angle, constrain=True):
+    def servo_angle_to_pulse(exp_angle: Experiment, exp_pulse: Experiment, servo, angle, constrain=True):
         """Performs the angle to pulse transformation on a servo-specific basis, while taking into consideration the specific limits and adding pulse corrections"""
         if constrain:
-            min_value = exp["ANGLE_LIMITS"][servo][0]
-            max_value = exp["ANGLE_LIMITS"][servo][2]
+            min_value = exp_angle["ANGLE_LIMITS"][servo][0]
+            max_value = exp_angle["ANGLE_LIMITS"][servo][2]
             angle, constrained = RobotHelper.constrain(
                 angle, min_value, max_value)
         pulse = RobotHelper.map_ranges(
-            angle, exp["CST_ANGLE_MIN"], exp["CST_ANGLE_MAX"], exp["CST_PULSE_MIN"], exp["CST_PULSE_MAX"])
-        corrected_pulse = int(pulse) + exp["PULSE_CORRECTION"][servo]
+            angle, exp_angle["CST_ANGLE_MIN"], exp_angle["CST_ANGLE_MAX"], exp_pulse["CST_PULSE_MIN"], exp_pulse["CST_PULSE_MAX"])
+        corrected_pulse = int(pulse) + exp_pulse["PULSE_CORRECTION"][servo]
         return corrected_pulse, constrained
 
 
     @staticmethod
-    def pulse_to_angle(exp: Experiment, pulse):
+    def pulse_to_angle(exp_pulse: Experiment, exp_angle: Experiment, pulse):
         """Returns the angle corresponding to a certain pulse"""
         angle = RobotHelper.map_ranges(
-            pulse, exp["CST_PULSE_MIN"], exp["CST_PULSE_MAX"], exp["CST_ANGLE_MIN"], exp["CST_ANGLE_MAX"])
+            pulse, exp_pulse["CST_PULSE_MIN"], exp_pulse["CST_PULSE_MAX"], exp_angle["CST_ANGLE_MIN"], exp_angle["CST_ANGLE_MAX"])
         return angle

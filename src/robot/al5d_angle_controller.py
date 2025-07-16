@@ -2,6 +2,7 @@ import numpy as np
 # from . import al5d_constants
 from .al5d_helper import RobotHelper
 from .al5d_pulse_controller import PulseController
+from exp_run_config import Config, Experiment
 
 class AngleController:
     """Implements a robot controller for the AL5D robot which performs control in the terms of angles (for the joints) and distance for the gripper.
@@ -11,7 +12,7 @@ class AngleController:
         self.exp = exp
         self.pulse_controller = pulse_controller
         self.positions = np.ones(self.pulse_controller.cnt_servos-1) * \
-            RobotHelper.pulse_to_angle(self.pulse_controller.exp,
+            RobotHelper.pulse_to_angle(self.pulse_controller.exp, exp,
                 self.pulse_controller.pulse_position_default)
         # FIXME: how do we set this?
         self.gripper_distance = 30
@@ -27,10 +28,10 @@ class AngleController:
             retval[i] = v
         return retval
 
-    def control_servo_angle(self, servo, angle):
+    def control_servo_angle(self, exp_angle: Experiment, exp_pulse: Experiment, servo, angle):
         """Controls the servo through angle, by converting the angle to pulse. It sets the position assuming success. Works only for the 5 angle servos."""
         speed = self.exp["CST_SPEED_DEFAULT"]
-        pulse, _ = RobotHelper.servo_angle_to_pulse(servo, angle)
+        pulse, _ = RobotHelper.servo_angle_to_pulse(exp_angle, exp_pulse, servo, angle)
         if servo < 0 or servo >= self.exp["no_servos"]:
             raise Exception(f"Invalid servo for control_servo_angle {servo}")
         self.pulse_controller.control_servo_pulse(servo, pulse, speed)
@@ -53,7 +54,7 @@ class AngleController:
         """Controls all the angles and the gripper in one shot"""
         target_pulses = np.zeros(self.pulse_controller.cnt_servos)
         for i in range(self.pulse_controller.cnt_servos - 1):
-            target_pulses[i], _ = RobotHelper.servo_angle_to_pulse(i, positions[i], self.exp)
+            target_pulses[i], _ = RobotHelper.servo_angle_to_pulse(self.exp, self.pulse_controller.exp, i, positions[i])
         target_pulses[self.pulse_controller.cnt_servos-1] = self.calculate_gripper(gripper_distance)
         self.pulse_controller.control_pulses(target_pulses)
         self.positions = positions

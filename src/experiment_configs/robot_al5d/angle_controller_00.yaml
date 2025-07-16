@@ -1,2 +1,17 @@
 # angle controller config data, nothing here for the time being
 
+# constraints
+CST_ANGLE_MIN: 0
+CST_ANGLE_MAX: 180
+
+
+# the specific angle limits that need to be set for the servo by servo basis
+# this is probably specific for the AL5D as a robot design. Each is a value
+# [minimum, rest, maximum]
+ANGLE_LIMITS:
+  - [0, 90, 180] # SERVO_Z
+  - [0, 90, 180] # SERVO_SHOULDER
+  - [0, 90, 180] # SERVO_ELBOW
+  - [0, 90, 180] # SERVO_WRIST
+  - [0, 90, 180] # SERVO_WRIST_ROTATION
+  - [0, 90, 180] # SERVO_GRIP

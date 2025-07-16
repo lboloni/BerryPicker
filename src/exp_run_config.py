@@ -242,13 +242,13 @@ class Config:
             return runs
         # if we are specifying done_only, we are listing them from the 
         # data directory
-        data_dir = pathlib.Path(self.values["experiment_data"], exp_name)
+        data_dir = pathlib.Path(self.values["experiment_data"], exp_name).expanduser()
         subdirs = [p.name for p in data_dir.iterdir() if p.is_dir()]
         return subdirs
 
     def list_subruns(self, exp_name, run_name):
         """List the done subruns in the experiment. """
-        data_dir = pathlib.Path(self.values["experiment_data"], exp_name, run_name)
+        data_dir = pathlib.Path(self.values["experiment_data"], exp_name, run_name).expanduser()
         if not data_dir.exists():
             return []
         subdirs = [p.name for p in data_dir.iterdir() if p.is_dir()]
@@ -321,9 +321,9 @@ class Config:
 
         # creating the data dir
         if subrun_name is None:
-            data_dir = pathlib.Path(self.values["experiment_data"], experiment_name, run_name)
+            data_dir = pathlib.Path(self.values["experiment_data"], experiment_name, run_name).expanduser()
         else:
-            data_dir = pathlib.Path(self.values["experiment_data"], experiment_name, run_name, subrun_name)
+            data_dir = pathlib.Path(self.values["experiment_data"], experiment_name, run_name, subrun_name).expanduser()
         exp_config[Config.DATA_DIR] = str(data_dir)
         exp_config[Config.SUBRUN_NAME] = subrun_name
 
