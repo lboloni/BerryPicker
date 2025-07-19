@@ -79,7 +79,7 @@ class Experiment:
         if not d.exists():
             print(f"The experiment directory\n\t{d}\n\tdoes not exist.")
             return
-        response = input("Cleaning the experiment will remove the directory: \n\{d}\n Confirm (y/n): ").strip().lower()
+        response = input(f"Cleaning the experiment will remove the directory: \n{d}\n Confirm (y/n): ").strip().lower()
         if response == 'y':
             d = self.data_dir()
             shutil.rmtree(d)
