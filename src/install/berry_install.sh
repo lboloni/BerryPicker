@@ -18,7 +18,7 @@ mkdir -p ~/WORK/BerryPicker/data
 # create the config
 mkdir -p ~/WORK/BerryPicker/cfg
 cd ~/WORK/BerryPicker/cfg
-cp ~/WORK/BerryPicker/src/BerryPicker/src/config_templates/settings-sample.yaml settings.yaml
+cp ~/WORK/BerryPicker/src/BerryPicker/src/install/settings-sample.yaml settings.yaml
 
 # create the vm
 mkdir -p ~/WORK/BerryPicker/vm
@@ -32,4 +32,4 @@ pip install pillow matplotlib
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # install the script for approxeng
-cp ~/WORK/BerryPicker/src/BerryPicker/src/config_templates/microsoft_xbox_360_pad_v1118_p654.yaml ~/.approxeng.input/
+cp ~/WORK/BerryPicker/src/BerryPicker/src/install/microsoft_xbox_360_pad_v1118_p654.yaml ~/.approxeng.input/
