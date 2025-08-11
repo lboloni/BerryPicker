@@ -1,0 +1,23 @@
+# Specification for demonstration collection in scenarios where we don't have 
+# access to the robot. Useful for debugging etc. 
+
+demonstration_name: "freeform"
+
+# specification of the controllers that are being used on this setup
+# this depends both on the particular machine as well as what components are being used 
+# at this moment. 
+
+primary_controller: "program"
+available_robot: False
+
+exp_position_controller: "robot_al5d"
+run_position_controller: "position_controller_00"
+
+exp_camera_controller: "controllers"
+run_camera_controller: "camera_cam0_controller"
+
+exp_keyboard_controller: "controllers"
+run_keyboard_controller: "keyboard_controller"
+
+exp_gamepad_controller: "controllers"
+run_gamepad_controller: "gamepad_x360_controller"

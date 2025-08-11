@@ -46,8 +46,10 @@ class DemonstrationRecorder:
             assert self.demonstration.metadata["maxsteps"] == self.counter
             data = {}
             data["rc-position-target"] = copy.copy(self.remote_control.pos_target.values)
-            data["rc-angle-target"] = self.robot_controller.angle_controller.as_dict()
-            data["rc-pulse-target"] = self.robot_controller.pulse_controller.as_dict()
+            # the simulated controller does not have this
+            if isinstance(self.robot_controller, PositionController):
+                data["rc-angle-target"] = self.robot_controller.angle_controller.as_dict()
+                data["rc-pulse-target"] = self.robot_controller.pulse_controller.as_dict()
             self.demonstration.actions.append(data)
             self.demonstration.annotations.append({})
             #data = {}

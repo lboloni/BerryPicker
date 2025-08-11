@@ -6,10 +6,7 @@ A high-level position controller for the al5d robot
 
 from exp_run_config import Config, Experiment
 Config.PROJECTNAME = "BerryPicker"
-# from . import al5d_constants
 import numpy as np
-# import serial
-# import time
 from .al5d_helper import RobotHelper
 from .al5d_pulse_controller import PulseController
 from .al5d_angle_controller import AngleController
@@ -89,7 +86,7 @@ class RobotPosition:
             rp.values[fld] = values[i]
         return rp
 
-    def empirical_distance(exp: Experiment, self, other):
+    def empirical_distance(self, exp: Experiment, other):
         """A weighted distance function between two robot positions"""
         w = np.ones([6]) / 6.0
         norm1 = np.array(self.to_normalized_vector(exp))

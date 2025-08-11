@@ -67,10 +67,10 @@ class ProgramController(AbstractController):
         if self.waypoints is None or self.waypoints == []:
             return None
         wp = self.waypoints[0]
-        dist = self.pos_current.empirical_distance(wp)
+        dist = self.pos_current.empirical_distance(self.robot_controller.exp, wp)
         print(f"wp {wp}")
         print(f"Distance to wp {dist}")
-        if self.pos_current.empirical_distance(wp) <= 0.001:
+        if self.pos_current.empirical_distance(self.robot_controller.exp, wp) <= 0.001:
             # current waypoint was reached get next
             del self.waypoints[0]
             if self.waypoints == []:
@@ -78,7 +78,7 @@ class ProgramController(AbstractController):
                 return None
             wp = self.waypoints[0]
             print(f"New waypoint: {wp}")
-        self.pos_target = move_position_towards(self.pos_current, wp, self)
+        self.pos_target = move_position_towards(self.pos_current, wp, self, self.robot_controller.exp)
         return self.pos_target
 
     def control(self):
@@ -96,7 +96,7 @@ class ProgramController(AbstractController):
                 self.stop()
                 break
             if self.interactive_confirm:
-                dist = self.pos_current.empirical_distance(self.pos_target)
+                dist = self.pos_current.empirical_distance(self.pos_target, self.robot_controller.exp)
                 print(f"Proposed next target: {self.pos_target} which is at distance {dist} from current")
                 proceed = input("Proceed? ") in ["y", "Y", ""]
                 if not proceed:
