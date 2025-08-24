@@ -1,0 +1,8 @@
+# configuration for the cameras on the computer "szenes"
+# which is in Lotzi Boloni's office on 319. 
+# there are two cameras mounted cam2 and cam3
+
+# active_camera_list: [0, 2, 3]
+active_camera_list: [0]
+#saved_image_size: [256, 256]
+saved_image_size: [512, 512]
