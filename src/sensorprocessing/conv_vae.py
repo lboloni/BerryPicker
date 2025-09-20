@@ -137,8 +137,8 @@ def create_configured_vae_json(exp):
         data["valid_loader"] = deepcopy(data["data_loader"])
         data["valid_loader"]["args"]["data_dir"] = str(
             Path(exp["data_dir"],exp["validation_data_dir"]))
-        # Extending early_stop from 10 to 25 as VAE will stop too early on bad runs
-        data['trainer']['early_stop'] = 25
+        # Extending early_stop from 10 to 100 as VAE will stop too early on bad runs
+        data['trainer']['early_stop'] = 100
         # Making validation_split equal to 0 to use all data present in data loaders
         data["valid_loader"]['args']["validation_split"] = 0.0
         data["data_loader"]['args']["validation_split"] = 0.0

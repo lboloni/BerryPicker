@@ -1,0 +1,27 @@
+# This run creates a conv_vae encoding of width 128, planned for the 
+# visual proprioception experiments
+
+# class: "ConvVaeSensorProcessing"
+
+latent_size: 128
+
+# Fall back to default, other ones are not feasible anyhow
+# image_size: [64, 64]
+
+# epochs if commented out, take from the defaults 
+epochs: 300
+
+# the training and validation data: take it from the defaults 
+
+validation_data_dir: 'vae-validation-data'
+
+training_data:
+  - ["leaf", "2025_09_17__13_47_21" , "dev0"]
+  - ["leaf", "2025_09_17__13_47_55" , "dev0"]
+  - ["leaf", "2025_09_17__13_48_24" , "dev0"]
+  - ["leaf", "2025_09_17__13_49_44" , "dev0"]
+
+# the validation data in the demonstration / subrun form 
+validation_data:
+  - ["leaf", "2025_09_17__13_50_14" , "dev0"]
+  - ["leaf", "2025_09_17__13_50_43" , "dev0"]

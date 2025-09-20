@@ -90,6 +90,15 @@ class RobotPosition:
             rp.values[fld] = RobotHelper.map_ranges(values[i], 0.0, 1.0, exp["POS_MIN"][fld], exp["POS_MAX"][fld])
         return rp
 
+    def from_normalized_vector_dict(exp: Experiment, values):
+        """Creates the rp from a normalized numpy vector"""
+        rp = RobotPosition(exp)
+        # Changed to load by dict key rather than index
+        # Perform inverse of to_normalized_vector_dict in map_ranges_dict_backward to get unnormalized values
+        for i, fld in enumerate(rp.values):
+            rp.values[fld] = RobotHelper.map_ranges_dict_backward(values[fld], exp["POS_DEFAULT"][fld])
+        return rp
+
     @staticmethod
     def from_vector(exp: Experiment, values):
         """Creates a RobotPosition from a numpy vector"""
@@ -113,6 +122,15 @@ class RobotPosition:
         norm2 = np.array(other.to_normalized_vector(exp))
         val = np.inner(w, np.abs(norm1 - norm2))
         return val    
+
+    def empirical_distance_dict(self, exp: Experiment, other):
+        """A weighted distance function between two robot positions"""
+        # Updated to work for the dict format
+        w = np.ones([6]) / 6.0
+        N1 = np.array(list(self.to_normalized_vector_dict(exp).values()))
+        N2 = np.array(list(other.to_normalized_vector_dict(exp).values()))
+        val = np.inner(w, np.abs(N1 - N2))
+        return val   
 
     def __str__(self):
         retval = "Position: \n"

@@ -1,0 +1,40 @@
+name: "bc_lstm_resid_00_validation_leaf"
+
+# information about the sp specified by the exp/run
+exp_sp: 'sensorprocessing_conv_vae'
+run_sp: 'sp_vae_128_300epochs_validation_leaf'
+
+# controller type
+controller: "bc_LSTM_Residual"
+controller_file: "controller.pth"
+hidden_size: 64  
+
+exp_robot_controller: "robot_al5d"
+run_robot_controller: "position_controller_00"
+
+exp_bc: "behavior_cloning"
+run_bc: "bc_lstm_resid_00_validation_leaf"
+
+# the size
+control_size: 6
+# the lenght of the sequence created for the LSTM-type training
+sequence_length: 10
+
+batch_size: 1
+
+# training - if commented out, falls back to the low default value
+epochs: 300
+
+training_data:
+  - ["leaf", "2025_09_17__13_47_21" , "dev0"]
+  - ["leaf", "2025_09_17__13_47_55" , "dev0"]
+  - ["leaf", "2025_09_17__13_48_24" , "dev0"]
+  - ["leaf", "2025_09_17__13_49_44" , "dev0"]
+
+# the validation data in the demonstration / subrun form 
+validation_data:
+  - ["leaf", "2025_09_17__13_50_14" , "dev0"]
+  - ["leaf", "2025_09_17__13_50_43" , "dev0"]
+
+validation: True
+shuffle: False
