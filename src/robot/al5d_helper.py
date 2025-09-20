@@ -34,6 +34,16 @@ class RobotHelper:
         value = ((value - min1) * (max2 - min2) / (max1 - min1) + min2)
         return (value)
 
+    def map_ranges_dict(value, default):
+        """Map a 0-1 from the range [min1, max1] to [min2, max2]"""
+        # Changed normalization specifically for position
+        # Normalization is relative to the default action values for each action
+        # Some default values are 0, therefore converted to 1 for valid division
+        if default == 0:
+            default = 1
+        value = (value - default) / default
+        return (value)
+
     @staticmethod
     def angle_to_pulse(exp: Experiment, angle, constrain=True):
         """Returns the pulse that correspond to a certain angle. 

@@ -71,6 +71,17 @@ class RobotPosition:
             retval[i] = RobotHelper.map_ranges(self.values[fld], exp["POS_MIN"][fld], exp["POS_MAX"][fld])
         return retval
 
+    def to_normalized_vector_dict(self, exp: Experiment):
+        """Converts the positions to a normalized vector"""
+        retval = {}
+        # Assigning by fld to avoid any issues, previously was done by index
+        # Using "POS_DEFAULT" for scaling of actions
+        # Unsure if to_normalized or from_normalized caused the bug before, or both
+        # The bug was that during runtime normalized values were not being converted properly
+        for fld in self.values:
+            retval[fld] = RobotHelper.map_ranges_dict(self.values[fld], exp["POS_DEFAULT"][fld])
+        return retval
+
     @staticmethod
     def from_normalized_vector(exp: Experiment, values):
         """Creates the rp from a normalized numpy vector"""
@@ -85,6 +96,14 @@ class RobotPosition:
         rp = RobotPosition(exp)
         for i, fld in enumerate(rp.values):
             rp.values[fld] = values[i]
+        return rp
+
+    def from_vector_dict(exp: Experiment, values):
+        """Creates a RobotPosition from a numpy vector"""
+        rp = RobotPosition(exp)
+        for i, fld in enumerate(rp.values):
+            # assign based on key values rather than list indices
+            rp.values[fld] = values[fld]
         return rp
 
     def empirical_distance(self, exp: Experiment, other):

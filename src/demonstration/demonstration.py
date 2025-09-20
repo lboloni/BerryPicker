@@ -154,7 +154,12 @@ class Demonstration:
         actions = self.actions[i][type]
         return list(actions.values())
 
-
+    def get_action_dict(self, i, type="rc-position-target"):
+        """Returns the action at timestep i. The action is a dictionary, and the type is the key to the dictionary. The default is "rc_position_target", which is the position of the robot in the world frame. Other types are "rc_velocity_target" and "rc_orientation_target".
+        """
+        actions = self.actions[i][type]
+        # return dic instead of list of values
+        return actions
 
     def __str__(self):
         return pprint.pformat(self.__dict__)
