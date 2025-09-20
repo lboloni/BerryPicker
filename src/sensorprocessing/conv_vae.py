@@ -40,6 +40,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import argparse
 import logging
+from copy import deepcopy
 
 
 
@@ -75,7 +76,13 @@ def train(config):
 
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', module_data)
-    valid_data_loader = data_loader.split_validation()
+    # If validation loader included then training will use validation loss
+    if 'valid_loader' in config.config:
+        valid_data_loader = config.init_obj('valid_loader', module_data)
+    else:
+        # valid_data made equal to None to replicate previous behavior.
+        valid_data_loader = data_loader.split_validation()
+        valid_data_loader = None
 
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
@@ -101,7 +108,7 @@ def train(config):
                       config=config,
                       device=device,
                       data_loader=data_loader,
-                      valid_data_loader=None,
+                      valid_data_loader=valid_data_loader,
                       lr_scheduler=lr_scheduler)
     trainer.train()
     # return the trainer, as the metrics might be useful
@@ -125,7 +132,17 @@ def create_configured_vae_json(exp):
     data["name"] = exp["model_name"]
     data["data_loader"]["args"]["data_dir"] = str(
         Path(exp["data_dir"],exp["training_data_dir"]))
-    
+    # Creates a validation dataloader if defined in the config file
+    if "validation_data_dir" in exp:
+        data["valid_loader"] = deepcopy(data["data_loader"])
+        data["valid_loader"]["args"]["data_dir"] = str(
+            Path(exp["data_dir"],exp["validation_data_dir"]))
+        # Extending early_stop from 10 to 25 as VAE will stop too early on bad runs
+        data['trainer']['early_stop'] = 25
+        # Making validation_split equal to 0 to use all data present in data loaders
+        data["valid_loader"]['args']["validation_split"] = 0.0
+        data["data_loader"]['args']["validation_split"] = 0.0
+
     # update the vae_config based on parameters from the experiment
     data["trainer"]["epochs"] = exp["epochs"] # was 100
     data["trainer"]["save_period"] = exp["save_period"] # 5
