@@ -14,7 +14,7 @@ hidden_size: 32
 # the size
 control_size: 6
 # the lenght of the sequence created for the LSTM-type training
-sequence_lenght: 10
+sequence_length: 10
 
 # training - if commented out, falls back to the low default value
 # epochs: 1000

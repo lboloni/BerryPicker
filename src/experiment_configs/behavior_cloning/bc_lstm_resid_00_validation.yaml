@@ -1,14 +1,11 @@
-name: "bc_lstm_mdn_00"
+name: "bc_lstm_resid_00_validation"
 
 # information about the sp specified by the exp/run
 exp_sp: 'sensorprocessing_conv_vae'
-run_sp: 'sp_vae_256'
-
-exp_mdn: "behavior_cloning"
-run_mdn: "mdn_for_bc_00"
+run_sp: 'sp_vae_128_300epochs_validation'
 
 # controller type
-controller: "bc_LSTM_MDN"
+controller: "bc_LSTM_Residual"
 controller_file: "controller.pth"
 hidden_size: 32  
 
@@ -18,13 +15,7 @@ control_size: 6
 sequence_length: 10
 
 # training - if commented out, falls back to the low default value
-# epochs: 40
-# batch_size: 32
-# epochs: 1000
-
-# this model also uses the MSELoss for validation, although not for training
-loss: "MSELoss"
-# loss: "MDNLoss"
+epochs: 300
 
 # fall back to default if commented out
 # the training data in the demonstration / subrun / camera form 
@@ -33,3 +24,5 @@ loss: "MSELoss"
 # the test data in the demonstration / subrun form 
 # test_data:
 #  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
+
+validation: True

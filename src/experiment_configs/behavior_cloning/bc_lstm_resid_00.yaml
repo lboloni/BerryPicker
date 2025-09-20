@@ -2,7 +2,7 @@ name: "bc_lstm_resid_00"
 
 # information about the sp specified by the exp/run
 exp_sp: 'sensorprocessing_conv_vae'
-run_sp: 'sp_vae_256'
+run_sp: 'sp_vae_128'
 
 # controller type
 controller: "bc_LSTM_Residual"
@@ -12,7 +12,7 @@ hidden_size: 32
 # the size
 control_size: 6
 # the lenght of the sequence created for the LSTM-type training
-sequence_lenght: 10
+sequence_length: 10
 
 # training - if commented out, falls back to the low default value
 # epochs: 1000
