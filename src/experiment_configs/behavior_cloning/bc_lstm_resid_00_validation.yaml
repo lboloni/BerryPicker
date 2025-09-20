@@ -26,3 +26,4 @@ epochs: 300
 #  - ["random-both-cameras", "2025_03_08__14_23_19" , "dev2"]
 
 validation: True
+shuffle: False
