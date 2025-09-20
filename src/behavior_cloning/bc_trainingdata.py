@@ -38,7 +38,7 @@ def create_trainingpair_prediction(x_seq: torch.Tensor, y_seq: torch.Tensor, seq
     inputs_list = []
     targets_list = []
     if sequence_length > 0: # LSTM style data, sequence to next
-        for i in range(total_length - sequence_length):
+        for i in range(total_length - sequence_length - 1):
             # Input is a subsequence of length `sequence_length`
             input_seq = x_seq[i:i + sequence_length]
             # Shape: [sequence_length, latent_size]
@@ -86,7 +86,7 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
                 z = sp.process(sensor_readings)
                 inputs_list.append(torch.from_numpy(z))
                 # the action we are choosing, is the next one
-                a = demo.get_action(i+1)
+                a = demo.get_action(i)
                 rp = RobotPosition.from_vector(exp_robot, a)
                 anorm = rp.to_normalized_vector(exp_robot)        
                 targets_list.append(torch.from_numpy(anorm))
