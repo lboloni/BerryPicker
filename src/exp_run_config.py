@@ -181,20 +181,31 @@ class Config:
         subdirs = [p.name for p in self.experiment_path.iterdir() if p.is_dir()]
         return subdirs
 
-    def set_experiment_path(self, path: pathlib.Path):
+    def set_exprun_path(self, path: pathlib.Path):
         """Sets the experiment config directories to be an external directory"""
         assert path.exists()
         self.experiment_path = path
         self.__log(f"Experiment config path changed to {self.experiment_path}")
+
+    def set_experiment_path(self, path: pathlib.Path):
+        """Sets the experiment config directories to be an external directory"""
+        raise Exception("set_experiment_path is deprecated, use set_exprun_path instead")
     
-    def get_experiment_path(self):
+    def get_exprun_path(self):
         return self.experiment_path
 
-    def set_experiment_data(self, path: pathlib.Path):
+    def get_experiment_path(self):
+        raise Exception("get_experiment_path is deprecated, use get_exprun_path instead")
+        #return self.experiment_path
+
+    def set_results_path(self, path: pathlib.Path):
         """Sets the experiment data to be an external directory"""
         assert path.exists()
         self.values["experiment_data"] = path
         self.__log(f"Experiment data path changed to {self.values['experiment_data']}")
+
+    def set_experiment_data(self, path: pathlib.Path):
+        raise Exception("set_experiment_data is deprecated, use set_results_path instead") 
 
     def copy_experiment(self, exp_name, run_name = None):
         """Copy an experiment run, or all the runs, from an internal

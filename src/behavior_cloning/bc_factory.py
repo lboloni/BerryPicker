@@ -71,8 +71,8 @@ def external_setup(setupname, rootdir: pathlib.Path):
     print(f"***Path for external data:\n{result_path}")
     result_path.mkdir(exist_ok=True, parents=True)
 
-    Config().set_experiment_path(exprun_path)
-    Config().set_experiment_data(result_path)
+    Config().set_exprun_path(exprun_path)
+    Config().set_results_path(result_path)
 
     # Copy the necessary experiments into the external directory
     Config().copy_experiment("demonstration")
