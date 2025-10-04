@@ -6,6 +6,12 @@
 # the place where the external experiment/run stuff goes. Other ones can be used, but it is convenient to keep one referred from here
 "experiment_external": '~/WORK/BerryPicker/data_external'
 
+# the directory where the flows go on this machine (as well as other results...)
+"flows_path": '~/WORK/BerryPicker-Flows'
+# the directory where the demopacks go on this machine
+"demopacks_path": '~/WORK/BerryPicker-Demopacks'
+
+
 conv_vae:
   # Directory for the checkout of the CONV_VAE project 
   # https://github.com/julian-8897/Conv-VAE-PyTorch
