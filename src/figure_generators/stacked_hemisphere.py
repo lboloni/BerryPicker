@@ -609,7 +609,7 @@ class StackedThreeCategoryHeatmap:
 
 
 def main():
-    """Main execution function"""
+
 
     # ========================================================================
     # UPDATE THESE PATHS
