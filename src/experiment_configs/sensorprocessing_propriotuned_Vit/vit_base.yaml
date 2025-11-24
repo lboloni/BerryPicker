@@ -22,7 +22,7 @@ loss: "MSE"
 batch_size: 32
 learning_rate: 0.0001
 freeze_feature_extractor: true  # Whether to freeze the ViT backbone during training
-epochs: 300
+epochs: 100
 batch_size: 8
 proprio_step_1: 64         # For final MLP
 proprio_step_2: 64

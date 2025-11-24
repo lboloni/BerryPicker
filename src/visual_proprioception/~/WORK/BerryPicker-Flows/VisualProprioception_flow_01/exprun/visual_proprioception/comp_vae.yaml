@@ -1,6 +1,0 @@
-name: "comp_vae"
-
-tocompare:
-  - "vp_convvae_128"
-  - "vp_convvae_256"
-

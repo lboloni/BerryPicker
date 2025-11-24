@@ -1,6 +1,0 @@
-cameras:
-- dev2
-- dev3
-maxsteps: 417
-stored_as_images: false
-stored_as_video: true

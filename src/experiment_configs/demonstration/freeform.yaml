@@ -1,7 +1,104 @@
 # Freeform demonstrations, for testing etc.
 name: "freeform"
+# cameras:
+#   all:
+#     fps: 10
+#     width: 256
+#     height: 256
 cameras:
-  all:
+  dev000:
+    fps: 10
+    width: 256
+    height: 256
+  dev001:
+    fps: 10
+    width: 256
+    height: 256
+  dev002:
+    fps: 10
+    width: 256
+    height: 256
+  dev003:
+    fps: 10
+    width: 256
+    height: 256
+  dev004:
+    fps: 10
+    width: 256
+    height: 256
+  dev005:
+    fps: 10
+    width: 256
+    height: 256
+  dev006:
+    fps: 10
+    width: 256
+    height: 256
+  dev007:
+    fps: 10
+    width: 256
+    height: 256
+  dev008:
+    fps: 10
+    width: 256
+    height: 256
+  dev009:
+    fps: 10
+    width: 256
+    height: 256
+  dev010:
+    fps: 10
+    width: 256
+    height: 256
+  dev011:
+    fps: 10
+    width: 256
+    height: 256
+  dev012:
+    fps: 10
+    width: 256
+    height: 256
+  dev013:
+    fps: 10
+    width: 256
+    height: 256
+  dev014:
+    fps: 10
+    width: 256
+    height: 256
+  dev015:
+    fps: 10
+    width: 256
+    height: 256
+  dev016:
+    fps: 10
+    width: 256
+    height: 256
+  dev017:
+    fps: 10
+    width: 256
+    height: 256
+  dev018:
+    fps: 10
+    width: 256
+    height: 256
+  dev019:
+    fps: 10
+    width: 256
+    height: 256
+  dev020:
+    fps: 10
+    width: 256
+    height: 256
+  dev021:
+    fps: 10
+    width: 256
+    height: 256
+  dev022:
+    fps: 10
+    width: 256
+    height: 256
+  dev023:
     fps: 10
     width: 256
     height: 256

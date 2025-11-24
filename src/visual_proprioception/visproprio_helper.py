@@ -19,14 +19,15 @@ import sensorprocessing.sp_helper as sp_helper
 
 
 def external_setup(setupname, rootdir: pathlib.Path):
-    """Create an external directory 'setupname' under rootdir, where the generated exp/runs and results will go. This allows separating a set of experiments both for training and robot running. 
+    """Create an external directory 'setupname' under rootdir, where the generated exp/runs and results will go. This allows separating a set of experiments both for training and robot running.
 
     Under this directory, there will be two directories:
-    * 'exprun' - contains the copied necessary expruns from the source code + the programatically generated expruns. 
-    * 'result' - contains the training data and the trained models. 
-    
+    * 'exprun' - contains the copied necessary expruns from the source code + the programatically generated expruns.
+    * 'result' - contains the training data and the trained models.
+
     The training data should go into result/demonstration under some directory (eg. touch-apple).
     """
+    rootdir = pathlib.Path(rootdir).expanduser()
     setup_path = pathlib.Path(rootdir, setupname)
     exprun_path = pathlib.Path(setup_path, "exprun")
     result_path = pathlib.Path(setup_path, "result")
@@ -40,6 +41,7 @@ def external_setup(setupname, rootdir: pathlib.Path):
     Config().set_results_path(result_path)
 
     # Copy the necessary experiments into the external directory
+    # Config().copy_experiment("robot_al5d")  # ← ADD THIS LINE
     Config().copy_experiment("demonstration")
     Config().copy_experiment("sensorprocessing_conv_vae")
     Config().copy_experiment("sensorprocessing_propriotuned_cnn")
@@ -55,7 +57,7 @@ def external_setup(setupname, rootdir: pathlib.Path):
 def load_demonstrations_as_proprioception_training(sp, exp: Experiment, spexp: Experiment, exp_robot: Experiment, datasetname, proprioception_input_file, proprioception_target_file, device=None):
     """Loads all the images from the specified dataset and creates the input and target tensors. """
     if proprioception_input_file.exists():
-        retval = {}        
+        retval = {}
         retval["inputs"] = torch.load(proprioception_input_file, weights_only=True)
         retval["targets"] = torch.load(proprioception_target_file, weights_only=True)
         print(f"***load_demonstrations_as_proprioception_training*** \n\tSuccessfully loaded from cached files {proprioception_input_file} etc")
@@ -64,7 +66,7 @@ def load_demonstrations_as_proprioception_training(sp, exp: Experiment, spexp: E
     inputlist = []
     targetlist = []
     transform = sp_helper.get_transform_to_sp(spexp)
-    
+
     for val in exp[datasetname]:
         run, demo_name, camera = val
         exp_demo = Config().get_experiment("demonstration", run)
@@ -86,13 +88,13 @@ def load_demonstrations_as_proprioception_training(sp, exp: Experiment, spexp: E
     retval["targets"] = torch.stack(targetlist)
     torch.save(retval["inputs"], proprioception_input_file)
     torch.save(retval["targets"], proprioception_target_file)
-    print(f"***load_demonstrations_as_proprioception_training*** \n\tSuccessfully recalculated the proprioception training and saved it to {proprioception_input_file} etc")    
-    return retval            
+    print(f"***load_demonstrations_as_proprioception_training*** \n\tSuccessfully recalculated the proprioception training and saved it to {proprioception_input_file} etc")
+    return retval
 
 def load_multiview_demonstrations_as_proprioception_training(exp_robot, task, proprioception_input_file, proprioception_target_file, num_views=2):
     """
 
-    FIXME: Sahara: this needs to be changed to match the single-view one above. 
+    FIXME: Sahara: this needs to be changed to match the single-view one above.
 
     Loads all the images of a task from multiple camera views, and processes it as two tensors
     as input and target data for proprioception training.
@@ -125,7 +127,7 @@ def load_multiview_demonstrations_as_proprioception_training(exp_robot, task, pr
     #             sensor_readings, _ = demo.get_image(i, camera=cam, transform=transform, device=device)
     #             z = sp.process(sensor_readings)
     #             S.append(sensor_readings)
-    #         # create the concatenated ... 
+    #         # create the concatenated ...
     #         a = demo.get_action(i)
     #         #anorm = np.zeros(a.shape, np.float32)
     #         rp = RobotPosition.from_vector(exp_robot, a)

@@ -1,0 +1,40 @@
+# an experiment for the generation of the comparisons
+
+name: "comp_vit_new"
+
+tocompare:
+  - "vit_base_256_000"
+  - "vit_base_256_001"
+  - "vit_base_256_002"
+  - "vit_base_256_003"
+  - "vit_base_256_004"
+  - "vit_base_256_005"
+  - "vit_base_256_006"
+  - "vit_base_256_007"
+  - "vit_base_256_008"
+  - "vit_base_256_009"
+  - "vit_base_256_010"
+  - "vit_base_256_011"
+  - "vit_base_256_012"
+  - "vit_base_256_013"
+  - "vit_base_256_014"
+  - "vit_base_256_015"
+  - "vit_base_256_016"
+  - "vit_base_256_017"
+  - "vit_base_256_018"
+  - "vit_base_256_019"
+  - "vit_base_256_020"
+  - "vit_base_256_021"
+  - "vit_base_256_022"
+  - "vit_base_256_023"
+  - "vit_base_256_024"
+  - "vit_base_256_025"
+  - "vit_base_256_026"
+  - "vit_base_256_027"
+  - "vit_base_256_028"
+  - "vit_base_256_029"
+  - "vit_base_256_030"
+
+
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'

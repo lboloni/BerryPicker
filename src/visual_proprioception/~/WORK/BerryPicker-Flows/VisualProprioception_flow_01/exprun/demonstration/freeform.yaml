@@ -1,7 +1,0 @@
-# Freeform demonstrations, for testing etc.
-name: "freeform"
-cameras:
-  all:
-    fps: 10
-    width: 256
-    height: 256

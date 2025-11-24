@@ -1,5 +1,0 @@
-name: visual_proprioception
-tocompare:
-- vp_conv_vae_256_0001
-- vp_vgg19_256_0001
-- vp_resnet50_256_0001

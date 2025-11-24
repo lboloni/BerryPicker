@@ -13,9 +13,8 @@ vit_output_dim: 768    # Output dimension of the base ViT model
 projection_hidden_dim: 512  # For vit_b_16, recommended values: 384-512
                            # For vit_l_16, recommended values: 512-768
                            # For vit_h_14, recommended values: 768-1024
-latent_size: 128       # Size of the latent embedding to generate
-# image_size: 224        # Required input size for the ViT model
-image_size: [224, 224]
+latent_size: 256       # Size of the latent embedding to generate
+image_size: [224, 224]       # Required input size for the ViT model
 loss: "MSE"
 # Training parameters
 batch_size: 32
@@ -28,7 +27,7 @@ proprio_step_2: 64
 regressor_hidden_size_1: 64
 regressor_hidden_size_2: 64
 # File paths
-encoding_size: 128
+encoding_size: 256
 weight_decay: 0.01
 proprioception_input_file: train_inputs.pt
 proprioception_target_file: train_targets.pt
@@ -47,6 +46,7 @@ use_6d_token: false
 # All values (including 128 for latent_size and 224 for image_size)
 # are specified here and not hardcoded in the implementation.
 
+class: "Vit"
 # training_data:
 #  - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2"]
 #  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
@@ -59,18 +59,21 @@ use_6d_token: false
 #   - ["random-both-cameras-video", "2025_03_08__14_24_52" , "dev2"]
 
 
-
 training_data:
-  - ["freeform", "2025_10_24__01_34_46" , "dev100"]
-  - ["freeform", "2025_10_24__01_51_54" , "dev100"]
-  - ["freeform", "2025_10_24__02_18_43" , "dev100"]
-  - ["freeform", "2025_10_24__19_30_56" , "dev100"]
-  - ["freeform", "2025_10_24__20_17_15" , "dev100"]
-  - ["freeform", "2025_10_25__02_58_05" , "dev100"]
-  - ["freeform", "2025_10_25__05_32_59" , "dev100"]
+  - ["freeform", "2025_10_24__01_34_46" , "dev010"]
+  - ["freeform", "2025_10_24__01_51_54" , "dev010"]
+  - ["freeform", "2025_10_24__02_18_43" , "dev010"]
+  - ["freeform", "2025_10_24__19_30_56" , "dev010"]
+
 
 # the validation data in the demonstration / subrun form
 validation_data:
-  - ["freeform", "2025_10_25__18_59_04" , "dev100"]
-  - ["freeform", "2025_10_25__21_34_30" , "dev100"]
-  - ["freeform", "2025_10_26__03_27_03" , "dev100"]
+  - ["freeform", "2025_10_24__20_17_15" , "dev010"]
+  - ["freeform", "2025_10_25__02_58_05" , "dev010"]
+  # - ["freeform", "2025_10_25__05_32_59" , "dev100"]
+  # - ["freeform", "2025_10_25__18_59_04" , "dev100"]
+
+
+testing_data:
+  - ["freeform", "2025_10_25__21_34_30" , "dev010"]
+  - ["freeform", "2025_10_26__03_27_03" , "dev010"]

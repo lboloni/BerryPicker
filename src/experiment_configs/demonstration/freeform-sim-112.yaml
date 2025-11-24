@@ -1,0 +1,51 @@
+# Freeform demonstrations, for testing etc.
+name: "freeform-sim-112"
+cameras:
+  dev100:
+    fps: 10
+    width: 256
+    height: 256
+  dev101:
+    fps: 10
+    width: 256
+    height: 256
+  # dev102:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev103:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev104:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev105:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev106:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev107:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev108:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev109:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev110:
+  #   fps: 10
+  #   width: 256
+  #   height: 256
+  # dev111:
+  #   fps: 10
+  #   width: 256
+  #   height: 256

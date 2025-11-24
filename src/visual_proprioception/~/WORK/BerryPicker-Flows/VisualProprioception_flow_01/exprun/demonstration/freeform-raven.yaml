@@ -1,7 +1,0 @@
-# Freeform demonstrations, for testing etc.
-name: "freeform-raven"
-cameras:
-  all:
-    fps: 10
-    width: 512
-    height: 512

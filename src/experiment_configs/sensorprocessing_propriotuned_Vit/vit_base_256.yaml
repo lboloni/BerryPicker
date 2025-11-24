@@ -20,7 +20,7 @@ loss: "MSE"
 batch_size: 32
 learning_rate: 0.0001
 freeze_feature_extractor: true  # Whether to freeze the ViT backbone during training
-epochs: 300
+epochs: 100
 batch_size: 8
 proprio_step_1: 64         # For final MLP
 proprio_step_2: 64
@@ -47,13 +47,33 @@ use_6d_token: false
 # are specified here and not hardcoded in the implementation.
 
 
+# training_data:
+#  - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2"]
+#  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
+#  - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
+#  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
+
+# # the validation data in the demonstration / subrun form
+# validation_data:
+#   - ["random-both-cameras-video", "2025_03_08__14_23_19" , "dev2"]
+#   - ["random-both-cameras-video", "2025_03_08__14_24_52" , "dev2"]
+
+
 training_data:
- - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2"]
- - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
- - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
- - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
+  - ["freeform", "2025_10_24__01_34_46" , "dev000"]
+  - ["freeform", "2025_10_24__01_51_54" , "dev000"]
+  - ["freeform", "2025_10_24__02_18_43" , "dev000"]
+  - ["freeform", "2025_10_24__19_30_56" , "dev000"]
+
 
 # the validation data in the demonstration / subrun form
 validation_data:
-  - ["random-both-cameras-video", "2025_03_08__14_23_19" , "dev2"]
-  - ["random-both-cameras-video", "2025_03_08__14_24_52" , "dev2"]
+  - ["freeform", "2025_10_24__20_17_15" , "dev000"]
+  - ["freeform", "2025_10_25__02_58_05" , "dev000"]
+  # - ["freeform", "2025_10_25__05_32_59" , "dev100"]
+  # - ["freeform", "2025_10_25__18_59_04" , "dev100"]
+
+
+testing_data:
+  - ["freeform", "2025_10_25__21_34_30" , "dev000"]
+  - ["freeform", "2025_10_26__03_27_03" , "dev000"]
