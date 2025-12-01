@@ -1,6 +1,9 @@
 latent_size: 128
 model_name: 'vit_multiview'
 
+
+robot_run: "position_controller_00"
+
 proprioception_mlp_model_file: 'proprioception_mlp.pth'
 proprioception_input_file: 'train_inputs.pt'
 proprioception_target_file: 'train_targets.pt'
@@ -12,9 +15,15 @@ proprioception_testing_task: 'proprioception-uncluttered'
 
 
 
+
 robot_exp: "robot_al5d"
 robot_run: "position_controller_00"
 
+
+# proprioception_training_task: 'proprioception-cluttered'
+# proprioception_testing_task: 'proprioception-uncluttered'
+
+# the training data in the demonstration / subrun / camera form
 training_data:
   - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2,dev3"]
 

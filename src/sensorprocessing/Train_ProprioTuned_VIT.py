@@ -78,33 +78,25 @@ external_path = None
 # If not None, set an output path
 data_path = None
 
-flow_name=None
 
 
 # In[18]:
 
 
-# Option 1: Use flow-style setup (recommended)
-if flow_name:
-    from visual_proprioception import visproprio_helper
-    exprun_path, result_path = visproprio_helper.external_setup(
-        flow_name,
-        pathlib.Path(Config()["flows_path"]).expanduser()
-    )
-
-# Option 2: Use papermill-style paths (when called from Flow)
-elif external_path:
-    external_path = pathlib.Path(external_path)
-    assert external_path.exists()
+# Option Use papermill-style paths (when called from Flow)
+# To:
+if external_path:
+    external_path = pathlib.Path(external_path).expanduser()  # Add .expanduser()
+    external_path.mkdir(parents=True, exist_ok=True)  # Create if needed instead of assert
     Config().set_exprun_path(external_path)
-    Config().copy_experiment("sensorprocessing_propriotuned_cnn")
+    Config().copy_experiment("sensorprocessing_propriotuned_Vit")  # Match the experiment name!
     Config().copy_experiment("robot_al5d")
     Config().copy_experiment("demonstration")
 
-    if data_path:
-        data_path = pathlib.Path(data_path)
-        assert data_path.exists()
-        Config().set_results_path(data_path)
+if data_path:
+    data_path = pathlib.Path(data_path).expanduser()  # Add .expanduser()
+    data_path.mkdir(parents=True, exist_ok=True)  # Create if needed
+    Config().set_results_path(data_path)
 
 # Option 3: Use default paths (no external_path or flow_name set)
 # Just uses ~/WORK/BerryPicker/data/ and source experiment_configs/
@@ -199,25 +191,46 @@ def load_images_as_proprioception_training(exp: Experiment, exp_robot: Experimen
 # In[21]:
 
 
-# Create output directory if it doesn't exist
-modelfile = pathlib.Path(
-    exp["data_dir"], exp["proprioception_mlp_model_file"])
+# # Create output directory if it doesn't exist
+# modelfile = pathlib.Path(
+#     exp["data_dir"], exp["proprioception_mlp_model_file"])
 
 
-# data_dir = pathlib.Path(exp["data_dir"])
-# data_dir.mkdir(parents=True, exist_ok=True)
-# print(f"Data directory: {data_dir}")
+# # data_dir = pathlib.Path(exp["data_dir"])
+# # data_dir.mkdir(parents=True, exist_ok=True)
+# # print(f"Data directory: {data_dir}")
 
-# task = exp["proprioception_training_task"]
-# proprioception_input_file = pathlib.Path(exp["data_dir"], exp["proprioception_input_file"])
-# proprioception_target_file = pathlib.Path(exp["data_dir"], exp["proprioception_target_file"])
+# # task = exp["proprioception_training_task"]
+# # proprioception_input_file = pathlib.Path(exp["data_dir"], exp["proprioception_input_file"])
+# # proprioception_target_file = pathlib.Path(exp["data_dir"], exp["proprioception_target_file"])
 
 
-tr = load_images_as_proprioception_training(exp, exp_robot)
-inputs_training = tr["inputs_training"]
-targets_training = tr["targets_training"]
-inputs_validation = tr["inputs_validation"]
-targets_validation = tr["targets_validation"]
+# tr = load_images_as_proprioception_training(exp, exp_robot)
+# inputs_training = tr["inputs_training"]
+# targets_training = tr["targets_training"]
+# inputs_validation = tr["inputs_validation"]
+# targets_validation = tr["targets_validation"]
+
+
+
+modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
+
+if modelfile.exists():
+    print("*** Train-ProprioTuned-ViT ***: NOT training; model already exists")
+else:
+    # Load data only when training
+    tr = load_images_as_proprioception_training(exp, exp_robot)
+    inputs_training = tr["inputs_training"]
+    targets_training = tr["targets_training"]
+    inputs_validation = tr["inputs_validation"]
+    targets_validation = tr["targets_validation"]
+
+    # Create DataLoaders
+    batch_size = exp.get('batch_size', 32)
+    train_dataset = TensorDataset(inputs_training, targets_training)
+    test_dataset = TensorDataset(inputs_validation, targets_validation)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 
 
@@ -287,13 +300,13 @@ lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
 # In[23]:
 
 
-# Create DataLoaders for batching
-batch_size = exp.get('batch_size', 32)
-train_dataset = TensorDataset(inputs_training, targets_training)
-test_dataset = TensorDataset(inputs_validation, targets_validation)
+# # Create DataLoaders for batching
+# batch_size = exp.get('batch_size', 32)
+# train_dataset = TensorDataset(inputs_training, targets_training)
+# test_dataset = TensorDataset(inputs_validation, targets_validation)
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+# train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+# test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 
 

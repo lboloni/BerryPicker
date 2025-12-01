@@ -191,7 +191,11 @@ class MultiViewViTEncoder(nn.Module):
         )
 
         # Create a resize transform to the required vit input size
-        input_size = (exp["image_size"], exp["image_size"])
+        # input_size = (exp["image_size"], exp["image_size"])
+        if isinstance(exp["image_size"], (list, tuple)):
+            input_size = tuple(exp["image_size"])
+        else:
+            input_size = (exp["image_size"], exp["image_size"])
         self.resize = transforms.Resize(input_size, antialias=True)
 
         # Freeze the feature extractor if specified
