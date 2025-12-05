@@ -4,6 +4,7 @@ model_name: 'VAE_Robot'
 model_dir: 'models'
 
 class: "ConvVaeSensorProcessing"
+clean_checkpoints: True
 
 # the library enforces 64 x 64
 image_size: [64, 64]
