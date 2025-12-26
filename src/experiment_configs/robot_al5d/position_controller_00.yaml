@@ -1,4 +1,4 @@
-# This is the type of exprun that should be passed into the ad5d_position_controller.RobotPosition and related fields
+# This is the type of exprun that should be passed into the al5d_position_controller.RobotPosition and related fields
 robot_name: "al5d"
 controller_type: "position_controller"
 
