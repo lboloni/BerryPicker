@@ -62,7 +62,7 @@ class Experiment:
         return text
     
     def data_dir(self):
-        return pathlib.Path(self.values[Config.DATA_DIR])
+        return pathlib.Path(self.values[Config.DATA_DIR]).expanduser()
 
     def experiment(self):
         return self.values[Config.EXPERIMENT_NAME]
