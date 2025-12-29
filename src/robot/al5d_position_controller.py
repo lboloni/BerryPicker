@@ -143,9 +143,11 @@ class PositionController:
 
     def move(self, target: RobotPosition):
         """Move to the specified target position: new version with one shot commands"""
+        normalpos = RobotPosition.to_normalized_vector(target, self.exp)
+        print(f"PositionController.move moving robot to target: {target},\n abs: {normalpos}")
         angle_z = 90 + target["heading"]
         angle_shoulder, angle_elbow, angle_wrist = self.ik_shoulder_elbow_wrist(target)
-        angle_wrist_rotation = target["wrist_rotation"]
+        angle_wrist_rotation = target["wrist_rotation"]        
         # safety check here
         angles = np.zeros(5)
         angles[self.exp["SERVO_ELBOW"]] = angle_elbow
