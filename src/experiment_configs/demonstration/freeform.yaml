@@ -6,6 +6,10 @@ name: "freeform"
 #     width: 256
 #     height: 256
 cameras:
+  all:
+    fps: 10
+    width: 256
+    height: 256
   dev000:
     fps: 10
     width: 256

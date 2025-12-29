@@ -1,5 +1,5 @@
 # configuration for the cameras on tredy2
 
-active_camera_list: [1, 2]
+active_camera_list: [0, 1]
 saved_image_size: [256, 256]
 fps: 10

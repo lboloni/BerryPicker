@@ -7,7 +7,7 @@ from robot.al5d_position_controller import RobotPosition, PositionController
 from approxeng.input.selectbinder import ControllerResource, ControllerNotFoundError
 import time
 # import serial 
-from copy import copy
+import copy
 
 import logging
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ from .abstract_controller import AbstractController
 
 class GamepadController(AbstractController):
     """
-    A controller to control an AL5D robot with an X360 type controller (tested with the Voyee). This controller is based on the approxeng.input library and it is only working in Linux.
+    Controls an AL5D robot with an X360 type controller (tested with the Voyee). This controller is based on the approxeng.input library and it is only working in Linux.
     """
     def __init__(self, exp, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
         super().__init__(robot_controller, camera_controller, demonstration_recorder)
@@ -81,9 +81,9 @@ class GamepadController(AbstractController):
         # the triggers immediately open and close the gripper
         # the pad opens/closes it gradually
         if "l1" in presses.names:
-            delta_gripper = self.exp["delta_gripper"]
-        if "r1" in presses.names:
             delta_gripper = -self.exp["delta_gripper"]
+        if "r1" in presses.names:
+            delta_gripper = +self.exp["delta_gripper"]
         if joystick["dleft"] is not None: # if held, returns the seconds
             delta_gripper += self.v_gripper * self.last_interval
             logging.warning(f"{joystick.dleft}")
@@ -97,20 +97,23 @@ class GamepadController(AbstractController):
             return
         # home  
         if self.exp["button_home"] in presses.names:
-            self.pos_target = copy(self.pos_home)
+            self.pos_target = copy.copy(self.pos_home)
             return
         # applying the changes 
-        self.pos_target["distance"] += delta_distance
-        self.pos_target["height"] += delta_height
-        self.pos_target["heading"] += delta_heading
-        self.pos_target["wrist_angle"] += delta_wrist_angle
-        self.pos_target["wrist_rotation"] += delta_wrist_rotation
-        self.pos_target["gripper"] += delta_gripper
-        # FIXME: applying a safety reset which prevents us going out of range
+        target = copy.copy(self.pos_target)
+        target["distance"] += delta_distance
+        target["height"] += delta_height
+        target["heading"] += delta_heading
+        target["wrist_angle"] += delta_wrist_angle
+        target["wrist_rotation"] += delta_wrist_rotation
+        target["gripper"] += delta_gripper
+        # applying a safety reset which prevents us going out of range
         ok = RobotPosition.limit(self.robot_controller.exp, self.pos_target)
-        if not ok:
+        if ok:
+            self.pos_target = copy.copy(target)
+        else:
             logger.warning(f"DANGER! exceeded range! {self.pos_target}")
-        logger.warning(f"Target: {self.pos_target}")
+        logger.info(f"Target: {self.pos_target}")
 
 
     def __str__(self):

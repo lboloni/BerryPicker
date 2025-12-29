@@ -108,7 +108,7 @@ class Demonstration:
         annotation_path = pathlib.Path(self.demo_dir, "_annotation.yaml")
         with open(annotation_path, "w") as file:
             yaml.dump(self.annotations, file, indent=4)
-
+        print(f"Saved demonstration metadata to\n\t{metadata_path}")
 
     def parse_image_based_demonstration(self):
         """Utility function to parse a demonstration that is stored as a sequence of images. We assume that the images have the format of {i:05d}_{camera}.jpg, where i is the timestep and camera is the camera name. This function creates the metadata file. If the images are stored as a video, we assume that this is a new demonstration, and the metadata already exists. 
