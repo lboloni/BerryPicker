@@ -13,8 +13,10 @@ from .al5d_angle_controller import AngleController
 from math import sqrt, atan, acos, fabs, degrees
 from copy import copy
 import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
-logging.basicConfig(level=logging.WARNING)
+#logging.basicConfig(level=logging.WARNING)
 
 class RobotPosition:
     """A data class describing the high level robot position. 
@@ -144,7 +146,7 @@ class PositionController:
     def move(self, target: RobotPosition):
         """Move to the specified target position: new version with one shot commands"""
         normalpos = RobotPosition.to_normalized_vector(target, self.exp)
-        print(f"PositionController.move moving robot to target: {target},\n abs: {normalpos}")
+        logger.info(f"PositionController.move moving robot to target: {target},\n abs: {normalpos}")
         angle_z = 90 + target["heading"]
         angle_shoulder, angle_elbow, angle_wrist = self.ik_shoulder_elbow_wrist(target)
         angle_wrist_rotation = target["wrist_rotation"]        

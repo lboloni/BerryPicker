@@ -113,7 +113,7 @@ class GamepadController(AbstractController):
             self.pos_target = copy.copy(target)
         else:
             logger.warning(f"DANGER! exceeded range! {self.pos_target}")
-        logger.warning(f"Target: {self.pos_target}")
+        logger.info(f"Target: {self.pos_target}")
 
 
     def __str__(self):
