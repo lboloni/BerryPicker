@@ -44,11 +44,18 @@ class RobotPosition:
     @staticmethod
     def limit(exp: Experiment, posc):
         """Verifies whether the given position is safe, defined between the mind and the max"""
-        retval = True
         for fld in RobotPosition.FIELDS:
-            retval = retval and posc.values[fld] <= exp["POS_MAX"][fld]
-            retval = retval and posc.values[fld] >= exp["POS_MIN"][fld]
-        return retval
+            testval = (posc.values[fld] <= exp["POS_MAX"][fld])
+            if not testval:
+                logger.warning(f"RobotPosition.limit value {fld} too big {posc.values[fld]} \n\tmax is {exp['POS_MAX'][fld]}")
+                logger.warning(posc)
+                return False
+            testval = (posc.values[fld] >= exp["POS_MIN"][fld])
+            if not testval:
+                logger.warning(f"RobotPosition.limit value {fld} too small {posc.values[fld]}, \n\tmin is {exp['POS_MIN'][fld]}")
+                logger.warning(posc)
+                return False
+        return True
 
     def to_normalized_vector(self, exp: Experiment):
         """Converts the positions from dictionary to a normalized vector"""
