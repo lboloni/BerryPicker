@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 
 class bc_MLP(nn.Module):
-    """An MLP model for hehavior cloning. Mostly specified through the exp/run"""
+    """An MLP model for behavior cloning. Mostly specified through the exp/run"""
 
     def __init__(self, exp, exp_sp):
         super().__init__()
