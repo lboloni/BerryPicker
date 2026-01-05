@@ -78,9 +78,6 @@ class PulseController:
         """Sends a command to the particular servo to move to the particular
         pulse value, moving with the specified speed.
         """
-        # FIXME: I removed this, because it does not play well with the constraints
-        #pulse, _ = RobotControllerHelper.constrain(
-        #    pulse, CST_PULSE_MIN, CST_PULSE_MAX)
         speed=self.exp["CST_SPEED_DEFAULT"]
         command = f"#{servo} P{pulse} S{speed}\r"
         logger.info(command)
