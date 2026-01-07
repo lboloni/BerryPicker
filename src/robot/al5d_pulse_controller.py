@@ -4,8 +4,9 @@ al5d_pulse_controller.py
 A low-level position controller for the al5d robot
 """
 
+from exp_run_config import Config, Experiment
+Config.PROJECTNAME = "BerryPicker"
 
-# from . import al5d_constants
 import numpy as np
 import serial
 import sys
