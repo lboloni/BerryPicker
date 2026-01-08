@@ -1,1 +1,37 @@
-# Example of a simple 
+# Example of a simple robot controller
+name: "SampleRobotController"
+
+components:
+  visual_input: 
+    type: RCCO_Input
+    # exp: robot_controller - if missing, it is the same
+    run: rcco_input_default
+
+  proprioception_input: 
+    type: RCCO_Input
+    # exp: robot_controller - if missing, it is the same
+    run: rcco_input_default
+
+  robot_output:
+    type: RCCO_Output
+    # exp: robot_controller - if missing, it is the same
+    run: rcco_output_default
+  
+  sensor_processing:
+    type: RCCO_VAE
+    run: rcco_vae_default
+
+  combine:
+    type: RCCO_Z_Combine
+    run: rcco_Z_combine_default
+
+  robot_controller:
+    type: RCCO_LSTM
+    run: rcco_lstm_default
+
+connections:
+  - from_component: visual_input
+    from_output: input 
+    to_component: sensor_processing
+    to_input: input
+    

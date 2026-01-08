@@ -26,15 +26,19 @@ class RCCO_Output(AbstractRCComponent):
     """An RCCO that implements the external output of the robot controller. Examples include the control sent to the robot itself, visualization outputs etc"""
 
     def __init__(self, exp_rcco):
+        super().__init__(exp_rcco)
         self.inputs["output"] = None
 
     def read_output(self):
         return self.inputs["output"]
 
 
-def create_rcco(exp):
+def create_component(exp):
     if exp["rcco-type"] == "Input":
         return RCCO_Input(exp)
     if exp["rcco-type"] == "Output":
         return RCCO_Output(exp)
+    if exp["rcco-type"] == "VAE":
+        import rcco_vae
+        return rcco_vae.RCCO_VAE(exp)
 

@@ -8,7 +8,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from abstract_rcco import AbstractRCComponent
-
+import rcco_factory
 
 class AbstractRobotController:
     """The root class for robot controllers (roco-s). 
@@ -26,21 +26,27 @@ class AbstractRobotController:
     def __init__(self, exp_roco):
         """Initialize the various components of based on the passed exp"""
         self.exp = exp_roco
-        self.rccos = {} # dictionary of rccos
+        self.components = {} # dictionary of rccos
         self.connections = [] # list of connections between rccos
+        for label, val in self.exp["components"].items():
+            exp_rcco = Config().get_experiment(val.get("exp", "robot_controller"), val["run"])
+            rcco = rcco_factory.create_component(exp_rcco)
+            self.add_component(label, rcco)
+        for val in self.exp["connections"]:
+            self.add_connection(**val)
 
     def receive_input(self, label, value, time=None):
         """Receives an input at a specified time"""
         self.inputs[label] = {"value": value, "time": time}
         # FIXME: follow the connections, and make things dirty as needed
 
-    def add_rcco(self, label, rcco: AbstractRCComponent):
+    def add_component(self, label, component: AbstractRCComponent):
         """Adds an rcco, that is currently not connected to anything"""
-        self.rccos[label] = rcco
+        self.components[label] = component
 
-    def add_connection(self, from_rcco, from_output, to_rcco, to_input):
+    def add_connection(self, from_component, from_output, to_component, to_input):
         """Creates a connection between the output of an rcco to an input of another. The parameters are all labels"""
-        self.connections.append({"from_rcco": from_rcco, "from_output": from_output, "to_rcco": to_rcco, "to_input": to_input})
+        self.connections.append({"from_component": from_component, "from_output": from_output, "to_component": to_component, "to_input": to_input})
 
     def save(self):
         """Saves all the components"""
