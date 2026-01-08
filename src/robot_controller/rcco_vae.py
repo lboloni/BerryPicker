@@ -9,8 +9,10 @@ Config.PROJECTNAME = "BerryPicker"
 from abstract_rcco import AbstractRCComponent
 
 class RCCO_VAE(AbstractRCComponent):
-    """An RCCO that implements an external input to the robot controller. Examples include camera inputs, sensors, remote control, proprioception etc.
-    The input values are stored in an *output* called input (due to the way this fits in the graph)"""
+    """An rcco that wraps a convolutional variational autoencoder. The input is a picture, the outputs are the z values. 
+    TODO: possibly the uncertainty values. 
+    TODO: implement based on the library we used. 
+    TODO: implement based on scratch"""
     
     def __init__(self, exp_rcco):
         super().__init__(exp_rcco)

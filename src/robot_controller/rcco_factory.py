@@ -39,6 +39,9 @@ def create_component(exp):
     if exp["rcco-type"] == "Output":
         return RCCO_Output(exp)
     if exp["rcco-type"] == "VAE":
-        import rcco_vae
-        return rcco_vae.RCCO_VAE(exp)
-
+        import rcco_vae; return rcco_vae.RCCO_VAE(exp)
+    if exp["rcco-rype"] == "LSTM":
+        import rcco_lstm; return rcco_lstm.RCCO_LSTM(exp)
+    if exp["rcco-rype"] == "Z-combinator":
+        import rcco_z_combinator; return rcco_lstm.RCCO_Z_Combinator(exp)
+    raise Exception(f"Unknown rcco type {exp['rcco-type']}")

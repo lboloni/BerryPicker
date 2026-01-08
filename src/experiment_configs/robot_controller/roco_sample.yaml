@@ -21,13 +21,13 @@ components:
     type: RCCO_VAE
     run: rcco_vae_default
 
-  combine:
-    type: RCCO_Z_Combine
-    run: rcco_Z_combine_default
+#  combine:
+#    type: RCCO_Z_Combine
+#    run: rcco_Z_combine_default
 
-  robot_controller:
-    type: RCCO_LSTM
-    run: rcco_lstm_default
+#  robot_controller:
+#    type: RCCO_LSTM
+#    run: rcco_lstm_default
 
 connections:
   - from_component: visual_input
