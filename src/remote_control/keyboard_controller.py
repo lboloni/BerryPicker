@@ -8,7 +8,7 @@ from .abstract_controller import AbstractController
 
 import time
 # import serial 
-from copy import copy
+import copy
 
 import logging
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ class KeyboardController(AbstractController):
             return
         # home h  
         if keycode == ord(self.exp["home_ord"]):
-            self.pos_target = copy(self.pos_home)
+            self.pos_target = copy.copy(self.pos_home)
             return
         # applying the changes 
         self.pos_target["distance"] += delta_distance

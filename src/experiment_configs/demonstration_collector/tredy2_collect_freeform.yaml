@@ -5,7 +5,8 @@ demonstration_name: "freeform"
 # this depends both on the particular machine as well as what components are being used 
 # at this moment. 
 
-primary_controller: "xbox"
+# primary_controller: "xbox"
+primary_controller: "widowx"
 available_robot: True
 
 exp_position_controller: "robot_al5d"
@@ -22,3 +23,6 @@ run_gamepad_controller: "gamepad_x360_controller"
 
 exp_automove_controller: "automove"
 run_automove_controller: "automove_random_waypoint_6D_00"
+
+exp_widowx_controller: "controllers"
+run_widowx_controller: "rc_widowx_00"

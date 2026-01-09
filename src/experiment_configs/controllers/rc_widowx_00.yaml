@@ -1,0 +1,23 @@
+# configuration for a controller that is using the widowx
+# it also contains the keyboard, for certain things
+
+forward_ord: "s"
+backward_ord: "a"
+up_ord: "w"
+down_ord: "z"
+heading_left_kc: 81 # left
+heading_right_kc: 83 # right
+wrist_up_kc: 85 # pgup
+wrist_down_kc: 86 # pgdown
+
+# FIXME: keys repeat!!! choose something else!!!
+wrist_left_kc: 81
+wrist_right_kc: 83
+
+close_gripper_kc: 226
+open_gripper_kc: 234
+closer_gripper_kc: 225
+wider_gripper_kc: 233
+
+exit_control_ord: "x"
+home_ord: "h"
