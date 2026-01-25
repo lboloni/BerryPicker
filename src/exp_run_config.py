@@ -163,7 +163,8 @@ class Config:
             current_directory = pathlib.Path(__file__).resolve().parent    
             cls._instance.experiment_path_internal = pathlib.Path(current_directory, "experiment_configs")
             cls._instance.experiment_path = cls._instance.experiment_path_internal
-
+            # initialize a runtime information, which is not saved
+            cls._instance.runtime = {}
         return cls._instance
 
     def __getitem__(self, key):

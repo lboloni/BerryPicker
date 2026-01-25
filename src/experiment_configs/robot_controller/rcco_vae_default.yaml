@@ -1,2 +1,4 @@
 # description of an input
-rcco-type: VAE
+rcco_type: VAE
+sp_experiment: "sensorprocessing_conv_vae"
+sp_run: "sp_vae_128"

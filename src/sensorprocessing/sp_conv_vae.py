@@ -83,8 +83,8 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
         Returns the z encoding in the form of a numpy array."""
         with torch.no_grad():
-            output, mu, logvar = self.model(sensor_readings)
-        mus = torch.squeeze(mu)
+            self.output, self.mu, self.logvar = self.model(sensor_readings)
+        mus = torch.squeeze(self.mu)
         return mus.cpu().numpy()
     
 

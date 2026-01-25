@@ -7,15 +7,23 @@ An rcco implementing a variational autoencoder
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 from abstract_rcco import AbstractRCComponent
+import sensorprocessing.sp_factory 
+import torch
 
 class RCCO_VAE(AbstractRCComponent):
-    """An rcco that wraps a convolutional variational autoencoder. The input is a picture, the outputs are the z values. 
-    TODO: possibly the uncertainty values. 
-    TODO: implement based on the library we used. 
-    TODO: implement based on scratch"""
+    """An rcco that wraps an SP with a convolutional variational autoencoder. The input is a picture, the outputs are the z values, the mu and logvar values from the encoder."""
     
     def __init__(self, exp_rcco):
         super().__init__(exp_rcco)
         self.inputs["image"] = None
         self.outputs["z"] = None
+        self.outputs["mu"] = None
+        self.outputs["logvar"] = None
+        self.exp_sp = Config().get_experiment(self.exp["sp_experiment"], self.exp["sp_run"])
+        self.sp = sensorprocessing.sp_factory.create_sp(self.exp_sp, Config().runtime["device"])
 
+    def propagate(self):
+        self.sp.process(self.inputs["image"])
+        # perform the transfer into the outputs in the expected form
+        self.outputs["z"] = torch.squeeze(self.sp.mu).cpu().numpy()
+        self.outputs["logvar"] = torch.squeeze(self.sp.logvar).cpu().numpy()

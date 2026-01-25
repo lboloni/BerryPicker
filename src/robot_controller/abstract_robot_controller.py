@@ -20,8 +20,7 @@ class AbstractRobotController:
     - The state of the rc, is the collection of the states of the rcco
     - The edges of the rc are outputs of rccos connected to inputs of other rccos
     - Inputs of the rc, are inputs that are received, such as camera input, remote control etc. These are implemented as rcco-s of a specific kind - RCCO_Input. 
-    - Outputs of the rc, are things we want to read out. They are implemented as an RCCO_Output object. A specific example of the input is 
-    - The final output is a command sent to the robot (real or simulated)
+    - Outputs of the rc, are things we want to read out. They are implemented as an RCCO_Output object. A specific example of the output is the command sent to the robot (real or simulated). 
     """
     def __init__(self, exp_roco):
         """Initialize the various components of based on the passed exp"""

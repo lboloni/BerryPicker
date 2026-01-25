@@ -9,7 +9,7 @@ Config.PROJECTNAME = "BerryPicker"
 from abstract_rcco import AbstractRCComponent
 
 class RCCO_Z_Combinator(AbstractRCComponent):
-    """An rcco that implements an LSTM based controller. The input is a latent encoding $z$, while the output is a robot control $a$"""
+    """An RCCO implementing a component that combines different latent encodings."""
     
     def __init__(self, exp_rcco):
         super().__init__(exp_rcco)
