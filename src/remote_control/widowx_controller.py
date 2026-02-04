@@ -63,11 +63,36 @@ class WidowXController(AbstractController):
         """Processes the movement of the widowx"""
         # get the joint positions from the WidowX
         joints = self.bot.arm.get_joint_positions()
-        jo_heading = joints[0]
-        print(f'WidowX heading joint {jo_heading} current on al5d {self.pos_target["heading"]}')
-        self.pos_target["heading"] = jo_heading * (-30.0)
-         # this will be commented out for the time being
+        jo_heading = joints[0] # supposedly "waist" ????
+        #jo_shoulder = joints[1] # supposedly "shoulder"
+        #jo_elbow = joints[2] # supposedly "elbow"
+        jo_wrist_rotate = joints[5]
+        jo_wrist_angle = joints[4]
 
+        val = self.bot.arm.get_ee_pose()
+        #x, y, z, roll, pitch, yaw = self.bot.arm.#get_ee_pose_components()
+        x = val[0, 3]
+        y = val[1, 3]
+        z = val[2, 3]
+        print(f"x={x} y={y} z={z}")
+
+        print(f'WidowX heading joint {jo_heading} current on al5d {self.pos_target["heading"]}')
+
+        self.pos_target["heading"] = jo_heading * (-50.0)
+        #print(f"jo_shoulder {jo_shoulder} pos_height {self.pos_target['height']}")
+
+        self.pos_target["height"] = 2.0 + 10.0 * z
+        import math
+        self.pos_target["distance"] = 2.0 + 10.0 * math.sqrt(x*x+y*y)
+
+        #print(f"jo_elbow {jo_elbow} pos_distance {self.pos_target['distance']}")
+        #self.pos_target["height"] = jo_shoulder * 1.0
+        #self.pos_target["distance"] = jo_elbow * 1.0
+         # this will be commented out for the time being
+        print(f"jo_wrist_angle={jo_wrist_angle} pos_wrist_angle={self.pos_target['wrist_angle']}")
+        print(f"jo_wrist_rotate={jo_wrist_rotate} pos_wrist_rotation={self.pos_target['wrist_rotation']}")
+        self.pos_target["wrist_angle"] = -45 - 15 * jo_wrist_angle
+        self.pos_target["wrist_rotation"] = 75 + 40 * jo_wrist_rotate
     
     def process_key(self, key):
         """Some of the components of the keyboard based controllers are replicated here"""
