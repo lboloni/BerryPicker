@@ -35,9 +35,6 @@ from sensorprocessing.sp_vit_multiview import MultiViewVitSensorProcessing
 from robot.al5d_position_controller import RobotPosition
 import sensorprocessing.sp_helper as sp_helper
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
-
 
 # In[ ]:
 

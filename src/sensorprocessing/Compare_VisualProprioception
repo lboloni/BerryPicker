@@ -41,9 +41,6 @@ from visual_proprioception.visproprio_helper import load_demonstrations_as_propr
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 import sensorprocessing.sp_factory as sp_factory
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
-
 
 # In[2]:
 
@@ -129,13 +126,13 @@ for subrun in runs:
     subexps.append(subexp)
     spexp = Config().get_experiment(subexp["sp_experiment"], subexp["sp_run"])
     spexps.append(spexp)
-    sp = sp_factory.create_sp(spexp, device)
+    sp = sp_factory.create_sp(spexp)
     sps.append(sp)
     model = VisProprio_SimpleMLPRegression(subexp)
     modelfile = pathlib.Path(subexp["data_dir"],
                             subexp["proprioception_mlp_model_file"])
     model.load_state_dict(torch.load(modelfile))
-    model.to(device)
+    model.to(Config().runtime["device"])
     models.append(model)
 
 
@@ -164,7 +161,7 @@ else:
     # Use original single-view loading function
     # These are actually just using the last ones
     tr = load_demonstrations_as_proprioception_training(
-        sps[0], firstexp, spexps[0], exp_robot, "validation_data", proprioception_input_file, proprioception_target_file, device=device
+        sps[0], firstexp, spexps[0], exp_robot, "validation_data", proprioception_input_file, proprioception_target_file
     )
 
 

@@ -9,7 +9,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
+from .sp_helper import get_transform_to_sp
 import pathlib
 import torch
 import torch.nn as nn
@@ -24,7 +24,7 @@ class ViTEncoder(nn.Module):
     The model extracts features using a pretrained ViT and projects them to our 128 latent.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         # All values from config
         self.latent_size = exp["latent_size"]
@@ -122,7 +122,7 @@ class ViTEncoder(nn.Module):
 
 
         # Move to device
-        self.to(device)
+        self.to(Config().runtime["device"])
 
     def encode(self, x):
         """Extract 128 d latent representation without 6d proprioceptor.
@@ -192,14 +192,14 @@ class VitSensorProcessing(AbstractSensorProcessing):
     regression to robot positions.
     """
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensor model
 
         Args:
             exp (dict): Experiment configuration dictionary
             device (str, optional): Device to run the model on. Defaults to "cpu".
         """
-        super().__init__(exp, device)
+        super().__init__(exp)
 
         # Log configuration details
         print(f"Initializing ViT Sensor Processing:")
@@ -210,13 +210,13 @@ class VitSensorProcessing(AbstractSensorProcessing):
 
 
         # Create the ViT encoder model
-        self.enc = ViTEncoder(exp, device)
+        self.enc = ViTEncoder(exp)
 
         # Load weights if model file exists
         modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
         if modelfile.exists():
             print(f"Loading ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=device))
+            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
         else:
             print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
 

@@ -10,7 +10,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
+from .sp_helper import get_transform_to_sp
 
 import numpy as np
 import cv2
@@ -19,9 +19,9 @@ import cv2
 class ArucoSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensormodel """
-        super().__init__(exp, device)
+        super().__init__(exp)
         self.arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
         self.arucoParams = cv2.aruco.DetectorParameters()
         self.MARKER_COUNT = exp["MARKER_COUNT"]

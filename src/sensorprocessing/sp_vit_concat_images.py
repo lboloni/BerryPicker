@@ -26,7 +26,7 @@ class ConcatImageViTEncoder(nn.Module):
     latent representation.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         # All values from config
         self.latent_size = exp["latent_size"]
@@ -115,7 +115,7 @@ class ConcatImageViTEncoder(nn.Module):
             print("Feature extractor frozen. Projection and proprioceptor layers are trainable.")
 
         # Move to device
-        self.to(device)
+        self.to(Config().runtime["device"])
 
     def concatenate_images(self, views_list):
         """Horizontally concatenate multiple image views into a single image.
@@ -207,14 +207,13 @@ class ConcatImageVitSensorProcessing(AbstractSensorProcessing):
     into a single image, which is then processed through a single ViT model.
     """
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensor model
 
         Args:
             exp (dict): Experiment configuration dictionary
-            device (str, optional): Device to run the model on. Defaults to "cpu".
         """
-        super().__init__(exp, device)
+        super().__init__(exp)
 
         # Log configuration details
         print(f"Initializing Concatenated Image ViT Sensor Processing:")
@@ -224,13 +223,13 @@ class ConcatImageVitSensorProcessing(AbstractSensorProcessing):
         print(f"  Image size: {exp['image_size']}x{exp['image_size']}")
 
         # Create the encoder model
-        self.enc = ConcatImageViTEncoder(exp, device)
+        self.enc = ConcatImageViTEncoder(exp)
 
         # Load weights if model file exists
         modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
         if modelfile.exists():
             print(f"Loading Concatenated Image ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=device))
+            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
         else:
             print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
 

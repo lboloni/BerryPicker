@@ -10,7 +10,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
+from .sp_helper import get_transform_to_sp
 
 import pathlib
 import torch
@@ -23,7 +23,7 @@ class VGG19ProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
@@ -45,8 +45,8 @@ class VGG19ProprioTunedRegression(nn.Module):
         for param in self.feature_extractor.parameters():
             param.requires_grad = False        
             # Move the whole thing to the GPU if available
-        self.feature_extractor.to(device)
-        self.model.to(device)
+        self.feature_extractor.to(Config().runtime["device"])
+        self.model.to(Config().runtime["device"])
 
 
     def forward(self, x):
@@ -77,7 +77,7 @@ class ResNetProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super(ResNetProprioTunedRegression, self).__init__()
         self.resnet = models.resnet50(pretrained=True)
         # Create the feature extractor by removing the last fully 
@@ -107,9 +107,9 @@ class ResNetProprioTunedRegression(nn.Module):
         )
 
         # Move the whole thing to the GPU if available
-        self.feature_extractor.to(device)
-        self.reductor.to(device)
-        self.proprioceptor.to(device)
+        self.feature_extractor.to(Config().runtime["device"])
+        self.reductor.to(Config().runtime["device"])
+        self.proprioceptor.to(Config().runtime["device"])
 
     def forward(self, x):
         """Forward the input image through the complete network for the purposes of training using the proprioception. Return a vector of output_size which """
@@ -138,11 +138,11 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     
     """
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensormodel """
-        super().__init__(exp, device)
+        super().__init__(exp)
         # self.exp = exp
-        self.enc = ResNetProprioTunedRegression(exp, device)
+        self.enc = ResNetProprioTunedRegression(exp)
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()
@@ -160,11 +160,11 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
 class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensormodel """
-        super().__init__(exp, device)
-        self.enc = VGG19ProprioTunedRegression(exp, device)
-        self.enc = self.enc.to(device)
+        super().__init__(exp)
+        self.enc = VGG19ProprioTunedRegression(exp)
+        self.enc = self.enc.to(Config().runtime["device"])
         modelfile = pathlib.Path(exp["data_dir"], 
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()

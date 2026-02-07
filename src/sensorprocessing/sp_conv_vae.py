@@ -52,9 +52,9 @@ from .sensor_processing import AbstractSensorProcessing
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
     """Sensor processing based on a pre-trained Conv-VAE"""
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         """Restore a pre-trained model based on the configuration json file and the model file"""
-        super().__init__(exp, device)
+        super().__init__(exp)
         #model_subdir = Path(exp["data_dir"], exp["model_dir"], "models", exp["model_name"], exp["model_subdir"])
         self.conv_vae_jsonfile = Path(exp.data_dir(), "config.json")
         self.resume_model_pthfile = Path(exp.data_dir(), "model.pth")

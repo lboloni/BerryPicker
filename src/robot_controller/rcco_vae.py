@@ -11,7 +11,7 @@ import sensorprocessing.sp_factory
 import torch
 
 class RCCO_VAE(AbstractRCComponent):
-    """An rcco that wraps an SP with a convolutional variational autoencoder. The input is a picture, the outputs are the z values, the mu and logvar values from the encoder."""
+    """An rcco that wraps an SP with a convolutional variational autoencoder. The input is a picture, the outputs are the z values = the mu and logvar values from the encoder. The outputs are on the cpu."""
     
     def __init__(self, exp_rcco):
         super().__init__(exp_rcco)
@@ -23,7 +23,9 @@ class RCCO_VAE(AbstractRCComponent):
         self.sp = sensorprocessing.sp_factory.create_sp(self.exp_sp, Config().runtime["device"])
 
     def propagate(self):
-        self.sp.process(self.inputs["image"])
+        # prepare the input
+        input = torch.from_numpy(self.inputs["image"])
+        self.sp.process()
         # perform the transfer into the outputs in the expected form
         self.outputs["z"] = torch.squeeze(self.sp.mu).cpu().numpy()
         self.outputs["logvar"] = torch.squeeze(self.sp.logvar).cpu().numpy()
