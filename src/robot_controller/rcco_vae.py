@@ -24,8 +24,8 @@ class RCCO_VAE(AbstractRCComponent):
 
     def propagate(self):
         # prepare the input
-        input = torch.from_numpy(self.inputs["image"])
-        self.sp.process()
+        input = torch.from_numpy(self.inputs["image"]).to(Config().runtime["device"])
+        self.sp.process(input)
         # perform the transfer into the outputs in the expected form
         self.outputs["z"] = torch.squeeze(self.sp.mu).cpu().numpy()
         self.outputs["logvar"] = torch.squeeze(self.sp.logvar).cpu().numpy()
