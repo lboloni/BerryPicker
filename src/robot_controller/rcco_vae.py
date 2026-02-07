@@ -23,6 +23,7 @@ class RCCO_VAE(AbstractRCComponent):
         self.sp = sensorprocessing.sp_factory.create_sp(self.exp_sp, Config().runtime["device"])
 
     def propagate(self):
+        """The input is a picture. The output is the z encoding which is the mu value, as well as the log of the variance. Normally only the z is used."""
         # prepare the input
         input = torch.from_numpy(self.inputs["image"]).to(Config().runtime["device"])
         self.sp.process(input)
