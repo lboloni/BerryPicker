@@ -190,7 +190,7 @@ class Demonstration:
             for img_path in image_paths:
                 img_path.unlink()
 
-    def get_image(self, i, device, camera=None, transform=None):
+    def get_image(self, i, camera=None, transform=None):
         """Gets the image as a pair of (sensor_readings, image) from the demonstration. Prefers loading it from image if it is stored as images, otherwise loads it from the video.
 
         Args:
@@ -199,20 +199,20 @@ class Demonstration:
             transform: Optional transform to apply to the image
         """
         if self.metadata["stored_as_images"]:
-            return self.get_image_from_imagefile(i, device=device, camera=camera, transform=transform)
+            return self.get_image_from_imagefile(i, camera=camera, transform=transform)
         else:
-            return self.get_image_from_video(i, device=device, camera=camera, transform=transform, cache=True)
+            return self.get_image_from_video(i, camera=camera, transform=transform, cache=True)
 
     def write_image(self, i, filepath, camera=None, transform=None):
         """Writes the specified image to a jpg file in filepath. This 
         function can be used to save the transformed images."""
-        sensor, _ = self.get_image(i, camera=camera, transform=transform, device="cpu")
+        sensor, _ = self.get_image(i, camera=camera, transform=transform)
         image = sensor[0].permute(1, 2, 0).cpu().numpy()  # to H x W x C
         image = (image * 255).astype(np.uint8)
         image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(filepath, image_bgr)
 
-    def get_image_from_video(self, i, device, camera=None, transform=None, cache=False):
+    def get_image_from_video(self, i, camera=None, transform=None, cache=False):
         """Extracts an image from the video. 
         If cache is False, the function closes the open file
         """
@@ -232,7 +232,7 @@ class Demonstration:
             # CV2 reads by default in BGR... 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # cv2.imwrite(output_image, frame)    
-            image_to_process, image_to_show = load_capture_to_tensor(frame, transform=transform, device=device)
+            image_to_process, image_to_show = load_capture_to_tensor(frame, transform=transform)
         else:
             print(f"Could not read frame {i}")
             image_to_process = None
@@ -266,7 +266,7 @@ class Demonstration:
         video_path = pathlib.Path(self.demo_dir, f"video_{camera}.mp4")
         return video_path
 
-    def get_image_from_imagefile(self, i, transform, device, camera=None):
+    def get_image_from_imagefile(self, i, transform, camera=None):
         """
         Gets the image as a torch batch from an image file. 
 
@@ -277,10 +277,10 @@ class Demonstration:
         """
         assert self.metadata["stored_as_images"], "The demonstration is not stored as images"
         filepath = self.get_image_path(i, camera)
-        sensor_readings, image = load_picturefile_to_tensor(filepath, transform, device=device)
+        sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
         return sensor_readings, image
 
-    def get_all_images_from_imagefile(self, i, transform=None, device=None):
+    def get_all_images_from_imagefile(self, i, transform=None):
         """
         Gets images from all cameras for a specific timestep
 
@@ -295,7 +295,7 @@ class Demonstration:
         for camera in self.metadata["cameras"]:
             filepath = self.get_image_path(i, camera)
             if filepath.exists():
-                sensor_readings, image = load_picturefile_to_tensor(filepath, transform, device=device)
+                sensor_readings, image = load_picturefile_to_tensor(filepath, transform)
                 images[camera] = (sensor_readings, image)
 
         return images

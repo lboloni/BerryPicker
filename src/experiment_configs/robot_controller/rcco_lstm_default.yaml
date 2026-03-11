@@ -1,0 +1,9 @@
+# description of an input
+rcco_type: LSTM
+z_size: 256
+a_size: 6
+num_layers: 2
+hidden_size: 32  
+# the lenght of the sequence created for the LSTM-type training
+sequence_lenght: 10
+keep_state: False

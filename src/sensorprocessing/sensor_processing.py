@@ -11,9 +11,8 @@ from .sp_helper import load_picturefile_to_tensor
 class AbstractSensorProcessing:
     """The ancestor of all the classes that perform a sensor processing. We make the assumption that all these classes are configured by an experiment/run, and take in an image"""
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         self.exp = exp
-        self.device = device
         self.transform = transforms.Compose([
           transforms.ToTensor(),
         ])
@@ -27,7 +26,7 @@ class AbstractSensorProcessing:
     def process_file(self, sensor_image_file):
         """Processes the sensor image from a file. This probably does not need to be overwritten. 
         """
-        sensor_readings, _ = load_picturefile_to_tensor(sensor_image_file, self.transform, device=self.device)
+        sensor_readings, _ = load_picturefile_to_tensor(sensor_image_file, self.transform)
         output = self.process(sensor_readings)
         return output
 

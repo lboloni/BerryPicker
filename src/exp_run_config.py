@@ -34,7 +34,7 @@ import shutil
 import textwrap
 from datetime import datetime
 from pathlib import Path
-
+import torch
 
 class Experiment:
     """A class encapsulating an experiment. It is a dict-like interface, with additional functionality for mandatory fields like data_dir, and support for saving to the data_dir and timers."""
@@ -165,6 +165,9 @@ class Config:
             cls._instance.experiment_path = cls._instance.experiment_path_internal
             # initialize a runtime information, which is not saved
             cls._instance.runtime = {}
+            # initialize the torch device, as this is almost always like this
+            cls._instance.runtime["device"] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            Config.__log(f"Using torch device: {cls._instance.runtime['device']}")
         return cls._instance
 
     def __getitem__(self, key):

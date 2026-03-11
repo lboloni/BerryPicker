@@ -23,7 +23,7 @@ class VGG19ProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
@@ -45,8 +45,8 @@ class VGG19ProprioTunedRegression(nn.Module):
         for param in self.feature_extractor.parameters():
             param.requires_grad = False
             # Move the whole thing to the GPU if available
-        self.feature_extractor.to(device)
-        self.model.to(device)
+        self.feature_extractor.to(Config().runtime["device"])
+        self.model.to(Config().runtime["device"])
 
 
     def forward(self, x):
@@ -75,7 +75,7 @@ class ResNetProprioTunedRegression(nn.Module):
     When used for encoding, the processing happens only to an internal layer in the MLP.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super(ResNetProprioTunedRegression, self).__init__()
         self.resnet = models.resnet50(pretrained=True)
         # Create the feature extractor by removing the last fully
@@ -105,9 +105,9 @@ class ResNetProprioTunedRegression(nn.Module):
         )
 
         # Move the whole thing to the GPU if available
-        self.feature_extractor.to(device)
-        self.reductor.to(device)
-        self.proprioceptor.to(device)
+        self.feature_extractor.to(Config().runtime["device"])
+        self.reductor.to(Config().runtime["device"])
+        self.proprioceptor.to(Config().runtime["device"])
 
     def forward(self, x):
         """Forward the input image through the complete network for the purposes of training using the proprioception. Return a vector of output_size which """
@@ -116,7 +116,6 @@ class ResNetProprioTunedRegression(nn.Module):
         flatfeatures = self.flatten(features)
         latent = self.reductor(flatfeatures)
         output = self.proprioceptor(latent)
-        # print(output.device)
         return output
 
     def encode(self, x):
@@ -136,12 +135,11 @@ class MultiViewVGG19Model(nn.Module):
     a regression head for proprioception prediction.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         self.num_views = exp.get("num_views", 2)
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
-        self.device = device
 
         # Create separate VGG19 feature extractors for each view
         self.feature_extractors = nn.ModuleList()
@@ -178,7 +176,7 @@ class MultiViewVGG19Model(nn.Module):
         )
 
         # Move the model to the specified device
-        self.to(device)
+        self.to(Config().runtime["device"])
 
     def encode_views(self, views_list):
         """
@@ -228,12 +226,11 @@ class MultiViewResNetModel(nn.Module):
     a regression head for proprioception prediction.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         self.num_views = exp.get("num_views", 2)
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
-        self.device = device
 
         # Create separate ResNet feature extractors for each view
         self.feature_extractors = nn.ModuleList()
@@ -270,7 +267,7 @@ class MultiViewResNetModel(nn.Module):
         )
 
         # Move the model to the specified device
-        self.to(device)
+        self.to(Config().runtime["device"])
 
     def encode_views(self, views_list):
         """
@@ -317,11 +314,11 @@ class MultiViewResNetModel(nn.Module):
 class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained architecture from above."""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensormodel """
-        super().__init__(exp, device)
+        super().__init__(exp)
         # self.exp = exp
-        self.enc = ResNetProprioTunedRegression(exp, device)
+        self.enc = ResNetProprioTunedRegression(exp)
         modelfile = pathlib.Path(exp["data_dir"],
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()
@@ -339,11 +336,11 @@ class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
 class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
     """Sensor processing using a pre-trained VGG19 architecture from above."""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensormodel """
-        super().__init__(exp, device)
-        self.enc = VGG19ProprioTunedRegression(exp, device)
-        self.enc = self.enc.to(device)
+        super().__init__(exp)
+        self.enc = VGG19ProprioTunedRegression(exp)
+        self.enc = self.enc.to(Config().runtime["device"])
         modelfile = pathlib.Path(exp["data_dir"],
                                 exp["proprioception_mlp_model_file"])
         assert modelfile.exists()
@@ -367,15 +364,14 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
     only one view is updated at a time.
     """
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """
         Initialize the multi-view CNN sensor processing
 
         Args:
             exp: Experiment configuration
-            device: Device to run the model on (cpu/cuda)
         """
-        super().__init__(exp, device)
+        super().__init__(exp)
 
         # Log configuration details
         print(f"Initializing Multi-View CNN Sensor Processing:")
@@ -385,9 +381,9 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
 
         # Create the encoder model based on configuration
         if exp['model'] == 'MultiViewVGG19Model':
-            self.enc = MultiViewVGG19Model(exp, device)
+            self.enc = MultiViewVGG19Model(exp)
         elif exp['model'] == 'MultiViewResNetModel':
-            self.enc = MultiViewResNetModel(exp, device)
+            self.enc = MultiViewResNetModel(exp)
         else:
             raise ValueError(f"Unknown model type: {exp['model']}")
 
@@ -395,7 +391,7 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
         modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
         if modelfile.exists():
             print(f"Loading Multi-View CNN encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=device))
+            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
         else:
             print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
 
@@ -536,17 +532,17 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
 class MultiViewVGG19SensorProcessing(MultiViewCNNSensorProcessing):
     """Convenience class for VGG19-based multi-view sensor processing"""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         # Ensure the model is set to VGG19
         exp_copy = exp.copy()
         exp_copy['model'] = 'MultiViewVGG19Model'
-        super().__init__(exp_copy, device)
+        super().__init__(exp_copy)
 
 class MultiViewResNetSensorProcessing(MultiViewCNNSensorProcessing):
     """Convenience class for ResNet-based multi-view sensor processing"""
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         # Ensure the model is set to ResNet
         exp_copy = exp.copy()
         exp_copy['model'] = 'MultiViewResNetModel'
-        super().__init__(exp_copy, device)
+        super().__init__(exp_copy)

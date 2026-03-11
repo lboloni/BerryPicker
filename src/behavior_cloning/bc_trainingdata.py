@@ -59,7 +59,7 @@ def create_trainingpair_prediction(x_seq: torch.Tensor, y_seq: torch.Tensor, seq
     return inputs_tensor, targets_tensor
 
 
-def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
+def create_trainingdata_bc(exp, exp_sp, exp_robot):
     """Creates training data for training and validation with the demonstrations specified in the exp/run. Caches the results into the input and target files specified in the exp/run. Remove those files to recalculate."""
 
     exp.start_timer("data_preparation")
@@ -71,7 +71,7 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
         all_demos_inputs_list = []
         all_demos_targets_list = []
         # Create the sp object described in the experiment
-        sp = create_sp(exp_sp, device)
+        sp = create_sp(exp_sp)
         transform = get_transform_to_sp(exp_sp)
         for val in exp["training_data"]: # for all demonstrations
             run, demo_name, camera = val
@@ -81,7 +81,7 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
             inputs_list = []
             targets_list = []
             for i in range(demo.metadata["maxsteps"]-1): # -1 because of lookahead
-                sensor_readings, _ = demo.get_image(i, device=device, transform=transform, camera=camera)                
+                sensor_readings, _ = demo.get_image(i, transform=transform, camera=camera)                
                 # inputlist.append(sensor_readings[0])
                 z = sp.process(sensor_readings)
                 inputs_list.append(torch.from_numpy(z))
@@ -119,9 +119,9 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot, device):
     training_size = int( all_demos_inputs_tensor.shape[0] * 0.67 )
 
     retval = {}
-    retval["z_train"] = shuffled_inputs[:training_size].to(device)
-    retval["a_train"] = shuffled_targets[:training_size].to(device)
-    retval["z_validation"] = shuffled_inputs[training_size:].to(device)
-    retval["a_validation"] = shuffled_targets[training_size:].to(device) 
+    retval["z_train"] = shuffled_inputs[:training_size].to(Config().runtime["device"])
+    retval["a_train"] = shuffled_targets[:training_size].to(Config().runtime["device"])
+    retval["z_validation"] = shuffled_inputs[training_size:].to(Config().runtime["device"])
+    retval["a_validation"] = shuffled_targets[training_size:].to(Config().runtime["device"]) 
     exp.end_timer("data_preparation")
     return retval

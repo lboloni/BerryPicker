@@ -32,7 +32,7 @@ class ConcatConvVaeSensorProcessing(_SingleViewSP):
 
     _ALLOWED = {"width", "channel"}
 
-    def __init__(self, exp: dict, device: torch.device | str = "cpu") -> None:
+    def __init__(self, exp: dict) -> None:
         self.num_views = exp.get("num_views", 2)
         self.stack_mode: str = exp.get("stack_mode", "width").lower()
         self.latent_size = exp.get("latent_size", 128)
@@ -48,10 +48,7 @@ class ConcatConvVaeSensorProcessing(_SingleViewSP):
             raise ValueError(
                 f"invalid stack_mode {self.stack_mode}; choose one of {self._ALLOWED}"
             )
-        super().__init__(exp, device)
-
-        # Store device for later use
-        self.device = device
+        super().__init__(exp)
 
         # Store expected image size
         self.expected_size = (64, 64)  # Most VAEs trained on this size
@@ -207,7 +204,7 @@ class ConcatConvVaeSensorProcessing(_SingleViewSP):
         # Process through the VAE model directly
         with torch.no_grad():
             # Ensure input is on the correct device
-            composite = composite.to(self.device)
+            composite = composite.to(Config().runtime["device"])
 
             try:
                 # Access the model directly to avoid shape issues

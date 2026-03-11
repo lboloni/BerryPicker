@@ -16,7 +16,7 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 
-def create_bc_model(exp, exp_sp, device):
+def create_bc_model(exp, exp_sp):
     if exp["controller"] == "bc_MLP":
         model = bc_MLP(exp, exp_sp)
     elif exp["controller"] == "bc_LSTM":
@@ -27,20 +27,18 @@ def create_bc_model(exp, exp_sp, device):
         model = bc_LSTM_MDN(exp, exp_sp)
     else:
         raise Exception(f"Unknown controller specified {exp['controller']}")    
-    model.to(device)
-    criterion = create_criterion(exp, device)
+    model.to(Config().runtime["device"])
+    criterion = create_criterion(exp)
     optimizer = create_optimizer(exp, model)
     return model, criterion, optimizer
 
 
-def create_criterion(exp, device):
+def create_criterion(exp):
     if exp["loss"] == "MSELoss":
         criterion = nn.MSELoss()  # Mean Squared Error for regression
-        criterion = criterion.to(device)
+        criterion = criterion.to(Config().runtime["device"])
     elif exp["loss"] == "MDNLoss":
         criterion = mdn_loss 
-        # criterion = criterion.to(device)
-        # Note that this is a bit different in parameters
     else:
         raise Exception(f"Loss function {exp['loss']} not implemented yet")
     return criterion

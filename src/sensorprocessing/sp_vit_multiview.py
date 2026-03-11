@@ -26,7 +26,7 @@ class MultiViewViTEncoder(nn.Module):
     into a single 128d latent representation.
     """
 
-    def __init__(self, exp, device):
+    def __init__(self, exp):
         super().__init__()
         # All values from config
         self.latent_size = exp["latent_size"]
@@ -207,7 +207,7 @@ class MultiViewViTEncoder(nn.Module):
             print("Feature extractors frozen. Projection and proprioceptor layers are trainable.")
 
         # Move to device
-        self.to(device)
+        self.to(Config().runtime["device"])
 
     def encode_single_view(self, x, view_idx=0):
         """Extract features from a single view."""
@@ -337,14 +337,14 @@ class MultiViewVitSensorProcessing(AbstractSensorProcessing):
     It only does the encoding step, not the regression to robot positions.
     """
 
-    def __init__(self, exp, device="cpu"):
+    def __init__(self, exp):
         """Create the sensor model
 
         Args:
             exp (dict): Experiment configuration dictionary
             device (str, optional): Device to run the model on. Defaults to "cpu".
         """
-        super().__init__(exp, device)
+        super().__init__(exp)
 
         # Log configuration details
         print(f"Initializing Multi-View ViT Sensor Processing:")
@@ -355,13 +355,13 @@ class MultiViewVitSensorProcessing(AbstractSensorProcessing):
         print(f"  Image size: {exp['image_size']}x{exp['image_size']}")
 
         # Create the multi-view ViT encoder model
-        self.enc = MultiViewViTEncoder(exp, device)
+        self.enc = MultiViewViTEncoder(exp)
 
         # Load weights if model file exists
         modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
         if modelfile.exists():
             print(f"Loading Multi-View ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=device))
+            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
         else:
             print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
 

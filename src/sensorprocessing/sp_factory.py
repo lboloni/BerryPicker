@@ -1,42 +1,3 @@
-# """
-# sp_factory.py
-
-# Factory functions to create sensor processing objects based on an exp/run
-# """
-
-# from sensorprocessing import sp_conv_vae, sp_propriotuned_cnn, sp_aruco, sp_vit, sp_vit_multiview, sp_vit_concat_images, sp_propriotuned_cnn_multiview, sp_conv_vae_concat_multiview
-
-# def create_sp(spexp, device):
-#     """Gets the sensor processing component specified by the
-#     visual_proprioception experiment."""
-#     # spexp = Config().get_experiment(exp['sp_experiment'], exp['sp_run'])
-#     if spexp["class"] == "ConvVaeSensorProcessing":
-#         return sp_conv_vae.ConvVaeSensorProcessing(spexp, device)
-#     if spexp["class"] == "ConvVaeSensorProcessing_concat_multiview":
-#         return sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing(spexp, device)
-#     if spexp["class"] == "ConvVaeSensorProcessing_multiview":
-#         return sp_conv_vae_concat_multiview.ConvVaeSensorProcessing_multiview(spexp, device)
-#     if spexp['class']=="VGG19ProprioTunedSensorProcessing":
-#         return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
-#     if spexp['class']=="ResNetProprioTunedSensorProcessing":
-#         return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp, device)
-#     if spexp['class']=="VGG19ProprioTunedSensorProcessing_multiview":
-#         return sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing(spexp, device)
-#     if spexp['class']=="ResNetProprioTunedSensorProcessing_multiview":
-#         return sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing(spexp, device)
-#     if spexp['class']=="Aruco":
-#         return sp_aruco.ArucoSensorProcessing(spexp, device)
-#     if spexp['class']=="Vit":
-#         return sp_vit.VitSensorProcessing(spexp, device)
-#     if spexp['class'] == "Vit_multiview":
-#         return sp_vit_multiview.MultiViewVitSensorProcessing(spexp, device)
-#     if spexp['class'] == "Vit_concat_images":
-#         return sp_vit_concat_images.ConcatImageVitSensorProcessing(spexp, device)
-#     raise Exception('Unknown sensor processing {exp["class"]}')
-
-
-
-
 """
 sp_factory.py
 
@@ -57,7 +18,7 @@ from sensorprocessing import (
 )
 
 
-def create_sp(spexp, device):
+def create_sp(spexp):
     """Gets the sensor processing component specified by the experiment.
 
     This factory function instantiates the appropriate sensor processing class
@@ -65,7 +26,6 @@ def create_sp(spexp, device):
 
     Args:
         spexp: Sensor processing experiment configuration dictionary
-        device: Device to load the model on (e.g., 'cpu', 'cuda')
 
     Returns:
         Sensor processing object
@@ -80,10 +40,10 @@ def create_sp(spexp, device):
     # =========================================================================
 
     if sp_class == "ConvVaeSensorProcessing":
-        return sp_conv_vae.ConvVaeSensorProcessing(spexp, device)
+        return sp_conv_vae.ConvVaeSensorProcessing(spexp)
 
     if sp_class == "ConvVaeSensorProcessing_concat_multiview":
-        return sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing(spexp, device)
+        return sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing(spexp)
 
 
     # =========================================================================
@@ -91,48 +51,48 @@ def create_sp(spexp, device):
     # =========================================================================
 
     if sp_class == "VGG19ProprioTunedSensorProcessing":
-        return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp, device)
+        return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp)
 
     if sp_class == "ResNetProprioTunedSensorProcessing":
-        return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp, device)
+        return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp)
 
     # =========================================================================
     # CNN MODELS (VGG, ResNet) - MULTI VIEW
     # =========================================================================
 
     if sp_class == "VGG19ProprioTunedSensorProcessing_multiview":
-        return sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing(spexp, device)
+        return sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing(spexp)
 
     if sp_class == "ResNetProprioTunedSensorProcessing_multiview":
-        return sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing(spexp, device)
+        return sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing(spexp)
 
     # =========================================================================
     # ARUCO MARKER
     # =========================================================================
 
     if sp_class == "Aruco":
-        return sp_aruco.ArucoSensorProcessing(spexp, device)
+        return sp_aruco.ArucoSensorProcessing(spexp)
 
     # =========================================================================
     # VIT MODELS - SINGLE VIEW
     # =========================================================================
 
     if sp_class == "Vit":
-        return sp_vit.VitSensorProcessing(spexp, device)
+        return sp_vit.VitSensorProcessing(spexp)
 
     # =========================================================================
     # VIT MODELS - MULTI VIEW
     # =========================================================================
 
     if sp_class == "Vit_multiview":
-        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp, device)
+        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp)
 
     if sp_class == "Vit_concat_images":
-        return sp_vit_concat_images.ConcatImageVitSensorProcessing(spexp, device)
+        return sp_vit_concat_images.ConcatImageVitSensorProcessing(spexp)
 
     # Also handle by name variations (for backwards compatibility)
     if sp_class == "MultiViewVitSensorProcessing":
-        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp, device)
+        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp)
 
 
     # =========================================================================
