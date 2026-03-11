@@ -5,6 +5,7 @@ Gamepad-based controller for the AL5D robot
 """
 from robot.al5d_position_controller import RobotPosition, PositionController
 from approxeng.input.selectbinder import ControllerResource, ControllerNotFoundError
+from . import double_demo_controller
 import time
 # import serial 
 import copy
@@ -22,6 +23,7 @@ class GamepadController(AbstractController):
     def __init__(self, exp, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
         super().__init__(robot_controller, camera_controller, demonstration_recorder)
         self.exp = exp
+        self.double_demo_controller = None
     
     def control(self):
         """The main control loop"""
@@ -89,7 +91,10 @@ class GamepadController(AbstractController):
             logging.warning(f"{joystick.dleft}")
         if joystick["dright"] is not None: 
             delta_gripper -= self.v_gripper * self.last_interval
-
+        # This is used to gather data 
+        if "circle" in presses.names and self.double_demo_controller is not None:            
+            self.double_demo_controller.record()
+            self.double_demo_controller.save()            
 
         # square aka x - exit control
         if self.exp["button_exit"] in presses.names:

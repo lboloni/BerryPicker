@@ -5,8 +5,11 @@ demonstration_name: "freeform"
 # this depends both on the particular machine as well as what components are being used 
 # at this moment. 
 
+# The case where we are gathering paired demonstrations
+primary_controller: "double"
+
 # primary_controller: "xbox"
-primary_controller: "widowx"
+# primary_controller: "widowx"
 available_robot: True
 
 exp_position_controller: "robot_al5d"
