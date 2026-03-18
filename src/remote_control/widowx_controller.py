@@ -21,6 +21,7 @@ class WidowXController(AbstractController):
     """A controller based on a backdriven WidowX robot"""    
 
     def __init__(self, exp, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
+        """Has access to the widowx. It does not use the other parameters as of yet, not even the exp"""
         super().__init__(robot_controller, camera_controller, demonstration_recorder)
         self.exp = exp
         # connecting the robot controller to the widowx
