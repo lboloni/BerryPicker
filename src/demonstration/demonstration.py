@@ -3,7 +3,6 @@ demonstration.py
 
 A class that wraps the data files in the demonstration, and allows convenient accesss to them. 
 """
-import json
 import sys
 
 import cv2
@@ -67,7 +66,7 @@ class Demonstration:
     The images can be stored either as a sequence of images, or as a video. Metadata about the demonstration, including annotations are stored in the _metadata.yaml file.
     """
 
-    def __init__(self, exp, demo, parse_old_style = True):
+    def __init__(self, exp, demo):
         """Initializes the demonstration, based on an experiment"""
         self.exp = exp
         self.demo = demo
@@ -80,7 +79,7 @@ class Demonstration:
         self.actions = []
         self.annotations = []                
         self.videocap = {} # placeholder for open videos
-        # load the _metadata.yaml file, if it exists, otherwise infer it from the directory
+        # load the _metadata.yaml file, if it exists
         metadata_path = pathlib.Path(self.demo_dir, "_metadata.yaml")
         if metadata_path.exists():
             with open(metadata_path) as file:
@@ -93,9 +92,6 @@ class Demonstration:
             annotation_path = pathlib.Path(self.demo_dir, "_annotation.yaml")
             with open(annotation_path) as file:
                 self.annotations = yaml.safe_load(file)
-        else:
-            if parse_old_style:
-                self.parse_image_based_demonstration()    
 
     def save_metadata(self):
         """Saves the metadata of the demonstration to a file"""
@@ -109,43 +105,6 @@ class Demonstration:
         with open(annotation_path, "w") as file:
             yaml.dump(self.annotations, file, indent=4)
         print(f"Saved demonstration metadata to\n\t{metadata_path}")
-
-    def parse_image_based_demonstration(self):
-        """Utility function to parse a demonstration that is stored as a sequence of images. We assume that the images have the format of {i:05d}_{camera}.jpg, where i is the timestep and camera is the camera name. This function creates the metadata file. If the images are stored as a video, we assume that this is a new demonstration, and the metadata already exists. 
-        """
-        print("***Demonstration***: parsing image based demonstration")
-        self.metadata = {}
-        # Set default values for metadata
-        self.metadata["stored_as_video"] = False
-        # Analyzes the demonstration to get the list of cameras. 
-        cameraset = {}
-        maxsteps = 0
-        for a in self.demo_dir.iterdir():
-            if a.name.endswith(".json") and a.name.startswith("0"):
-                count = int(a.name.split(".")[0])
-                maxsteps = max(maxsteps, count)
-            if a.name.endswith(".jpg"):
-                cameraname = a.name[6:-4]
-                cameraset[cameraname] = cameraname
-                self.metadata["stored_as_images"] = True
-        if not cameraset:
-            raise ValueError("No cameras found in the demonstration directory")
-        self.metadata["cameras"] = sorted(cameraset.keys())
-        self.metadata["maxsteps"] = maxsteps + 1
-        # load the content of json files into the metadata
-        self.actions = []
-        self.annotations = []
-        for i in range(self.metadata["maxsteps"]):
-            json_path = pathlib.Path(self.demo_dir, f"{i:05d}.json")
-            with open(json_path) as file:
-                data = json.load(file)
-            data.pop("annotation")
-            data.pop("reward")
-            data["time"] = i
-            self.actions.append(data)
-            self.annotations.append({"reward": 0.0, "comment":"", "labels": [], "time": i}) # append empty annotations
-        self.save_metadata()
-        print("***Demonstration***: parsing image based demonstration done")
 
     def get_annotation(self, i, type="reward"):
         """Returns the annotation, by default the reward"""
