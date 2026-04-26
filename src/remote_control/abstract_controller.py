@@ -54,6 +54,8 @@ class AbstractController:
     def update(self):
         """Updates the state of the various components"""
         logger.info(f"***AbstractController***: Update started")
+        if self.demonstration_recorder:
+            self.demonstration_recorder.update_mobile_camera()
         if self.camera_controller:
             self.camera_controller.update()
         if self.demonstration_recorder:

@@ -1,4 +1,5 @@
-# a demonstration setup for tredy2 for collecting automated demonstrations
+# A demonstration setup for tredy2 for collecting automated demonstrations. This file has all the generic components, uses the xbox controller and puts the demonstrations in the "freeform" directory. 
+
 demonstration_name: "freeform"
 
 # specification of the controllers that are being used on this setup
@@ -6,9 +7,8 @@ demonstration_name: "freeform"
 # at this moment. 
 
 # The case where we are gathering paired demonstrations
-primary_controller: "double"
-
-# primary_controller: "xbox"
+# primary_controller: "double"
+primary_controller: "xbox"
 # primary_controller: "widowx"
 available_robot: True
 

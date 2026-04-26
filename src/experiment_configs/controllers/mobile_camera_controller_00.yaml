@@ -1,0 +1,4 @@
+# Minimal mobile camera controller configuration.
+
+controller_name: "mobile_camera_controller"
+mobile_camera_id: "mobile_camera_00"
