@@ -2,3 +2,26 @@
 
 controller_name: "mobile_camera_controller"
 mobile_camera_id: "mobile_camera_00"
+
+robot_model: "wx250s"
+group_name: "arm"
+gripper_name: "gripper"
+
+observation_dome:
+  x: 0.25
+  y: 0.0
+  z: 0.20
+  r: 0.05
+  no_long: 10
+  no_lat: 10
+
+default_lat_index: 0
+default_long_index: 0
+
+safety_box:
+  x: [0.0, 0.40]
+  y: [-0.20, 0.20]
+  z: [0.0, 0.40]
+
+move_kwargs:
+  moving_time: 1.5

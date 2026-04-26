@@ -194,7 +194,7 @@ class DemonstrationRecorder:
         if "run_mobile_camera_controller" not in exp:
             return None
 
-        from camera.mobile_camera_controller import MobileCamera
+        from mobile_camera.mobile_camera_controller import MobileCamera
 
         exp_mobile_camera_controller = Config().get_experiment(
             exp["exp_mobile_camera_controller"],

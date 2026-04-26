@@ -29,3 +29,6 @@ run_automove_controller: "automove_random_waypoint_6D_00"
 
 exp_widowx_controller: "controllers"
 run_widowx_controller: "rc_widowx_00"
+
+exp_mobile_camera_controller: "controllers"
+run_mobile_camera_controller: "mobile_camera_controller_00"
