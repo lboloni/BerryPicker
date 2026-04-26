@@ -2,7 +2,9 @@
 
 # active_camera_list: [0, 1]
 # for Jan 9, 2026
-active_camera_list: [2, 3]
+# active_camera_list: [2, 3]
+# for April 2026
+active_camera_list: [0, 2]
 # Changed in April 2026 from:
 # saved_image_size: [256, 256]
 saved_image_size: [512, 512]
