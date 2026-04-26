@@ -7,10 +7,11 @@ Contains AbstractRobotController, the root class for the robot controllers, an a
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
+from abc import ABC, abstractmethod
 from abstract_rcco import AbstractRCComponent
 import rcco_factory
 
-class AbstractRobotController:
+class AbstractRobotController(ABC):
     """The root class for robot controllers (roco-s). 
     It follows an asynchronous model. Various external entitites are adding observations, commands etc to it. 
 
@@ -57,7 +58,7 @@ class AbstractRobotController:
         for rcco in self.components:
             rcco.load()
 
+    @abstractmethod
     def propagate(self):
         """Perform all the computations on the graph rcco-s, essentially propagating the data from the inputs to the outputs. This involves propagating on the rcco-s and performing the data transfers."""
-        
-
+        raise NotImplementedError

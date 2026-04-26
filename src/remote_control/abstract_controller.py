@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-class AbstractController:
+class AbstractController(ABC):
     """An abstract class representing the ancestor of all classes that are used to perform high-level control the robot. Most of the classes here are something like remote control"""
 
     def __init__(self, robot_controller: PositionController = None, camera_controller = None, demonstration_recorder = None):
@@ -41,6 +41,11 @@ class AbstractController:
         self.v_wrist_rotation = 0.1 # angle degree / second
         self.camera_controller = camera_controller
         self.demonstration_recorder = demonstration_recorder
+
+    @abstractmethod
+    def control(self):
+        """Run the controller's main control loop."""
+        raise NotImplementedError
 
     def stop(self):
         """Stops the controller and all the other subcomponents"""

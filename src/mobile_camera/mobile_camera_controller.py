@@ -12,6 +12,7 @@ class MobileCamera:
         from interbotix_common_modules.common_robot.robot import robot_shutdown
         from interbotix_common_modules.common_robot.robot import robot_startup
         from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
+        from mobile_camera.mobile_camera_decision import SimpleHighLowMobileCameraDecision
         from mobile_camera.observation_dome import ObservationDome
         from mobile_camera.widowx_observation_dome import WidowX_ObservationDomeDriver
 
@@ -47,6 +48,14 @@ class MobileCamera:
             self.dome,
             safety_box=exp.get("safety_box", None),
         )
+        decision_config = exp.get("decision", {})
+        self.decision = SimpleHighLowMobileCameraDecision(
+            self.dome_driver,
+            height_threshold=decision_config.get("height_threshold", 0.5),
+            middle_lat_index=decision_config.get("middle_lat_index", None),
+            middle_long_index=decision_config.get("middle_long_index", 0),
+            reachability_kwargs=decision_config.get("reachability_kwargs", {}),
+        )
 
     def update(self):
         """Update the mobile camera after the robot has moved."""
@@ -59,7 +68,7 @@ class MobileCamera:
 
     def get_lat_long_for_robot_position(self, robot_position):
         """Return the dome node to use for a robot position."""
-        return self.default_lat_index, self.default_long_index
+        return self.decision.get_lat_long_for_robot_position(robot_position)
 
     def move_to_lat_long(self, lat_index, long_index, **kwargs):
         """Move the mobile camera to a latitude/longitude node on the dome."""

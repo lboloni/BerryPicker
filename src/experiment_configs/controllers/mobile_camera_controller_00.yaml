@@ -18,6 +18,12 @@ observation_dome:
 default_lat_index: 0
 default_long_index: 0
 
+decision:
+  type: "simple_high_low"
+  height_threshold: 0.5
+  middle_lat_index: 5
+  middle_long_index: 0
+
 safety_box:
   x: [0.0, 0.40]
   y: [-0.20, 0.20]

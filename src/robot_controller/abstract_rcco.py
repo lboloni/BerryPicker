@@ -4,7 +4,10 @@ abstract_rcco.py
 Contains AbstractRCComponent, the root class for the robot controller components
 """
 
-class AbstractRCComponent:
+from abc import ABC
+
+
+class AbstractRCComponent(ABC):
     """The root class for robot controller components (rcco-*). A typical model is a neural network, but can be other things that visualize, log, memorize, visualize, perform safety checks etc.
 
     An RC component is described
@@ -42,4 +45,3 @@ class AbstractRCComponent:
     def load(self):
         """Load the state, context, input and output from different files"""
         pass
-
