@@ -4,5 +4,6 @@
 
 # active_camera_list: [0, 2, 3]
 active_camera_list: [0]
-#saved_image_size: [256, 256]
+# Changed in April 2026 from:
+# saved_image_size: [256, 256]
 saved_image_size: [512, 512]
