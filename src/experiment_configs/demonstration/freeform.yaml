@@ -8,36 +8,36 @@ name: "freeform"
 cameras:
   all:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev000:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev001:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev002:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev003:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev004:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev005:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev006:
     fps: 10
-    width: 256
-    height: 256
+    width: 512
+    height: 512
   dev007:
     fps: 10
     width: 256

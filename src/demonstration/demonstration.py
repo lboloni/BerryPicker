@@ -137,13 +137,47 @@ class Demonstration:
         # Initialize video writer
         if not video_path.exists():
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(video_path, fourcc, params["fps"], (params["width"], params["height"]))
-            for i in range(self.metadata["maxsteps"]):
-                img_path = self.get_image_path(i, camera=cam)
-                image_paths.append(img_path)
-                frame = cv2.imread(str(img_path))
-                out.write(frame)
-            out.release()
+            expected_size = (params["width"], params["height"])
+            out = cv2.VideoWriter(video_path, fourcc, params["fps"], expected_size)
+            if not out.isOpened():
+                raise RuntimeError(
+                    f"Could not open video writer for {video_path} "
+                    f"with fps={params['fps']} and size={expected_size}"
+                )
+            write_succeeded = False
+            try:
+                for i in range(self.metadata["maxsteps"]):
+                    img_path = self.get_image_path(i, camera=cam)
+                    image_paths.append(img_path)
+                    frame = cv2.imread(str(img_path))
+                    if frame is None:
+                        raise FileNotFoundError(f"Could not read image for camera {cam}: {img_path}")
+                    actual_size = (frame.shape[1], frame.shape[0])
+                    if actual_size != expected_size:
+                        raise ValueError(
+                            f"Image size mismatch for camera {cam}, frame {i}: "
+                            f"{img_path} is {actual_size}, but video config expects {expected_size}"
+                        )
+                    out.write(frame)
+                write_succeeded = True
+            finally:
+                out.release()
+                if not write_succeeded and video_path.exists():
+                    video_path.unlink()
+
+            cap = cv2.VideoCapture(str(video_path))
+            video_is_readable = False
+            try:
+                if not cap.isOpened():
+                    raise RuntimeError(f"Created video cannot be opened: {video_path}")
+                ret, _ = cap.read()
+                if not ret and self.metadata["maxsteps"] > 0:
+                    raise RuntimeError(f"Created video contains no readable frames: {video_path}")
+                video_is_readable = True
+            finally:
+                cap.release()
+                if not video_is_readable and video_path.exists():
+                    video_path.unlink()
         # if specified, delete the image files
         if delete_img_files:
             for img_path in image_paths:
