@@ -28,6 +28,8 @@ class WidowX_ObservationDomeDriver:
             }
         self.safety_box = safety_box
         self.reached_pose_history = []
+        self.current_lat_index = None
+        self.current_long_index = None
 
     def set_safety_box(self, safety_box):
         """
@@ -41,6 +43,29 @@ class WidowX_ObservationDomeDriver:
     def clear_reached_pose_history(self):
         """Clear the recorded history of successfully reached end-effector poses."""
         self.reached_pose_history = []
+
+    def get_current_lat_long(self):
+        """Return the current `(lat_index, long_index)` position, if known."""
+        if self.current_lat_index is None or self.current_long_index is None:
+            return None
+        return self.current_lat_index, self.current_long_index
+
+    def clear_current_lat_long(self):
+        """Clear the remembered latitude/longitude position."""
+        self.current_lat_index = None
+        self.current_long_index = None
+
+    def _is_current_lat_long(self, lat_index, long_index):
+        """Return `True` if the driver already believes it is at this dome node."""
+        return (
+            self.current_lat_index == lat_index
+            and self.current_long_index == long_index
+        )
+
+    def _record_current_lat_long(self, lat_index, long_index):
+        """Record the current latitude/longitude position."""
+        self.current_lat_index = lat_index
+        self.current_long_index = long_index
 
     def _record_reached_pose(self, command_pose):
         """Record a successfully reached end-effector pose."""
@@ -270,6 +295,18 @@ class WidowX_ObservationDomeDriver:
         :param return_report: if `True`, return a detailed report dictionary
         :return: `True` if the move was safe and succeeded; otherwise `False`
         """
+        if self._is_current_lat_long(lat_index, long_index):
+            report = {
+                'safe': True,
+                'reachable': True,
+                'success': True,
+                'executed': False,
+                'status': 'already_reached',
+            }
+            if return_report:
+                return report
+            return report['success']
+
         command_pose = self.get_lat_long_pose_components(
             lat_index=lat_index,
             long_index=long_index,
@@ -279,6 +316,8 @@ class WidowX_ObservationDomeDriver:
             **command_pose,
             **kwargs,
         )
+        if report['success'] and report['executed']:
+            self._record_current_lat_long(lat_index, long_index)
         if return_report:
             return report
         return report['success']
@@ -320,6 +359,19 @@ class WidowX_ObservationDomeDriver:
             long_index=long_index,
             target=target,
         )
+        if self._is_current_lat_long(lat_index, long_index):
+            report = {
+                'safe': True,
+                'reachable': True,
+                'success': True,
+                'executed': False,
+                'status': 'already_reached',
+            }
+            result = (True, command_pose, 'already_reached')
+            if return_report:
+                return result + (report,)
+            return result
+
         reachability_report = self.is_lat_long_reachable(
             lat_index=lat_index,
             long_index=long_index,

@@ -50,6 +50,7 @@ class SimpleHighLowMobileCameraDecision(AbstractMobileCameraDecision):
         if robot_position is None:
             return 0.0
         try:
+            print(f"Height threshold is {self.height_threshold}, robot height is {robot_position['height']}")
             return robot_position["height"]
         except (KeyError, TypeError):
             return robot_position.height

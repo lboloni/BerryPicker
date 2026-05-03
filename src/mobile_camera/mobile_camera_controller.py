@@ -51,7 +51,7 @@ class MobileCamera:
         decision_config = exp.get("decision", {})
         self.decision = SimpleHighLowMobileCameraDecision(
             self.dome_driver,
-            height_threshold=decision_config.get("height_threshold", 0.5),
+            height_threshold=decision_config.get("height_threshold", 3.0),
             middle_lat_index=decision_config.get("middle_lat_index", None),
             middle_long_index=decision_config.get("middle_long_index", 0),
             reachability_kwargs=decision_config.get("reachability_kwargs", {}),
@@ -74,6 +74,7 @@ class MobileCamera:
         """Move the mobile camera to a latitude/longitude node on the dome."""
         move_kwargs = dict(self.move_kwargs)
         move_kwargs.update(kwargs)
+        print(f"Moving mobile camera to lat {lat_index}, long {long_index} with kwargs {move_kwargs}")
         return self.dome_driver.try_move_to_lat_long(
             lat_index,
             long_index,
