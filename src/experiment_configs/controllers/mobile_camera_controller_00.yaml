@@ -20,9 +20,9 @@ default_long_index: 0
 
 decision:
   type: "simple_high_low"
-  height_threshold: 0.5
+  height_threshold: 4.0
   middle_lat_index: 5
-  middle_long_index: 0
+  middle_long_index: 5
 
 safety_box:
   x: [0.0, 0.40]

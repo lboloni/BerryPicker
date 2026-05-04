@@ -28,7 +28,7 @@ class SimpleHighLowMobileCameraDecision(AbstractMobileCameraDecision):
     def __init__(
         self,
         dome_driver,
-        height_threshold=0.5,
+        height_threshold=4.0,
         middle_lat_index=None,
         middle_long_index=0,
         reachability_kwargs=None,
