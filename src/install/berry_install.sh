@@ -30,7 +30,8 @@ pip install ipykernel
 pip install pyyaml papermill numpy pyserial opencv-python
 pip install approxeng.input
 pip install pillow matplotlib pandas
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu132
 
 # install the script for approxeng
 cp ~/WORK/BerryPicker/src/BerryPicker/src/install/microsoft_xbox_360_pad_v1118_p654.yaml ~/.approxeng.input/
