@@ -133,8 +133,7 @@ def load_demonstrations_as_proprioception_training(
 
         for i in range(demo.metadata["maxsteps"]):
             sensor_readings, _ = demo.get_image(
-                i, camera=camera, transform=transform, device=device
-            )
+                i, camera=camera, transform=transform)
             z = sp.process(sensor_readings)
             rp = demo.get_action(i, "rc-position-target", exp_robot)
             anorm = rp.to_normalized_vector(exp_robot)
