@@ -16,6 +16,15 @@ import torch
 from torchvision import transforms
 
 
+def _model_file(exp):
+    return Path(exp["data_dir"]) / exp["proprioception_mlp_model_file"]
+
+
+def model_available(exp):
+    """Return whether the final model file configured by ``exp`` exists."""
+    return _model_file(exp).is_file()
+
+
 def find_latest_checkpoint(model_dir):
     """Return the most recent epoch checkpoint and its epoch number."""
     checkpoint_dir = Path(model_dir) / "checkpoints"
@@ -53,9 +62,7 @@ def train_model(exp, model, optimizer, model_training_step,
     if keep_checkpoints < 1:
         raise ValueError("keep_checkpoints must be at least 1")
 
-    modelfile = (
-        Path(exp["data_dir"]) / exp["proprioception_mlp_model_file"]
-    )
+    modelfile = _model_file(exp)
     if epochs is None:
         epochs = exp.get("epochs", 20)
 
@@ -150,12 +157,10 @@ def load_or_train(exp, model, optimizer, model_training_step,
     """
     device = Config().runtime["device"]
     model = model.to(device)
-    modelfile = (
-        Path(exp["data_dir"]) / exp["proprioception_mlp_model_file"]
-    )
+    modelfile = _model_file(exp)
     num_epochs = epochs if epochs is not None else exp.get("epochs", 20)
 
-    if modelfile.exists() and exp.get("reload_existing_model", True):
+    if model_available(exp) and exp.get("reload_existing_model", True):
         print(f"Loading existing model from {modelfile}")
         model_state = torch.load(
             modelfile, map_location=device, weights_only=True
