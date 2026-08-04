@@ -1,4 +1,5 @@
 import sys
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -179,6 +180,227 @@ class TestHelperTrainingData(unittest.TestCase):
                     helper_training_data.load_images_as_proprioception_training(
                         self.exp, {}, training_fraction=fraction
                     )
+
+
+class TestMultiviewHelperTrainingData(unittest.TestCase):
+    def setUp(self):
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.data_dir = Path(self.temporary_directory.name)
+        self.robot_exp = {"robot": "configuration"}
+        self.exp = {
+            "data_dir": str(self.data_dir),
+            "proprioception_input_file": "train-inputs.pt",
+            "proprioception_target_file": "train-targets.pt",
+            "proprioception_test_input_file": "validation-inputs.pt",
+            "proprioception_test_target_file": "validation-targets.pt",
+            "training_data": [
+                ["demo-run", "training-demo", ["camera-2", "camera-1"]]
+            ],
+            "validation_data": [
+                ["demo-run", "validation-demo", ["camera-2", "camera-1"]]
+            ],
+            "image_size": [8, 8],
+            "num_views": 2,
+        }
+
+    def tearDown(self):
+        self.temporary_directory.cleanup()
+
+    def _patch_demonstrations(self):
+        robot_exp = self.robot_exp
+
+        class FakePosition:
+            def __init__(self, index):
+                self.index = index
+
+            def to_normalized_vector(self, received_robot_exp):
+                assert received_robot_exp is robot_exp
+                return np.array(
+                    [self.index, self.index + 0.5], dtype=np.float32
+                )
+
+        class FakeDemonstration:
+            def __init__(self, _exp_demo, demo_name):
+                self.demo_name = demo_name
+                self.metadata = {
+                    "cameras": ["camera-1", "camera-2"],
+                    "maxsteps": 2 if demo_name == "training-demo" else 1,
+                }
+
+            def get_image(self, index, transform, camera):
+                assert transform == "transform"
+                camera_value = 20 if camera == "camera-2" else 10
+                return torch.tensor([[camera_value + index]], dtype=torch.float32), None
+
+            def get_action(self, index, action_name, received_robot_exp):
+                assert action_name == "rc-position-target"
+                assert received_robot_exp is robot_exp
+                return FakePosition(index)
+
+        def fake_get_experiment(_config, experiment, run):
+            return {"experiment": experiment, "run": run}
+
+        return (
+            patch.object(
+                helper_training_data.Config,
+                "get_experiment",
+                new=fake_get_experiment,
+            ),
+            patch.object(
+                helper_training_data,
+                "get_transform_to_sp",
+                return_value="transform",
+            ),
+            patch.object(
+                helper_training_data,
+                "Demonstration",
+                FakeDemonstration,
+            ),
+        )
+
+    def test_builds_ordered_training_and_explicit_validation_sets(self):
+        config_patch, transform_patch, demonstration_patch = (
+            self._patch_demonstrations()
+        )
+        with config_patch, transform_patch, demonstration_patch:
+            result = (
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp, self.robot_exp
+                )
+            )
+
+        self.assertEqual(len(result["view_inputs_training"]), 2)
+        self.assertEqual(len(result["targets_training"]), 2)
+        self.assertEqual(len(result["targets_validation"]), 1)
+        self.assertEqual(
+            result["view_inputs_training"][0].flatten().tolist(),
+            [20.0, 21.0],
+        )
+        self.assertEqual(
+            result["view_inputs_training"][1].flatten().tolist(),
+            [10.0, 11.0],
+        )
+        for filename in (
+            "train-inputs.pt",
+            "train-inputs.pt.manifest.json",
+            "train-targets.pt",
+            "validation-inputs.pt",
+            "validation-inputs.pt.manifest.json",
+            "validation-targets.pt",
+        ):
+            self.assertTrue((self.data_dir / filename).exists())
+
+    def test_cached_training_data_can_use_reproducible_fallback_split(self):
+        self.exp.pop("validation_data")
+        views = [
+            torch.arange(6, dtype=torch.float32).reshape(6, 1),
+            torch.arange(10, 16, dtype=torch.float32).reshape(6, 1),
+        ]
+        targets = torch.arange(6, dtype=torch.float32).reshape(6, 1)
+        torch.save(views, self.data_dir / "train-inputs.pt")
+        torch.save(targets, self.data_dir / "train-targets.pt")
+        manifest = helper_training_data._multiview_cache_manifest(
+            self.exp, "training_data"
+        )
+        with (self.data_dir / "train-inputs.pt.manifest.json").open(
+            "w", encoding="utf-8"
+        ) as handle:
+            json.dump(manifest, handle)
+
+        with patch.object(
+            helper_training_data,
+            "get_transform_to_sp",
+            return_value="unused",
+        ):
+            first = (
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp,
+                    self.robot_exp,
+                    generator=torch.Generator().manual_seed(17),
+                )
+            )
+            second = (
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp,
+                    self.robot_exp,
+                    generator=torch.Generator().manual_seed(17),
+                )
+            )
+
+        self.assertTrue(
+            torch.equal(
+                first["targets_training"], second["targets_training"]
+            )
+        )
+        for view, target_offset in zip(
+            first["view_inputs_training"], (0, 10)
+        ):
+            self.assertTrue(
+                torch.equal(
+                    view.flatten() - target_offset,
+                    first["targets_training"].flatten(),
+                )
+            )
+
+    def test_rebuilds_legacy_cache_without_manifest(self):
+        torch.save(
+            [torch.full((1, 1), -1.0), torch.full((1, 1), -1.0)],
+            self.data_dir / "train-inputs.pt",
+        )
+        torch.save(
+            torch.full((1, 2), -1.0), self.data_dir / "train-targets.pt"
+        )
+
+        config_patch, transform_patch, demonstration_patch = (
+            self._patch_demonstrations()
+        )
+        with config_patch, transform_patch, demonstration_patch:
+            result = (
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp, self.robot_exp
+                )
+            )
+
+        self.assertEqual(len(result["targets_training"]), 2)
+        self.assertNotEqual(
+            result["view_inputs_training"][0][0].item(), -1.0
+        )
+
+    def test_requires_an_ordered_camera_list(self):
+        self.exp["training_data"][0][2] = "camera-2,camera-1"
+        with patch.object(
+            helper_training_data,
+            "get_transform_to_sp",
+            return_value="transform",
+        ):
+            with self.assertRaisesRegex(ValueError, "ordered list"):
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp, self.robot_exp
+                )
+
+    def test_rejects_cached_view_count_mismatch(self):
+        torch.save(
+            [torch.zeros((2, 1))], self.data_dir / "train-inputs.pt"
+        )
+        torch.save(
+            torch.zeros((2, 1)), self.data_dir / "train-targets.pt"
+        )
+        manifest = helper_training_data._multiview_cache_manifest(
+            self.exp, "training_data"
+        )
+        with (self.data_dir / "train-inputs.pt.manifest.json").open(
+            "w", encoding="utf-8"
+        ) as handle:
+            json.dump(manifest, handle)
+        with patch.object(
+            helper_training_data,
+            "get_transform_to_sp",
+            return_value="unused",
+        ):
+            with self.assertRaisesRegex(ValueError, "expected 2"):
+                helper_training_data.load_multiview_images_as_proprioception_training(
+                    self.exp, self.robot_exp
+                )
 
 
 if __name__ == "__main__":
