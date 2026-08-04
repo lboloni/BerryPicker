@@ -41,7 +41,7 @@ from visual_proprioception.visproprio_helper import load_demonstrations_as_propr
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 import sensorprocessing.sp_factory as sp_factory
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = Config().runtime["device"]
 print(f"Using device: {device}")
 
 
@@ -132,7 +132,7 @@ for subrun in runs:
     subexps.append(subexp)
     spexp = Config().get_experiment(subexp["sp_experiment"], subexp["sp_run"])
     spexps.append(spexp)
-    sp = sp_factory.create_sp(spexp, device)
+    sp = sp_factory.create_sp(spexp)
     sps.append(sp)
     model = VisProprio_SimpleMLPRegression(subexp)
     modelfile = pathlib.Path(subexp["data_dir"],
@@ -167,7 +167,7 @@ else:
     # Use original single-view loading function
     # These are actually just using the last ones
     tr = load_demonstrations_as_proprioception_training(
-        sps[0], firstexp, spexps[0], exp_robot, "validation_data", proprioception_input_file, proprioception_target_file, device=device
+        sps[0], firstexp, spexps[0], exp_robot, "validation_data", proprioception_input_file, proprioception_target_file
     )
 
 
@@ -230,7 +230,7 @@ for subexp, sp, spexp, model in zip(subexps, sps, spexps, models):
     else:
         # Original single-view approach
         tr = load_demonstrations_as_proprioception_training(
-            sp, subexp, spexp, exp_robot, "validation_data", proprioception_input_file, proprioception_target_file, device=device
+            sp, subexp, spexp, exp_robot, "validation_data", proprioception_input_file, proprioception_target_file
         )
         inputs = tr["inputs"]
         ypred = []
@@ -463,4 +463,3 @@ graphfilename = pathlib.Path(exp["data_dir"], "msecomparison-robi.pdf")
 plt.savefig(graphfilename, bbox_inches='tight')
 graphfilename = pathlib.Path(exp["data_dir"], "msecomparison-robi.jpg")
 plt.savefig(graphfilename, bbox_inches='tight')
-

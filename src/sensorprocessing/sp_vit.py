@@ -197,7 +197,6 @@ class VitSensorProcessing(AbstractSensorProcessing):
 
         Args:
             exp (dict): Experiment configuration dictionary
-            device (str, optional): Device to run the model on. Defaults to "cpu".
         """
         super().__init__(exp)
 
@@ -239,5 +238,4 @@ class VitSensorProcessing(AbstractSensorProcessing):
             z = self.enc.encode(sensor_readings)
         z = torch.squeeze(z)
         return z.cpu().numpy()
-
 

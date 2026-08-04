@@ -68,13 +68,15 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         self.model = self.vae_config.init_obj('arch', module_arch)
         self.loss_fn = getattr(module_loss, self.vae_config['loss'])
         # loading the checkpoint, have to set weights_only false here
-        self.checkpoint = torch.load(self.vae_config.resume, 
-                                     weights_only = False, map_location=torch.device('cpu'))
+        self.checkpoint = torch.load(
+            self.vae_config.resume,
+            weights_only=False,
+            map_location=Config().runtime["device"],
+        )
         self.state_dict = self.checkpoint['state_dict']
         self.model.load_state_dict(self.state_dict)
         # prepare model for testing
-        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = self.model.to(self.device)
+        self.model = self.model.to(Config().runtime["device"])
         self.model.eval()
         self.transform = get_transform_to_sp(exp)
 
@@ -86,7 +88,3 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
             self.output, self.mu, self.logvar = self.model(sensor_readings)
         mus = torch.squeeze(self.mu)
         return mus.cpu().numpy()
-    
-
-        
-        

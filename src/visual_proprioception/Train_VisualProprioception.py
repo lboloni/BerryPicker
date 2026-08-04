@@ -36,7 +36,7 @@ from visual_proprioception.visproprio_helper import load_demonstrations_as_propr
 
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = Config().runtime["device"]
 print(f"Using device: {device}")
 
 
@@ -169,7 +169,7 @@ pprint(exp)
 
 # Create the sp object described in the experiment
 spexp = Config().get_experiment(exp["sp_experiment"], exp["sp_run"])
-sp = create_sp(spexp, device)
+sp = create_sp(spexp)
 exp_robot = Config().get_experiment(exp["robot_exp"], exp["robot_run"])
 
 
@@ -208,7 +208,7 @@ proprioception_input_file = pathlib.Path(
 proprioception_target_file = pathlib.Path(
     exp.data_dir(), exp["proprioception_target_file"])
 tr = load_demonstrations_as_proprioception_training(
-    sp, exp, spexp, exp_robot, "training_data", proprioception_input_file, proprioception_target_file, device=device
+    sp, exp, spexp, exp_robot, "training_data", proprioception_input_file, proprioception_target_file
 )
 
 inputs_training = tr["inputs"]
@@ -222,7 +222,7 @@ proprioception_test_target_file = pathlib.Path(
 
 exp.start_timer("load-demos-as-proprioception-training")
 tr_test = load_demonstrations_as_proprioception_training(
-    sp, exp, spexp, exp_robot, "validation_data", proprioception_test_input_file, proprioception_test_target_file, device=device
+    sp, exp, spexp, exp_robot, "validation_data", proprioception_test_input_file, proprioception_test_target_file
 )
 exp.end_timer("load-demos-as-proprioception-training")
 
@@ -549,7 +549,6 @@ exp["timer-load-demos-as-proprioception-training-end"]
 
 
 # In[ ]:
-
 
 
 

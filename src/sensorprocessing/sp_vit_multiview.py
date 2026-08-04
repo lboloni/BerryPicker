@@ -342,7 +342,6 @@ class MultiViewVitSensorProcessing(AbstractSensorProcessing):
 
         Args:
             exp (dict): Experiment configuration dictionary
-            device (str, optional): Device to run the model on. Defaults to "cpu".
         """
         super().__init__(exp)
 

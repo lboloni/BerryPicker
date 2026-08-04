@@ -71,18 +71,17 @@ def external_setup(setupname, rootdir: pathlib.Path):
     return exprun_path, result_path
 
 
-def get_visual_proprioception_sp(exp, device):
+def get_visual_proprioception_sp(exp):
     """Get the sensor processing component for a visual proprioception experiment.
 
     Args:
         exp: Visual proprioception experiment configuration
-        device: Device to load the model on
 
     Returns:
         Sensor processing object
     """
     spexp = Config().get_experiment(exp["sp_experiment"], exp["sp_run"])
-    return sp_factory.create_sp(spexp, device)
+    return sp_factory.create_sp(spexp)
 
 
 def load_demonstrations_as_proprioception_training(
@@ -93,7 +92,6 @@ def load_demonstrations_as_proprioception_training(
     datasetname,
     proprioception_input_file,
     proprioception_target_file,
-    device=None
 ):
     """Loads all the images from the specified dataset and creates the input
     and target tensors for single-view proprioception training.
@@ -109,7 +107,6 @@ def load_demonstrations_as_proprioception_training(
         datasetname: "training_data" or "validation_data"
         proprioception_input_file: Path to save/load processed inputs
         proprioception_target_file: Path to save/load processed targets
-        device: Device to load tensors to
 
     Returns:
         Dictionary with 'inputs' and 'targets' tensors
@@ -161,7 +158,6 @@ def load_multiview_demonstrations_as_proprioception_training(
     datasetname,
     proprioception_input_file,
     proprioception_target_file,
-    device=None
 ):
     """Loads all the images from the specified dataset from multiple cameras and creates
     the input and target tensors for visual proprioception training.
@@ -177,7 +173,6 @@ def load_multiview_demonstrations_as_proprioception_training(
         datasetname: "training_data" or "validation_data"
         proprioception_input_file: Path to save/load processed inputs
         proprioception_target_file: Path to save/load processed targets
-        device: Device to load tensors to
 
     Returns:
         Dictionary with inputs and targets (encoded latents, not raw images)
@@ -216,7 +211,7 @@ def load_multiview_demonstrations_as_proprioception_training(
             for camera in cameras[:num_views]:
                 try:
                     sensor_readings, _ = demo.get_image(
-                        i, camera=camera, transform=transform, device=device
+                        i, camera=camera, transform=transform
                     )
                     view_images.append(sensor_readings)  # Keep batch dimension
                 except Exception as e:
@@ -258,7 +253,6 @@ def load_multiview_raw_images_as_training(
     datasetname,
     view_inputs_file,
     targets_file,
-    device=None
 ):
     """Loads raw images from multiple cameras for SP encoder training.
 
@@ -272,7 +266,6 @@ def load_multiview_raw_images_as_training(
         datasetname: "training_data" or "validation_data"
         view_inputs_file: Path to save/load raw view images
         targets_file: Path to save/load targets
-        device: Device to load tensors to
 
     Returns:
         Dictionary with:
@@ -319,7 +312,7 @@ def load_multiview_raw_images_as_training(
             for camera in cameras[:num_views]:
                 try:
                     sensor_readings, _ = demo.get_image(
-                        i, device=device, transform=transform, camera=camera
+                        i, transform=transform, camera=camera
                     )
                     frame_images[camera] = sensor_readings[0]  # Remove batch dim
                 except Exception as e:
@@ -541,7 +534,7 @@ def collate_multiview(batch):
 
 
 
-# def load_demonstrations_as_proprioception_training(sp, exp: Experiment, spexp: Experiment, exp_robot: Experiment, datasetname, proprioception_input_file, proprioception_target_file, device=None):
+# def load_demonstrations_as_proprioception_training(sp, exp: Experiment, spexp: Experiment, exp_robot: Experiment, datasetname, proprioception_input_file, proprioception_target_file):
 #     """Loads all the images from the specified dataset and creates the input and target tensors. """
 #     if proprioception_input_file.exists():
 #         retval = {}
@@ -559,7 +552,7 @@ def collate_multiview(batch):
 #         exp_demo = Config().get_experiment("demonstration", run)
 #         demo = Demonstration(exp_demo, demo_name)
 #         for i in range(demo.metadata["maxsteps"]):
-#             sensor_readings, _ = demo.get_image(i, camera=camera, transform=transform, device=device)
+#             sensor_readings, _ = demo.get_image(i, camera=camera, transform=transform)
 #             z = sp.process(sensor_readings)
 #             # a = demo.get_action(i)
 #             rp = demo.get_action(i, "rc-position-target", exp_robot)
@@ -586,7 +579,6 @@ def collate_multiview(batch):
 #     datasetname,                     # "training_data" or "validation_data"
 #     proprioception_input_file,       # Explicit file path
 #     proprioception_target_file,      # Explicit file path
-#     device=None
 # ):
 #     """Loads all the images from the specified dataset from multiple cameras and creates
 #     the input and target tensors for VP training.
@@ -601,7 +593,6 @@ def collate_multiview(batch):
 #         datasetname: "training_data" or "validation_data"
 #         proprioception_input_file: Path to save/load processed inputs
 #         proprioception_target_file: Path to save/load processed targets
-#         device: Device to load tensors to
 
 #     Returns:
 #         Dictionary with inputs and targets (encoded latents, not raw images)
@@ -634,7 +625,7 @@ def collate_multiview(batch):
 #             for camera in cameras[:num_views]:
 #                 try:
 #                     sensor_readings, _ = demo.get_image(
-#                         i, camera=camera, transform=transform, device=device
+#                         i, camera=camera, transform=transform
 #                     )
 #                     view_images.append(sensor_readings)  # Keep batch dimension
 #                 except Exception as e:
@@ -700,7 +691,7 @@ def collate_multiview(batch):
 #     #     for i in range(demo.metadata["maxsteps"]):
 #     #         S = []
 #     #         for cam in cameras:
-#     #             sensor_readings, _ = demo.get_image(i, camera=cam, transform=transform, device=device)
+#     #             sensor_readings, _ = demo.get_image(i, camera=cam, transform=transform)
 #     #             z = sp.process(sensor_readings)
 #     #             S.append(sensor_readings)
 #     #         # create the concatenated ...

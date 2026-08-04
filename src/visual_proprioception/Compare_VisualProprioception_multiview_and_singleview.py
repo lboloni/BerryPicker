@@ -38,7 +38,7 @@ from visual_proprioception.visproprio_helper import (
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 import sensorprocessing.sp_factory as sp_factory
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = Config().runtime["device"]
 print(f"Using device: {device}")
 
 
@@ -182,7 +182,7 @@ for subrun in runs:
     spexps.append(spexp)
 
     # Load and ensure sensor processor is on the right device
-    sp = sp_factory.create_sp(spexp, device)
+    sp = sp_factory.create_sp(spexp)
     if hasattr(sp, 'enc') and hasattr(sp.enc, 'to'):
         sp.enc = force_to_device(sp.enc, device)
     if hasattr(sp, 'model') and hasattr(sp.model, 'to'):
@@ -242,7 +242,6 @@ for i, (subexp, sp, spexp, model) in enumerate(zip(exps, sps, spexps, models)):
             "validation_data",
             proprioception_input_file,
             proprioception_target_file,
-            device=device
         )
 
         inputs = tr["inputs"]
@@ -274,7 +273,6 @@ for i, (subexp, sp, spexp, model) in enumerate(zip(exps, sps, spexps, models)):
             "validation_data",
             proprioception_input_file,
             proprioception_target_file,
-            device=device
         )
 
         inputs = tr["inputs"]
@@ -450,4 +448,3 @@ best_name = exps[best_idx].get("name", f"model_{best_idx}")
 print(f"\nBest model: {best_name}")
 
 print("\nComparison complete!")
-

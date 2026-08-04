@@ -20,7 +20,7 @@ class RCCO_VAE(AbstractRCComponent):
         self.outputs["mu"] = None
         self.outputs["logvar"] = None
         self.exp_sp = Config().get_experiment(self.exp["sp_experiment"], self.exp["sp_run"])
-        self.sp = sensorprocessing.sp_factory.create_sp(self.exp_sp, Config().runtime["device"])
+        self.sp = sensorprocessing.sp_factory.create_sp(self.exp_sp)
 
     def propagate(self):
         """The input is a picture. The output is the z encoding which is the mu value, as well as the log of the variance. Normally only the z is used."""

@@ -330,14 +330,14 @@ class ConcatConvVaeSensorProcessing(_SingleViewSP):
 
 #     _ALLOWED = {"width", "channel"}
 
-#     def __init__(self, exp: dict, device: torch.device | str = "cpu") -> None:
+#     def __init__(self, exp: dict) -> None:
 #         self.num_views = exp.get("num_views", 2)
 #         self.stack_mode: str = exp.get("stack_mode", "width").lower()
 #         if self.stack_mode not in self._ALLOWED:
 #             raise ValueError(
 #                 f"invalid stack_mode {self.stack_mode}; choose one of {self._ALLOWED}"
 #             )
-#         super().__init__(exp, device)
+#         super().__init__(exp)
 
 #     # ------------------------------------------------------------------
 #     #  helpers
@@ -383,4 +383,3 @@ class ConcatConvVaeSensorProcessing(_SingleViewSP):
 #     @property
 #     def enc(self):
 #         return self
-

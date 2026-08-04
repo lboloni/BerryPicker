@@ -35,7 +35,7 @@ from visual_proprioception.visproprio_helper import (
 )
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = Config().runtime["device"]
 print(f"Using device: {device}")
 
 
@@ -156,7 +156,7 @@ print(f"Using device: {device}")
 # exp = Config().get_experiment(experiment, run)
 # pprint(exp)
 
-# sp = get_visual_proprioception_sp(exp, device)
+# sp = get_visual_proprioception_sp(exp)
 
 
 # In[ ]:
@@ -206,7 +206,7 @@ exp = Config().get_experiment(experiment, run, creation_style=creation_style)
 pprint(exp)
 
 # Get sensor processor
-sp = get_visual_proprioception_sp(exp, device)
+sp = get_visual_proprioception_sp(exp)
 
 # Get robot experiment for normalization
 exp_robot = Config().get_experiment(
@@ -284,7 +284,6 @@ if is_multiview:
         "training_data",
         proprioception_input_file,
         proprioception_target_file,
-        device=device
     )
 
     # For multiview, inputs are already encoded latents
@@ -304,7 +303,6 @@ if is_multiview:
         "validation_data",
         val_input_file,
         val_target_file,
-        device=device
     )
 
     inputs_validation = tr_val["inputs"]
@@ -323,7 +321,6 @@ else:
         "training_data",
         proprioception_input_file,
         proprioception_target_file,
-        device=device
     )
 
     inputs_training = tr["inputs"]
@@ -342,7 +339,6 @@ else:
         "validation_data",
         val_input_file,
         val_target_file,
-        device=device
     )
 
     inputs_validation = tr_val["inputs"]
@@ -377,7 +373,7 @@ def has_batch_norm(model):
 
 def train_and_save_proprioception_model(
     model, criterion, optimizer, train_loader, test_loader,
-    modelfile, device="cpu", epochs=100
+    modelfile, epochs=100
 ):
     """Train and save the visual proprioception model.
 
@@ -388,12 +384,12 @@ def train_and_save_proprioception_model(
         train_loader: Training data loader
         test_loader: Validation data loader
         modelfile: Path to save the model
-        device: Training device
         epochs: Number of training epochs
 
     Returns:
         Trained model
     """
+    device = Config().runtime["device"]
     model = model.to(device)
 
     # Checkpoint directory
@@ -553,7 +549,7 @@ else:
     model = train_and_save_proprioception_model(
         model, criterion, optimizer,
         train_loader, test_loader,
-        modelfile, device=device, epochs=epochs
+        modelfile, epochs=epochs
     )
 
 
@@ -584,4 +580,3 @@ else:
 
 print(f"\nTraining complete! Model saved to:")
 print(f"  {modelfile}")
-

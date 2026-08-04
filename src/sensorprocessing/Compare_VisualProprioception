@@ -41,6 +41,8 @@ from visual_proprioception.visproprio_helper import load_demonstrations_as_propr
 from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 import sensorprocessing.sp_factory as sp_factory
 
+device = Config().runtime["device"]
+
 
 # In[2]:
 
@@ -224,7 +226,7 @@ for subexp, sp, spexp, model in zip(subexps, sps, spexps, models):
     else:
         # Original single-view approach
         tr = load_demonstrations_as_proprioception_training(
-            sp, subexp, spexp, exp_robot, "validation_data", proprioception_input_file, proprioception_target_file, device=device
+            sp, subexp, spexp, exp_robot, "validation_data", proprioception_input_file, proprioception_target_file
         )        
         inputs = tr["inputs"]
         ypred = []
@@ -457,4 +459,3 @@ graphfilename = pathlib.Path(exp["data_dir"], "msecomparison-robi.pdf")
 plt.savefig(graphfilename, bbox_inches='tight')
 graphfilename = pathlib.Path(exp["data_dir"], "msecomparison-robi.jpg")
 plt.savefig(graphfilename, bbox_inches='tight')
-
