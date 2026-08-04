@@ -1,5 +1,8 @@
+model_name: "VGG-19"
 latent_size: 128
-model_name: "vit_multiview"
+
+image_size: [256, 256]
+num_views: 2
 
 proprioception_mlp_model_file: "proprioception_mlp.pth"
 proprioception_input_file: "train_inputs.pt"
@@ -7,8 +10,9 @@ proprioception_target_file: "train_targets.pt"
 proprioception_test_input_file: "test_inputs.pt"
 proprioception_test_target_file: "test_targets.pt"
 
-proprioception_training_task: 'proprioception-cluttered'
-proprioception_testing_task: 'proprioception-uncluttered'
+proprioception_training_task: "proprioception-cluttered"
+proprioception_testing_task: "proprioception-uncluttered"
+
 robot_exp: "robot_al5d"
 robot_run: "position_controller_00"
 
@@ -16,9 +20,6 @@ robot_run: "position_controller_00"
 training_data:
   - ["random-both-cameras-video", "2025_03_08__14_15_53", ["dev2", "dev3"]]
 
-#  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
-#  - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
-#  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
 validation_data:
   - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
   - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]

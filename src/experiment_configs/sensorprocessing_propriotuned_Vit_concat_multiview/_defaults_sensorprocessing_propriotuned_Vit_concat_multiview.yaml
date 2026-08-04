@@ -15,15 +15,15 @@ proprioception_testing_task: 'proprioception-uncluttered'
 robot_exp: "robot_al5d"
 robot_run: "position_controller_00"
 
+# Entries are demonstration run, demonstration name, and ordered camera views.
 training_data:
-  - ["random-both-cameras-video", "2025_03_08__14_15_53" , "dev2,dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", ["dev2", "dev3"]]
 
 #  - ["random-both-cameras-video", "2025_03_08__14_16_57" , "dev2"]
 #  - ["random-both-cameras-video", "2025_03_08__14_19_12" , "dev2"]
 #  - ["random-both-cameras-video", "2025_03_08__14_21_28" , "dev2"]
 
 
-# the validation data in the demonstration / subrun form
 validation_data:
-  - ["random-both-cameras-video", "2025_03_08__14_23_19" ,  "dev2,dev3"]
-  - ["random-both-cameras-video", "2025_03_08__14_24_52" ,  "dev2,dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]

@@ -20,7 +20,7 @@ proprio_step_2: 64
 regressor_hidden_size_1: 64
 regressor_hidden_size_2: 64
 latent_size: 256       # Size of the latent embedding to generate
-image_size: 224        # Required input size for the ViT model
+image_size: [224, 224] # Required input size for the ViT model
 
 
 

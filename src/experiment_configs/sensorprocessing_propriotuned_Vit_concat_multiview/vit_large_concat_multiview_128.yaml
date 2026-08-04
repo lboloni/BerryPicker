@@ -14,7 +14,7 @@ vit_weights: "DEFAULT"  # Use DEFAULT for the standard pretrained weights
 vit_output_dim: 1024 # Output dimension of the base ViT Large Model
 # vit_output_dim:: 1280
 latent_size: 128       # Size of the latent embedding to generate
-image_size: 224        # Required input size for the ViT model
+image_size: [224, 224] # Required input size for the ViT model
 loss: "MSE"
 # Training parameters
 batch_size: 32
