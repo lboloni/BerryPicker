@@ -1,39 +1,109 @@
-"""Shared model training, checkpointing, and resume helpers."""
+"""
+runner.py
+
+Training-loop orchestration for the shared training harness.
+"""
 
 import re
-from pathlib import Path
 
 import torch
 
 from exp_run_config import Config
+from .checkpoints import (
+    CheckpointStore,
+    TrainingState,
+    _model_file,
+    find_latest_checkpoint,
+    model_available,
+)
 
 Config.PROJECTNAME = "BerryPicker"
 
 
-def _model_file(exp):
-    return Path(exp["data_dir"]) / exp["proprioception_mlp_model_file"]
+def train_with_checkpoints(
+    exp,
+    model,
+    optimizer,
+    train_epoch,
+    evaluate_epoch,
+    *,
+    checkpoint_store=None,
+    scheduler=None,
+    progress=None,
+    restart_from_best=False,
+    on_completed_model_loaded=None,
+):
+    """Run model-specific epoch callbacks under a shared checkpoint harness.
 
+    ``train_epoch`` receives ``(model, optimizer, epoch, state,
+    on_batch_error)`` and returns the mean training loss. ``evaluate_epoch``
+    receives ``model`` and returns the mean validation loss.
+    """
+    device = Config().runtime["device"]
+    model = model.to(device)
+    store = checkpoint_store or CheckpointStore(
+        exp["data_dir"], exp["proprioception_mlp_model_file"]
+    )
 
-def model_available(exp):
-    """Return whether the final model file configured by ``exp`` exists."""
-    return _model_file(exp).is_file()
+    if (
+        not restart_from_best
+        and exp.get("reload_existing_model", True)
+        and store.load_completed_model(model, device)
+    ):
+        if on_completed_model_loaded is not None:
+            on_completed_model_loaded(model)
+        return model
 
+    if restart_from_best:
+        state = store.restart_from_best(model, optimizer, device, scheduler)
+        if state is None:
+            print("No best checkpoint found; starting a new training run")
+            state = TrainingState()
+    else:
+        state = store.resume_latest(model, optimizer, device, scheduler)
+        if state.next_epoch == 0:
+            print(f"Starting new training for {exp['epochs']} epochs")
 
-def find_latest_checkpoint(model_dir):
-    """Return the most recent epoch checkpoint and its epoch number."""
-    checkpoint_dir = Path(model_dir) / "checkpoints"
-    epoch_checkpoints = []
+    epochs = range(state.next_epoch, exp["epochs"])
+    if progress is not None:
+        epochs = progress(epochs)
 
-    for checkpoint_file in checkpoint_dir.glob("epoch_*.pth"):
-        match = re.fullmatch(r"epoch_(\d+)\.pth", checkpoint_file.name)
-        if match:
-            epoch_checkpoints.append((int(match.group(1)), checkpoint_file))
+    for epoch in epochs:
+        def on_batch_error(batch, partial_loss, error):
+            print(f"Error in batch {batch}: {error}")
+            store.save_emergency(
+                epoch, batch, state, model, optimizer, partial_loss, scheduler
+            )
 
-    if not epoch_checkpoints:
-        return None, 0
+        train_loss = train_epoch(model, optimizer, epoch, state, on_batch_error)
+        validation_loss = evaluate_epoch(model)
+        improved = validation_loss < state.best_loss
+        if improved:
+            state.best_loss = validation_loss
 
-    latest_epoch, latest_file = max(epoch_checkpoints)
-    return latest_file, latest_epoch
+        if scheduler is not None:
+            scheduler.step(validation_loss)
+
+        store.save_epoch(
+            epoch, state, model, optimizer, train_loss, validation_loss, scheduler
+        )
+        if improved:
+            store.save_best(
+                epoch, state, model, optimizer, train_loss, validation_loss,
+                scheduler,
+            )
+
+        print(
+            f"Epoch [{epoch + 1}/{exp['epochs']}], Train Loss: "
+            f"{train_loss:.4f}, Validation Loss: {validation_loss:.4f}"
+        )
+
+    if store.restore_best_for_export(model, device):
+        print(f"Training complete. Best validation loss: {state.best_loss:.4f}")
+    else:
+        print("Training complete without a best checkpoint")
+    store.save_completed_model(model)
+    return model
 
 
 def train_model(

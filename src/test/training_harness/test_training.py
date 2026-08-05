@@ -1,3 +1,9 @@
+"""
+test_training.py
+
+Tests for the shared training harness.
+"""
+
 import sys
 import tempfile
 import unittest
@@ -11,7 +17,7 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from sensorprocessing import helper_training
+from training_harness import runner as helper_training
 
 
 class TestHelperTraining(unittest.TestCase):

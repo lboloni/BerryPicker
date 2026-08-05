@@ -19,3 +19,4 @@ def configure_deterministic_run(seed=777):
     np.random.seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.cuda.manual_seed_all(seed)
+    return seed
