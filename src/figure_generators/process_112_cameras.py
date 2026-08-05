@@ -116,11 +116,11 @@ class Camera112Processor:
             device_folder = f"VisualProprioception_flow_00dev{i:03d}"
 
             # Build path to MSE file
-            # mse_path = self.base_folder / device_folder / "result" / "visual_proprioception" / "vp_comp_flow_all" / "msecomparison_values.csv"
+            # mse_path = self.base_folder / device_folder / "results" / "visual_proprioception" / "vp_comp_flow_all" / "msecomparison_values.csv"
             mse_path = (
                 self.base_folder
                 / device_folder
-                / "result"
+                / "results"
                 / "visual_proprioception"
                 / "vp_comp_flow_all"
                 / "msecomparison_values.csv"
@@ -735,5 +735,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

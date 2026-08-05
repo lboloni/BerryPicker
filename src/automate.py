@@ -11,7 +11,7 @@ def automate_exprun(notebook, name, params):
    """Automates the execution of a notebook. It is assumed that in the notebook there is cell tagged "parameters", and in general that the notebook is idempotent."""
 
    ext_path = pathlib.Path(Config()["experiment_external"])
-   params["external_path"] = str(pathlib.Path(ext_path, "_automate").resolve())
+   params["expruns_path"] = str(pathlib.Path(ext_path, "_automate").resolve())
    notebook_path = pathlib.Path(notebook)
    output_path = pathlib.Path(ext_path, "_automation_output")
    output_filename = f"{notebook_path.stem}_{name}_output{ notebook_path.suffix}"

@@ -55,22 +55,22 @@ def external_setup(setupname, rootdir: pathlib.Path):
     """Create an external directory 'setupname' where the generated exp/runs and results will go. This allows separating a set of experiments both for training and robot running. 
 
     Under this directory, there will be two directories:
-    * 'exprun' - contains the copied necessary expruns from the source code + the programatically generated expruns. 
-    * 'result' - contains the training data and the trained models. 
+    * 'expruns' - contains the copied necessary expruns from the source code + the programatically generated expruns.
+    * 'results' - contains the training data and the trained models.
     
-    The training data should go into result/demonstration under some directory (eg. touch-apple).
+    The training data should go into results/demonstration under some directory (eg. touch-apple).
     """
     setup_path = pathlib.Path(rootdir, setupname)
-    exprun_path = pathlib.Path(setup_path, "exprun")
-    result_path = pathlib.Path(setup_path, "result")
+    expruns_path = pathlib.Path(setup_path, "expruns")
+    results_path = pathlib.Path(setup_path, "results")
 
-    print(f"***Path for external experiments:\n{exprun_path}")
-    exprun_path.mkdir(exist_ok=True, parents=True)
-    print(f"***Path for external data:\n{result_path}")
-    result_path.mkdir(exist_ok=True, parents=True)
+    print(f"***Path for external experiments:\n{expruns_path}")
+    expruns_path.mkdir(exist_ok=True, parents=True)
+    print(f"***Path for external data:\n{results_path}")
+    results_path.mkdir(exist_ok=True, parents=True)
 
-    Config().set_exprun_path(exprun_path)
-    Config().set_results_path(result_path)
+    Config().set_exprun_path(expruns_path)
+    Config().set_results_path(results_path)
 
     # Copy the necessary experiments into the external directory
     Config().copy_experiment("demonstration")
@@ -80,4 +80,4 @@ def external_setup(setupname, rootdir: pathlib.Path):
     Config().copy_experiment("behavior_cloning")
     Config().copy_experiment("controllers")
 
-    return exprun_path, result_path
+    return expruns_path, results_path

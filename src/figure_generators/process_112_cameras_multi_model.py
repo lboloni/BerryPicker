@@ -134,7 +134,7 @@ class Camera112Processor_multi:
             mse_path = (
                 self.base_folder
                 / device_folder
-                / "result"
+                / "results"
                 / "visual_proprioception"
                 / "vp_comp_flow_all"
                 / mse_filename
@@ -1026,4 +1026,3 @@ def main():
     )
 if __name__ == "__main__":
     main()
-

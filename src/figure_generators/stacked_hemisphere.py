@@ -116,7 +116,7 @@ class StackedThreeCategoryHeatmap:
                 continue
 
             # Build path to MSE file - CORRECTED PATH
-            mse_path = (folder / "result" / "visual_proprioception" /
+            mse_path = (folder / "results" / "visual_proprioception" /
                        "vp_comp_flow_all" / "msecomparison_values.csv")
 
             if mse_path.exists():

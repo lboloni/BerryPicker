@@ -1,0 +1,5 @@
+# Defaults for collections of visual-proprioception model runs.
+# Collections list runs from this experiment; they do not define a model.
+source_experiment: visual_proprioception
+robot_exp: robot_al5d
+robot_run: position_controller_00
