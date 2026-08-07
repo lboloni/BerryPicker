@@ -13,7 +13,13 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from sensorprocessing import helper_training_data, sensor_processing, sp_factory, vit_helper
+from sensorprocessing import (
+    helper_training_data,
+    sensor_processing,
+    sp_factory,
+    sp_propriotuned_cnn,
+    vit_helper,
+)
 
 
 class TestMultiViewSensorProcessing(unittest.TestCase):
@@ -128,6 +134,39 @@ class TestViTHelpers(unittest.TestCase):
             )
 
 
+class TestProprioTunedCNNRegression(unittest.TestCase):
+    def test_common_pipeline_encodes_and_predicts(self):
+        class TinyRegression(sp_propriotuned_cnn._ProprioTunedCNNRegression):
+            def create_feature_extractor(self):
+                return torch.nn.Linear(2, 2, bias=False)
+
+            def create_heads(self, _exp):
+                self.reductor = torch.nn.Linear(2, 1, bias=False)
+                self.proprioceptor = torch.nn.Linear(1, 1, bias=False)
+                self.feature_extractor.weight.data.copy_(torch.eye(2))
+                self.reductor.weight.data.copy_(torch.tensor([[2.0, 3.0]]))
+                self.proprioceptor.weight.data.fill_(4.0)
+
+            def encode_flat_features(self, flat_features):
+                return self.reductor(flat_features)
+
+            def predict_from_latent(self, latent):
+                return self.proprioceptor(latent)
+
+        frozen = TinyRegression(
+            {"latent_size": 1, "output_size": 1, "freeze_feature_extractor": True}
+        )
+        trainable = TinyRegression(
+            {"latent_size": 1, "output_size": 1, "freeze_feature_extractor": False}
+        )
+
+        inputs = torch.tensor([[1.0, 2.0]])
+        self.assertTrue(torch.equal(frozen.encode(inputs), torch.tensor([[8.0]])))
+        self.assertTrue(torch.equal(frozen(inputs), torch.tensor([[32.0]])))
+        self.assertFalse(frozen.feature_extractor.weight.requires_grad)
+        self.assertTrue(trainable.feature_extractor.weight.requires_grad)
+
+
 class TestSensorProcessingFactory(unittest.TestCase):
     def test_multiview_class_registry_and_unknown_processor(self):
         self.assertTrue(sp_factory.is_multiview_sp({"class": "Vit_multiview"}))
@@ -154,6 +193,31 @@ class TestSensorProcessingFactory(unittest.TestCase):
         )
         self.assertEqual(
             processor_class.call_args_list[1].args[0]["model"], "MultiViewVGG19Model"
+        )
+
+    def test_singleview_cnn_factory_uses_the_configured_or_legacy_model(self):
+        with patch.object(
+            sp_factory.sp_propriotuned_cnn,
+            "ProprioTunedCNNSensorProcessing",
+        ) as processor_class:
+            sp_factory.create_sp(
+                {
+                    "class": "ProprioTunedCNN",
+                    "model": "ResNetProprioTunedRegression",
+                }
+            )
+            sp_factory.create_sp(
+                {"class": "VGG19ProprioTunedSensorProcessing"}
+            )
+
+        self.assertEqual(processor_class.call_count, 2)
+        self.assertEqual(
+            processor_class.call_args_list[0].args[0]["model"],
+            "ResNetProprioTunedRegression",
+        )
+        self.assertEqual(
+            processor_class.call_args_list[1].args[0]["model"],
+            "VGG19ProprioTunedRegression",
         )
 
 

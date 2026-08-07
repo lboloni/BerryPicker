@@ -28,17 +28,27 @@ def _create_multiview_cnn(spexp, model=None):
     return sp_propriotuned_cnn_multiview.MultiViewCNNSensorProcessing(cnn_exp)
 
 
+def _create_singleview_cnn(spexp, model=None):
+    """Instantiate the generic single-view CNN processor with an optional model."""
+    cnn_exp = spexp.copy()
+    if model is not None:
+        cnn_exp["model"] = model
+    return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(cnn_exp)
+
+
 _PROCESSOR_CLASSES = {
     "ConvVaeSensorProcessing": sp_conv_vae.ConvVaeSensorProcessing,
     "ConvVaeSensorProcessing_concat_multiview": (
         sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing
     ),
-    "VGG19ProprioTunedSensorProcessing": (
-        sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing
+    "VGG19ProprioTunedSensorProcessing": partial(
+        _create_singleview_cnn, model="VGG19ProprioTunedRegression"
     ),
-    "ResNetProprioTunedSensorProcessing": (
-        sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing
+    "ResNetProprioTunedSensorProcessing": partial(
+        _create_singleview_cnn, model="ResNetProprioTunedRegression"
     ),
+    "ProprioTunedCNNSensorProcessing": _create_singleview_cnn,
+    "ProprioTunedCNN": _create_singleview_cnn,
     "VGG19ProprioTunedSensorProcessing_multiview": partial(
         _create_multiview_cnn, model="MultiViewVGG19Model"
     ),
