@@ -6,11 +6,8 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import (
-    MultiViewSensorProcessing,
-)
+from .sensor_processing import MultiViewEncoderSensorProcessing
 
-import pathlib
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -199,7 +196,7 @@ class MultiViewResNetModel(nn.Module):
         output = self.proprioceptor(latent)
         return output
 
-class MultiViewCNNSensorProcessing(MultiViewSensorProcessing):
+class MultiViewCNNSensorProcessing(MultiViewEncoderSensorProcessing):
     """
     Sensor processing class that handles multiple camera views using CNN encoders.
 
@@ -207,6 +204,8 @@ class MultiViewCNNSensorProcessing(MultiViewSensorProcessing):
     a cache of previously seen views to ensure complete processing even when
     only one view is updated at a time.
     """
+
+    encoder_method = "encode_views"
 
     def __init__(self, exp):
         """
@@ -231,33 +230,7 @@ class MultiViewCNNSensorProcessing(MultiViewSensorProcessing):
         else:
             raise ValueError(f"Unknown model type: {exp['model']}")
 
-        # Load weights if model file exists
-        modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
-        if modelfile.exists():
-            print(f"Loading Multi-View CNN encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
-        else:
-            print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
-
-        # Set model to evaluation mode
-        self.enc.eval()
-
-    def process(self, sensor_readings_list):
-        """
-        Process multiple sensor readings (images) to produce a single embedding.
-
-        Args:
-            sensor_readings_list: List of image tensors from different camera views
-
-        Returns:
-            Embedding vector as numpy array with dimensions batch x latent_size
-        """
-        self.enc.eval()
-        with torch.no_grad():
-            # Use the encode_views function to get the latent representation
-            z = self.enc.encode_views(sensor_readings_list)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
+        self.load_encoder_checkpoint(required=False, label="Multi-View CNN encoder")
 
 class MultiViewVGG19SensorProcessing(MultiViewCNNSensorProcessing):
     """Convenience class for VGG19-based multi-view sensor processing"""

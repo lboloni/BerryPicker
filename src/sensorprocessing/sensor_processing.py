@@ -4,7 +4,9 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 import numpy as np
+import torch
 from torchvision import transforms
 from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
 
@@ -86,3 +88,58 @@ class MultiViewSensorProcessing(
     MultiViewDemonstrationProcessing, AbstractSensorProcessing
 ):
     """Base class for multi-view processors built on AbstractSensorProcessing."""
+
+
+class EncoderSensorProcessing:
+    """Shared inference and checkpoint lifecycle for tensor encoders.
+
+    Subclasses create ``self.enc`` and optionally set ``encoder_method`` when
+    their encoder uses a name other than ``encode``.
+    """
+
+    encoder_method = "encode"
+
+    def load_encoder_checkpoint(self, *, required=False, label="encoder"):
+        """Load the configured encoder state dictionary and enter eval mode."""
+        checkpoint_path = Path(
+            self.exp["data_dir"], self.exp["proprioception_mlp_model_file"]
+        )
+        if not checkpoint_path.exists():
+            if required:
+                raise FileNotFoundError(
+                    f"Required {label} model file does not exist: {checkpoint_path}"
+                )
+            print(
+                f"Warning: {label} model file {checkpoint_path} does not exist. "
+                "Using untrained model."
+            )
+            self.enc.eval()
+            return None
+
+        print(f"Loading {label} weights from {checkpoint_path}")
+        state_dict = torch.load(
+            checkpoint_path, map_location=Config().runtime["device"]
+        )
+        self.enc.load_state_dict(state_dict)
+        self.enc.eval()
+        return checkpoint_path
+
+    def process(self, sensor_readings):
+        """Encode sensor tensors and return a squeezed NumPy representation."""
+        self.enc.eval()
+        with torch.no_grad():
+            encode = getattr(self.enc, self.encoder_method)
+            encoding = encode(sensor_readings)
+        return torch.squeeze(encoding).cpu().numpy()
+
+
+class SingleViewEncoderSensorProcessing(
+    EncoderSensorProcessing, AbstractSensorProcessing
+):
+    """Base class for single-view processors backed by a tensor encoder."""
+
+
+class MultiViewEncoderSensorProcessing(
+    EncoderSensorProcessing, MultiViewSensorProcessing
+):
+    """Base class for multi-view processors backed by a tensor encoder."""

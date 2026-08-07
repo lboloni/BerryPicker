@@ -8,8 +8,7 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import MultiViewSensorProcessing
-import pathlib
+from .sensor_processing import MultiViewEncoderSensorProcessing
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -326,7 +325,7 @@ class MultiViewViTEncoder(nn.Module):
         return output
 
 
-class MultiViewVitSensorProcessing(MultiViewSensorProcessing):
+class MultiViewVitSensorProcessing(MultiViewEncoderSensorProcessing):
     """Multi-view sensor processing using Vision Transformer (ViT) architecture.
 
     This class handles image processing using multiple ViT models to extract a fused 128d embedding.
@@ -352,30 +351,4 @@ class MultiViewVitSensorProcessing(MultiViewSensorProcessing):
         # Create the multi-view ViT encoder model
         self.enc = MultiViewViTEncoder(exp)
 
-        # Load weights if model file exists
-        modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
-        if modelfile.exists():
-            print(f"Loading Multi-View ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
-        else:
-            print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
-
-        # Set model to evaluation mode
-        self.enc.eval()
-
-    def process(self, sensor_readings_list):
-        """Process multiple sensor readings (images) to produce a single embedding.
-
-        Args:
-            sensor_readings_list: List of image tensors from different camera views
-
-        Returns:
-            Embedding vector as numpy array with dimensions batch x 128
-        """
-        self.enc.eval()
-        with torch.no_grad():
-            # Use the encode function which returns just the latent representation
-            # without passing through the proprioceptor
-            z = self.enc.encode(sensor_readings_list)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
+        self.load_encoder_checkpoint(required=False, label="Multi-View ViT encoder")

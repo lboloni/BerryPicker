@@ -8,9 +8,8 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import AbstractSensorProcessing
+from .sensor_processing import SingleViewEncoderSensorProcessing
 from .sp_helper import get_transform_to_sp
-import pathlib
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -184,7 +183,7 @@ class ViTEncoder(nn.Module):
         return output
 
 
-class VitSensorProcessing(AbstractSensorProcessing):
+class VitSensorProcessing(SingleViewEncoderSensorProcessing):
     """Sensor processing using Vision Transformer (ViT) architecture.
 
     This class handles image processing using a ViT model to extract our 128 embeddings .
@@ -211,31 +210,4 @@ class VitSensorProcessing(AbstractSensorProcessing):
         # Create the ViT encoder model
         self.enc = ViTEncoder(exp)
 
-        # Load weights if model file exists
-        modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
-        if modelfile.exists():
-            print(f"Loading ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
-        else:
-            print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
-
-        # Set model to evaluation mode
-        self.enc.eval()
-
-    def process(self, sensor_readings):
-        """Process sensor readings (images) to produce embeddings.
-
-        Args:
-            sensor_readings: Image tensor prepared into a batch
-
-        Returns:
-            Embedding vector as numpy array with dimensions batch x 128
-        """
-        self.enc.eval()
-        with torch.no_grad():
-            # Use the encode func method which returns just the latent representation
-            # without passing through the proprioceptor
-            z = self.enc.encode(sensor_readings)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
-
+        self.load_encoder_checkpoint(required=False, label="ViT encoder")

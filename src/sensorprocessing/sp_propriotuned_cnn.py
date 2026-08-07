@@ -9,10 +9,9 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import AbstractSensorProcessing
+from .sensor_processing import SingleViewEncoderSensorProcessing
 from .sp_helper import get_transform_to_sp
 
-import pathlib
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -131,50 +130,24 @@ class ResNetProprioTunedRegression(nn.Module):
 # FIXME: these are identical, differ only in the regression component, 
 # maybe can be merged together somehow.
         
-class ResNetProprioTunedSensorProcessing(AbstractSensorProcessing):
-    """Sensor processing using a pre-trained architecture from above.
-    
-    WOULD THIS BE TOTALLY IDENTICAL TO THE VGG19 ones?
-    
-    """
+class _SingleViewCNNSensorProcessing(SingleViewEncoderSensorProcessing):
+    """Common runtime wrapper for a proprioception-tuned CNN encoder."""
+
+    encoder_class = None
 
     def __init__(self, exp):
-        """Create the sensormodel """
         super().__init__(exp)
-        # self.exp = exp
-        self.enc = ResNetProprioTunedRegression(exp)
-        modelfile = pathlib.Path(exp["data_dir"], 
-                                exp["proprioception_mlp_model_file"])
-        assert modelfile.exists()
-        self.enc.load_state_dict(torch.load(modelfile))
+        self.enc = self.encoder_class(exp).to(Config().runtime["device"])
+        self.load_encoder_checkpoint(required=True, label=self.encoder_class.__name__)
 
-    def process(self, sensor_readings):
-        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
-        Returns the z encoding in the form of a numpy array."""
-        # print(f"sensor readings shape {sensor_readings.shape}")
-        with torch.no_grad():
-            z = self.enc.encode(sensor_readings)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
-    
-class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
-    """Sensor processing using a pre-trained VGG19 architecture from above."""
 
-    def __init__(self, exp):
-        """Create the sensormodel """
-        super().__init__(exp)
-        self.enc = VGG19ProprioTunedRegression(exp)
-        self.enc = self.enc.to(Config().runtime["device"])
-        modelfile = pathlib.Path(exp["data_dir"], 
-                                exp["proprioception_mlp_model_file"])
-        assert modelfile.exists()
-        self.enc.load_state_dict(torch.load(modelfile))
+class ResNetProprioTunedSensorProcessing(_SingleViewCNNSensorProcessing):
+    """Sensor processing using a pre-trained ResNet architecture."""
 
-    def process(self, sensor_readings):
-        """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
-        Returns the z encoding in the form of a numpy array."""
-        # print(f"sensor readings shape {sensor_readings.shape}")
-        with torch.no_grad():
-            z = self.enc.encode(sensor_readings)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
+    encoder_class = ResNetProprioTunedRegression
+
+
+class VGG19ProprioTunedSensorProcessing(_SingleViewCNNSensorProcessing):
+    """Sensor processing using a pre-trained VGG19 architecture."""
+
+    encoder_class = VGG19ProprioTunedRegression

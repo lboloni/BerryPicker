@@ -8,8 +8,7 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import MultiViewSensorProcessing
-import pathlib
+from .sensor_processing import MultiViewEncoderSensorProcessing
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -197,7 +196,7 @@ class ConcatImageViTEncoder(nn.Module):
         return output
 
 
-class ConcatImageVitSensorProcessing(MultiViewSensorProcessing):
+class ConcatImageVitSensorProcessing(MultiViewEncoderSensorProcessing):
     """Sensor processing that concatenates multiple images before processing with ViT.
 
     This class handles image preprocessing by concatenating multiple camera views
@@ -222,30 +221,6 @@ class ConcatImageVitSensorProcessing(MultiViewSensorProcessing):
         # Create the encoder model
         self.enc = ConcatImageViTEncoder(exp)
 
-        # Load weights if model file exists
-        modelfile = pathlib.Path(exp["data_dir"], exp["proprioception_mlp_model_file"])
-        if modelfile.exists():
-            print(f"Loading Concatenated Image ViT encoder weights from {modelfile}")
-            self.enc.load_state_dict(torch.load(modelfile, map_location=Config().runtime["device"]))
-        else:
-            print(f"Warning: Model file {modelfile} does not exist. Using untrained model.")
-
-        # Set model to evaluation mode
-        self.enc.eval()
-
-    def process(self, sensor_readings_list):
-        """Process multiple sensor readings (images) to produce a single embedding.
-
-        Args:
-            sensor_readings_list: List of image tensors from different camera views
-
-        Returns:
-            Embedding vector as numpy array with dimensions batch x 128
-        """
-        self.enc.eval()
-        with torch.no_grad():
-            # Use the encode function which returns just the latent representation
-            # without passing through the proprioceptor
-            z = self.enc.encode(sensor_readings_list)
-        z = torch.squeeze(z)
-        return z.cpu().numpy()
+        self.load_encoder_checkpoint(
+            required=False, label="Concatenated Image ViT encoder"
+        )

@@ -65,6 +65,44 @@ class TestMultiViewSensorProcessing(unittest.TestCase):
             processor.process_demonstration(object(), 7, ["camera-1"])
 
 
+class TestEncoderSensorProcessing(unittest.TestCase):
+    def test_loads_checkpoint_and_processes_with_encoder_method(self):
+        class ToyEncoder(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.scale = torch.nn.Parameter(torch.tensor(1.0))
+
+            def encode(self, inputs):
+                return inputs * self.scale
+
+        class ToyProcessor(sensor_processing.SingleViewEncoderSensorProcessing):
+            def __init__(self, exp):
+                super().__init__(exp)
+                self.enc = ToyEncoder()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            checkpoint_path = Path(temporary_directory) / "encoder.pth"
+            source_encoder = ToyEncoder()
+            source_encoder.scale.data.fill_(3.0)
+            torch.save(source_encoder.state_dict(), checkpoint_path)
+
+            exp = {
+                "data_dir": temporary_directory,
+                "proprioception_mlp_model_file": checkpoint_path.name,
+                "latent_size": 1,
+                "image_size": [8, 8],
+            }
+            processor = ToyProcessor(exp)
+
+            loaded_path = processor.load_encoder_checkpoint(required=True)
+
+            self.assertEqual(loaded_path, checkpoint_path)
+            self.assertFalse(processor.enc.training)
+            self.assertEqual(
+                np.asarray(processor.process(torch.tensor([[2.0]]))).item(), 6.0
+            )
+
+
 class TestHelperTrainingData(unittest.TestCase):
     def setUp(self):
         self.temporary_directory = tempfile.TemporaryDirectory()
