@@ -6,6 +6,8 @@ Factory functions to create sensor processing objects based on an exp/run.
 This version supports both single-view and multi-view sensor processors.
 """
 
+from functools import partial
+
 from sensorprocessing import (
     sp_conv_vae,
     sp_propriotuned_cnn,
@@ -16,6 +18,14 @@ from sensorprocessing import (
     sp_propriotuned_cnn_multiview,
     sp_conv_vae_concat_multiview
 )
+
+
+def _create_multiview_cnn(spexp, model=None):
+    """Instantiate the generic multi-view CNN processor with an optional model."""
+    cnn_exp = spexp.copy()
+    if model is not None:
+        cnn_exp["model"] = model
+    return sp_propriotuned_cnn_multiview.MultiViewCNNSensorProcessing(cnn_exp)
 
 
 _PROCESSOR_CLASSES = {
@@ -29,12 +39,14 @@ _PROCESSOR_CLASSES = {
     "ResNetProprioTunedSensorProcessing": (
         sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing
     ),
-    "VGG19ProprioTunedSensorProcessing_multiview": (
-        sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing
+    "VGG19ProprioTunedSensorProcessing_multiview": partial(
+        _create_multiview_cnn, model="MultiViewVGG19Model"
     ),
-    "ResNetProprioTunedSensorProcessing_multiview": (
-        sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing
+    "ResNetProprioTunedSensorProcessing_multiview": partial(
+        _create_multiview_cnn, model="MultiViewResNetModel"
     ),
+    "MultiViewCNNSensorProcessing": _create_multiview_cnn,
+    "MultiViewCNN": _create_multiview_cnn,
     "Aruco": sp_aruco.ArucoSensorProcessing,
     "Vit": sp_vit.VitSensorProcessing,
     "Vit_multiview": sp_vit_multiview.MultiViewVitSensorProcessing,
@@ -47,6 +59,8 @@ _MULTIVIEW_CLASSES = {
     "ConvVaeSensorProcessing_multiview",
     "VGG19ProprioTunedSensorProcessing_multiview",
     "ResNetProprioTunedSensorProcessing_multiview",
+    "MultiViewCNNSensorProcessing",
+    "MultiViewCNN",
     "Vit_multiview",
     "Vit_concat_images",
     "MultiViewVitSensorProcessing",

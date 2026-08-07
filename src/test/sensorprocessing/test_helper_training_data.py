@@ -136,6 +136,26 @@ class TestSensorProcessingFactory(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "Unknown sensor processing class"):
             sp_factory.create_sp({"class": "unknown"})
 
+    def test_multiview_cnn_factory_uses_the_configured_or_legacy_model(self):
+        with patch.object(
+            sp_factory.sp_propriotuned_cnn_multiview,
+            "MultiViewCNNSensorProcessing",
+        ) as processor_class:
+            sp_factory.create_sp(
+                {"class": "MultiViewCNN", "model": "MultiViewResNetModel"}
+            )
+            sp_factory.create_sp(
+                {"class": "VGG19ProprioTunedSensorProcessing_multiview"}
+            )
+
+        self.assertEqual(processor_class.call_count, 2)
+        self.assertEqual(
+            processor_class.call_args_list[0].args[0]["model"], "MultiViewResNetModel"
+        )
+        self.assertEqual(
+            processor_class.call_args_list[1].args[0]["model"], "MultiViewVGG19Model"
+        )
+
 
 class TestHelperTrainingData(unittest.TestCase):
     def setUp(self):

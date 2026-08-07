@@ -122,21 +122,3 @@ class MultiViewCNNSensorProcessing(MultiViewEncoderSensorProcessing):
             raise ValueError(f"Unknown model type: {exp['model']}")
 
         self.load_encoder_checkpoint(required=False, label="Multi-View CNN encoder")
-
-class MultiViewVGG19SensorProcessing(MultiViewCNNSensorProcessing):
-    """Convenience class for VGG19-based multi-view sensor processing"""
-
-    def __init__(self, exp):
-        # Ensure the model is set to VGG19
-        exp_copy = exp.copy()
-        exp_copy['model'] = 'MultiViewVGG19Model'
-        super().__init__(exp_copy)
-
-class MultiViewResNetSensorProcessing(MultiViewCNNSensorProcessing):
-    """Convenience class for ResNet-based multi-view sensor processing"""
-
-    def __init__(self, exp):
-        # Ensure the model is set to ResNet
-        exp_copy = exp.copy()
-        exp_copy['model'] = 'MultiViewResNetModel'
-        super().__init__(exp_copy)
