@@ -9,18 +9,15 @@ This version fixes the dimension mismatch issue by handling the VAE encoding pro
 
 from __future__ import annotations
 
-import pathlib
 import torch
 import torch.nn.functional as F
 import numpy as np
-from typing import List, Union, Optional
+from typing import List, Union
 from sensorprocessing.sp_conv_vae import ConvVaeSensorProcessing as _SingleViewSP
 from sensorprocessing.sensor_processing import MultiViewDemonstrationProcessing
 
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
-
-from typing import List, Union
 
 class ConcatConvVaeSensorProcessing(
     MultiViewDemonstrationProcessing, _SingleViewSP
@@ -57,67 +54,6 @@ class ConcatConvVaeSensorProcessing(
         self.expected_size = (64, 64)  # Most VAEs trained on this size
 
     def _concat_views(self, views: List[torch.Tensor]) -> torch.Tensor:
-        """Fuse *N* view tensors according to ``self.stack_mode``.
-
-        * **width**   – concatenate along W then bilinear‑resize back to the
-                        original width so that downstream FC layers (built
-                        for 64×64 inputs) keep their expected feature size.
-        * **channel** – concatenate along C to produce a 6‑channel (for 2 views)
-                        tensor; requires Conv‑VAE with matching `input_channels`.
-        """
-        assert all(v.shape == views[0].shape for v in views), "mismatched view shapes"
-
-        if self.stack_mode == "width":
-            # [B,C,H,W] → [B,C,H,W*N]
-            composite = torch.cat(views, dim=3)
-            # Down‑sample width back to original W
-            _, _, H, W_total = composite.shape
-            W_single = W_total // self.num_views
-
-            if self.debug:
-                print(f"Concatenated shape: {composite.shape}, resizing to {H}x{W_single}")
-
-            if W_total != W_single:  # always true for N>1
-                composite = F.interpolate(
-                    composite,
-                    size=(H, W_single),
-                    mode="bilinear",
-                    align_corners=False,
-                )
-
-            # Resize to expected VAE input size if needed
-            _, _, H, W = composite.shape
-            if H != self.expected_size[0] or W != self.expected_size[1]:
-                if self.debug:
-                    print(f"Resizing to expected VAE input size: {self.expected_size}")
-                composite = F.interpolate(
-                    composite,
-                    size=self.expected_size,
-                    mode="bilinear",
-                    align_corners=False,
-                )
-
-            return composite
-        else:  # "channel" stacking
-            composite = torch.cat(views, dim=1)  # [B,C*N,H,W]
-
-            # Resize to expected VAE input size if needed
-            _, _, H, W = composite.shape
-            if H != self.expected_size[0] or W != self.expected_size[1]:
-                if self.debug:
-                    print(f"Resizing channel-stacked to expected VAE input size: {self.expected_size}")
-                composite = F.interpolate(
-                    composite,
-                    size=self.expected_size,
-                    mode="bilinear",
-                    align_corners=False,
-                )
-
-            if self.debug:
-                print(f"Channel-stacked shape: {composite.shape}")
-
-            return composite
-    def _concat_views(self, views):
         """Fuse *N* view tensors according to `self.stack_mode` with enhanced dimension handling."""
         # Ensure all views have 4 dimensions [B,C,H,W]
         processed_views = []
@@ -129,11 +65,10 @@ class ConcatConvVaeSensorProcessing(
                     print(f"Added batch dimension to view {i}, new shape: {view.shape}")
 
             # Ensure all views have the expected size
-            expected_size = (64, 64)  # Most VAEs trained on this size
-            if view.shape[2] != expected_size[0] or view.shape[3] != expected_size[1]:
+            if view.shape[2:] != self.expected_size:
                 view = F.interpolate(
                     view,
-                    size=expected_size,
+                    size=self.expected_size,
                     mode="bilinear",
                     align_corners=False
                 )
@@ -210,10 +145,7 @@ class ConcatConvVaeSensorProcessing(
             composite = composite.to(Config().runtime["device"])
 
             try:
-                # Access the model directly to avoid shape issues
-                # Extract latent representation (mu) directly
-                encoder_output = self.model.encoder(composite)
-                # Process through the encoder
+                # Extract the latent representation directly from the encoder.
                 encoder_output = self.model.encode(composite)
 
                 # Get mu directly - this is the latent representation
@@ -275,114 +207,10 @@ class ConcatConvVaeSensorProcessing(
                     latent = np.zeros(self.latent_size, dtype=np.float32)
                     return latent
 
-    # convenience alias
+    # Convenience alias.
     encode = process
 
-    # NEW — makes training code that expects `sp.enc.encode(...)` work
+    # Makes training code that expects `sp.enc.encode(...)` work.
     @property
     def enc(self):
         return self
-
-# """
-# sp_conv_vae_concat.py
-
-# Sensor processing using the encoder part of a convolutional VAE for concatenated multi-view images.
-# This extends the existing ConvVAE sensor processing to handle multiple camera views.
-# """
-
-# #  End‑to‑end support for *concatenated‑view* Conv‑VAE training and inference.
-# #
-# #  ▸  **ConcatConvVaeSensorProcessing** – runtime component that takes *N* camera
-# #     views, stitches them along the **width** dimension (C, H, W → C, H, N·W)
-# #     and feeds the result through a Julian‑8897 Conv‑VAE encoder that was
-# #     trained on such composites.  The class mirrors the public API of the
-# #     single‑view `ConvVaeSensorProcessing` (process, process_file, encode …)
-# #     so that downstream code stays drop‑in compatible.
-
-# from __future__ import annotations
-
-# import argparse
-# import pathlib
-# import shutil
-# import sys
-# from dataclasses import dataclass
-# from pathlib import Path
-# from typing import List
-# import torch.nn.functional as F
-
-# import torch
-# from PIL import Image
-# from sensorprocessing.sp_conv_vae import ConvVaeSensorProcessing as _SingleViewSP
-# from settings import Config
-# # from sensorprocessing.conv_vae import (
-# #     create_configured_vae_json,
-# #     get_conv_vae_config,
-# #     train as conv_vae_train,
-# # )
-
-# # -----------------------------------------------------------------------------
-# #  Runtime  –  ConcatConvVaeSensorProcessing
-# # -----------------------------------------------------------------------------
-
-
-# class ConcatConvVaeSensorProcessing(_SingleViewSP):
-#     """Sensor‑processing module that accepts *N* camera views and encodes them
-#     either by width‑concatenating (default) **or** channel‑stacking before
-#     passing through a Conv‑VAE.
-#     """
-
-#     _ALLOWED = {"width", "channel"}
-
-#     def __init__(self, exp: dict) -> None:
-#         self.num_views = exp.get("num_views", 2)
-#         self.stack_mode: str = exp.get("stack_mode", "width").lower()
-#         if self.stack_mode not in self._ALLOWED:
-#             raise ValueError(
-#                 f"invalid stack_mode {self.stack_mode}; choose one of {self._ALLOWED}"
-#             )
-#         super().__init__(exp)
-
-#     # ------------------------------------------------------------------
-#     #  helpers
-#     # ------------------------------------------------------------------
-#     def _concat_views(self, views: List[torch.Tensor]) -> torch.Tensor:
-#         """Fuse *N* view tensors according to ``self.stack_mode``.
-
-#         * **width**   – concatenate along W then bilinear‑resize back to the
-#                          original width so that downstream FC layers (built
-#                          for 64×64 inputs) keep their expected feature size.
-#         * **channel** – concatenate along C to produce a 6‑channel (for 2 views)
-#                          tensor; requires Conv‑VAE with matching `input_channels`.
-#         """
-#         assert all(v.shape == views[0].shape for v in views), "mismatched view shapes"
-
-#         if self.stack_mode == "width":
-#             # [B,C,H,W] → [B,C,H,W*N]
-#             composite = torch.cat(views, dim=3)
-#             # Down‑sample width back to original W
-#             _, _, H, W_total = composite.shape
-#             W_single = W_total // self.num_views
-#             if W_total != W_single:  # always true for N>1
-#                 composite = F.interpolate(
-#                     composite,
-#                     size=(H, W_single),
-#                     mode="bilinear",
-#                     align_corners=False,
-#                 )
-#             return composite
-#         else:  # "channel" stacking
-#             return torch.cat(views, dim=1)  # [B,C*N,H,W]
-
-#     def process(self, views: List[torch.Tensor]):  # type: ignore[override]
-#         if len(views) != self.num_views:
-#             raise ValueError(f"expected {self.num_views} views, got {len(views)})")
-#         composite = self._concat_views(views)
-#         return super().process(composite)
-
-#     # convenience alias
-#     encode = process
-
-#     # NEW — makes training code that expects `sp.enc.encode(...)` work
-#     @property
-#     def enc(self):
-#         return self
