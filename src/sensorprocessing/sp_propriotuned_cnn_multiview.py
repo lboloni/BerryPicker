@@ -13,188 +13,79 @@ import torch.nn as nn
 from torchvision import models
 
 
-# Multi-view CNN models
-class MultiViewVGG19Model(nn.Module):
-    """
-    Neural network that processes multiple camera views using VGG19 encoders.
+class _MultiViewCNNModel(nn.Module):
+    """Common implementation for per-view CNN backbones and regression heads."""
 
-    The model processes each view separately through a VGG19 backbone,
-    then concatenates the feature vectors before passing them through
-    a regression head for proprioception prediction.
-    """
+    feature_size = None
+    default_reductor_size = None
 
     def __init__(self, exp):
         super().__init__()
         self.num_views = exp.get("num_views", 2)
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
-
-        # Create separate VGG19 feature extractors for each view
-        self.feature_extractors = nn.ModuleList()
-        for _ in range(self.num_views):
-            vgg19 = models.vgg19(pretrained=True)
-            extractor = vgg19.features
-            # Freeze the parameters of the feature extractor if specified
-            if exp.get("freeze_feature_extractor", True):
-                for param in extractor.parameters():
-                    param.requires_grad = False
-            self.feature_extractors.append(extractor)
-
-        self.flatten = nn.Flatten()  # Flatten the output for the fully connected layer
-
-        # Calculate the size of the concatenated feature vector
-        # VGG19 features output size is 512 * 8 * 8 for each view
-        concat_size = 512 * 8 * 8 * self.num_views
-
-        # Dimension reduction network
-        self.reductor = nn.Sequential(
-            nn.Linear(concat_size, exp.get("reductor_step_1", 512)),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(exp.get("reductor_step_1", 512), self.latent_size)
+        self.feature_extractors = nn.ModuleList(
+            self._create_feature_extractor(exp) for _ in range(self.num_views)
         )
-
-        # Proprioception head for predicting robot position
-        self.proprioceptor = nn.Sequential(
-            nn.Linear(self.latent_size, exp.get("proprio_step_1", 128)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_1", 128), exp.get("proprio_step_2", 64)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_2", 64), self.output_size)
-        )
-
-        # Move the model to the specified device
-        self.to(Config().runtime["device"])
-
-    def encode_views(self, views_list):
-        """
-        Extract features from each view and concatenate them
-
-        Args:
-            views_list: List of image tensors from different camera views
-
-        Returns:
-            latent: The latent representation of the concatenated views
-        """
-        # Process each view through its respective feature extractor
-        features_list = []
-        for i, view in enumerate(views_list):
-            features = self.feature_extractors[i](view)
-            flat_features = self.flatten(features)
-            features_list.append(flat_features)
-
-        # Concatenate the flattened features
-        concat_features = torch.cat(features_list, dim=1)
-
-        # Reduce dimensions to latent size
-        latent = self.reductor(concat_features)
-
-        return latent
-
-    def forward(self, views_list):
-        """
-        Forward pass through the network
-
-        Args:
-            views_list: List of image tensors from different camera views
-
-        Returns:
-            output: Predicted robot position
-        """
-        latent = self.encode_views(views_list)
-        output = self.proprioceptor(latent)
-        return output
-
-class MultiViewResNetModel(nn.Module):
-    """
-    Neural network that processes multiple camera views using ResNet50 encoders.
-
-    The model processes each view separately through a ResNet50 backbone,
-    then concatenates the feature vectors before passing them through
-    a regression head for proprioception prediction.
-    """
-
-    def __init__(self, exp):
-        super().__init__()
-        self.num_views = exp.get("num_views", 2)
-        self.latent_size = exp["latent_size"]
-        self.output_size = exp["output_size"]
-
-        # Create separate ResNet feature extractors for each view
-        self.feature_extractors = nn.ModuleList()
-        for _ in range(self.num_views):
-            resnet = models.resnet50(pretrained=True)
-            # Create feature extractor by removing the last fully connected layer
-            extractor = torch.nn.Sequential(*list(resnet.children())[:-1])
-            # Freeze the parameters of the feature extractor if specified
-            if exp.get("freeze_feature_extractor", True):
-                for param in extractor.parameters():
-                    param.requires_grad = False
-            self.feature_extractors.append(extractor)
-
         self.flatten = nn.Flatten()
-
-        # ResNet50 features size is 2048 per view
-        concat_size = 2048 * self.num_views
-
-        # Dimension reduction network
+        reductor_size = exp.get("reductor_step_1", self.default_reductor_size)
         self.reductor = nn.Sequential(
-            nn.Linear(concat_size, exp.get("reductor_step_1", 1024)),
+            nn.Linear(self.feature_size * self.num_views, reductor_size),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(exp.get("reductor_step_1", 1024), self.latent_size)
+            nn.Linear(reductor_size, self.latent_size),
         )
-
-        # Proprioception head for predicting robot position
+        proprio_step_1 = exp.get("proprio_step_1", 128)
+        proprio_step_2 = exp.get("proprio_step_2", 64)
         self.proprioceptor = nn.Sequential(
-            nn.Linear(self.latent_size, exp.get("proprio_step_1", 128)),
+            nn.Linear(self.latent_size, proprio_step_1),
             nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_1", 128), exp.get("proprio_step_2", 64)),
+            nn.Linear(proprio_step_1, proprio_step_2),
             nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_2", 64), self.output_size)
+            nn.Linear(proprio_step_2, self.output_size),
         )
-
-        # Move the model to the specified device
         self.to(Config().runtime["device"])
 
+    def _create_feature_extractor(self, exp):
+        extractor = self.create_feature_extractor()
+        if exp.get("freeze_feature_extractor", True):
+            for parameter in extractor.parameters():
+                parameter.requires_grad = False
+        return extractor
+
+    def create_feature_extractor(self):
+        raise NotImplementedError
+
     def encode_views(self, views_list):
-        """
-        Extract features from each view and concatenate them
-
-        Args:
-            views_list: List of image tensors from different camera views
-
-        Returns:
-            latent: The latent representation of the concatenated views
-        """
-        # Process each view through its respective feature extractor
-        features_list = []
-        for i, view in enumerate(views_list):
-            features = self.feature_extractors[i](view)
-            flat_features = self.flatten(features)
-            features_list.append(flat_features)
-
-        # Concatenate the flattened features
-        concat_features = torch.cat(features_list, dim=1)
-
-        # Reduce dimensions to latent size
-        latent = self.reductor(concat_features)
-
-        return latent
+        features = [
+            self.flatten(self.feature_extractors[index](view))
+            for index, view in enumerate(views_list)
+        ]
+        return self.reductor(torch.cat(features, dim=1))
 
     def forward(self, views_list):
-        """
-        Forward pass through the network
+        return self.proprioceptor(self.encode_views(views_list))
 
-        Args:
-            views_list: List of image tensors from different camera views
 
-        Returns:
-            output: Predicted robot position
-        """
-        latent = self.encode_views(views_list)
-        output = self.proprioceptor(latent)
-        return output
+class MultiViewVGG19Model(_MultiViewCNNModel):
+    """Multi-view VGG19 encoder with a shared regression-head implementation."""
+
+    feature_size = 512 * 8 * 8
+    default_reductor_size = 512
+
+    def create_feature_extractor(self):
+        return models.vgg19(pretrained=True).features
+
+
+class MultiViewResNetModel(_MultiViewCNNModel):
+    """Multi-view ResNet50 encoder with a shared regression-head implementation."""
+
+    feature_size = 2048
+    default_reductor_size = 1024
+
+    def create_feature_extractor(self):
+        resnet = models.resnet50(pretrained=True)
+        return nn.Sequential(*list(resnet.children())[:-1])
 
 class MultiViewCNNSensorProcessing(MultiViewEncoderSensorProcessing):
     """

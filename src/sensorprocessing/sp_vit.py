@@ -9,12 +9,16 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from .sensor_processing import SingleViewEncoderSensorProcessing
-from .sp_helper import get_transform_to_sp
-import torch
 import torch.nn as nn
-import torchvision.models as models
-from torchvision.models import ViT_B_16_Weights
-from torchvision import transforms
+from .vit_helper import (
+    create_image_preprocessing,
+    create_projection,
+    create_proprioceptor,
+    create_vit_backbone,
+    freeze_feature_extractor,
+    normalize_if_unit_interval,
+    resize_if_needed,
+)
 
 
 class ViTEncoder(nn.Module):
@@ -29,94 +33,25 @@ class ViTEncoder(nn.Module):
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
 
-        # Load the ViT model based on configuration
-        vit_model_name = exp["vit_model"]
-        vit_weights_name = exp["vit_weights"]
-
-        # Handle the model and weights imports
-        if vit_model_name == "vit_b_16":
-            from torchvision.models import vit_b_16, ViT_B_16_Weights
-            weights = getattr(ViT_B_16_Weights, vit_weights_name)
-            self.vit_model = vit_b_16(weights=weights)
-            vit_output_dim = exp["vit_output_dim"]  # ViT-B has 768 hidden dim
-        elif vit_model_name == "vit_l_16":
-            from torchvision.models import vit_l_16, ViT_L_16_Weights
-            weights = getattr(ViT_L_16_Weights, vit_weights_name)
-            self.vit_model = vit_l_16(weights=weights)
-            vit_output_dim = exp["vit_output_dim"]  # ViT-L has 1024 hidden dim
-        elif vit_model_name == "vit_h_14":
-            from torchvision.models import vit_h_14, ViT_H_14_Weights
-            weights = getattr(ViT_H_14_Weights, vit_weights_name)
-            self.vit_model = vit_h_14(weights=weights)
-            vit_output_dim = exp["vit_output_dim"]   # ViT-H has 1280 hidden dim
-        else:
-            raise ValueError(f"Unsupported ViT model type: {vit_model_name}")
-
-        # Override with config value if provided
-        if "vit_output_dim" in exp:
-            vit_output_dim = exp["vit_output_dim"]
-
-        ## ;ets see if the putput dimention matches my VIT model
-
-        print(f"Using {vit_model_name} with output dimension {vit_output_dim}")
-
-        # Replace the head with our custom projection to get better regression
-        if "projection_hidden_dim" in exp:
-            projection_hidden_dim = exp["projection_hidden_dim"]
-        else:
-            # Default to a reasonable size based on input dimension
-            projection_hidden_dim = vit_output_dim // 2
-
-        # More sophisticated projection network with multiple layers
-        self.projection = nn.Sequential(
-            nn.Linear(vit_output_dim, projection_hidden_dim),
-            nn.BatchNorm1d(projection_hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(projection_hidden_dim, projection_hidden_dim // 2),
-            nn.BatchNorm1d(projection_hidden_dim // 2),
-            nn.ReLU(),
-            nn.Linear(projection_hidden_dim // 2, self.latent_size),
+        self.vit_model, vit_output_dim = create_vit_backbone(exp)
+        projection, projection_hidden_dim = create_projection(
+            vit_output_dim, self.latent_size, exp
+        )
+        self.projection = projection
+        self.proprioceptor = create_proprioceptor(
+            self.latent_size, self.output_size, exp
         )
 
-
-
+        print(f"Using {exp['vit_model']} with output dimension {vit_output_dim}")
         print(f"Created projection network: {vit_output_dim} → {projection_hidden_dim} → {projection_hidden_dim // 2} → {self.latent_size}")
-
-        # Replace the ViT's head with our projection
-        self.vit_model.heads = nn.Identity()  # Remove original classification head
-
-        # Add proprioceptor for end-to-end training (not used for inference)
-        # This maps from latent space to 6d
-        self.proprioceptor = nn.Sequential(
-            nn.Linear(self.latent_size, exp["proprio_step_1"]),
-            nn.ReLU(),
-            nn.Linear(exp["proprio_step_1"], exp["proprio_step_2"]),
-            nn.ReLU(),
-            nn.Linear(exp["proprio_step_2"], self.output_size)
-        )
-
         print(f"Created latent representation: {vit_output_dim} → {projection_hidden_dim} → {self.latent_size}")
         print(f"Created proprioceptor: {self.latent_size} → {exp.get('proprio_step_1', 128)} → {exp.get('proprio_step_2', 64)} → {self.output_size}")
 
-        # some papers said this is a good idea for VIT we can try without Normalize as well
-        self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )
-
-        # Create a resize transform to the required vit input size
-        # input_size = (exp["image_size"], exp["image_size"])
-        input_size = (exp["image_size"])
-
-        self.resize = transforms.Resize(input_size, antialias=True)
+        self.normalize, self.resize = create_image_preprocessing(exp["image_size"])
 
         # Freeze the feature extractor if specified
-        if exp["freeze_feature_extractor"]:
-            # Freeze all parameters except the head
-            for name, param in self.vit_model.named_parameters():
-                if "heads" not in name:
-                    param.requires_grad = False
+        if exp.get("freeze_feature_extractor", False):
+            freeze_feature_extractor(self.vit_model)
             print("Feature extractor frozen. Projection and proprioceptor layers are trainable.")
 
 
@@ -131,27 +66,12 @@ class ViTEncoder(nn.Module):
         Returns:
             latent: 128-dimensional latent representation
         """
-        # Resize and normalize input if needed
-        if x.size(2) != x.size(3) or x.size(2) != self.resize.size[0]:
-            x = self.resize(x)
-
-        x = self._normalize_input(x)
-
-        # Forward through base ViT (without its head)
-        features = self.vit_model(x)
-
-        # Project to latent space only (no proprioceptor)
-        latent = self.projection(features)
-
-        return latent
+        x = resize_if_needed(x, self.resize)
+        return self.projection(self.vit_model(self._normalize_input(x)))
 
     def _normalize_input(self, x):
         """Normalize input images to ImageNet statistics."""
-        # Check if already normalized
-        if x.min() >= 0 and x.max() <= 1:
-            # Convert [0,1] to normalized range matching ImageNet stats
-            return self.normalize(x)
-        return x
+        return normalize_if_unit_interval(x, self.normalize)
 
     def forward(self, x):
         """Forward pass to generate latent representation and then proprioceptor (6d)
@@ -159,28 +79,7 @@ class ViTEncoder(nn.Module):
             for inference I will call the encode function
 
         """
-        # Resize the input image to 224x224 as expected by ViT
-        x = self.resize(x)
-
-        # Use the full ViT model with our custom head
-        latent = self.vit_model(x)
-
-        # Resize and normalize input
-        if x.size(2) != x.size(3) or x.size(2) != self.resize.size[0]:
-            x = self.resize(x)
-
-        x = self._normalize_input(x)
-
-        # Forward through base ViT (without its head)
-        features = self.vit_model(x)
-
-        # Project to latent space
-        latent = self.projection(features)
-
-        # Map to robot position prediction via proprioceptor
-        output = self.proprioceptor(latent)
-
-        return output
+        return self.proprioceptor(self.encode(x))
 
 
 class VitSensorProcessing(SingleViewEncoderSensorProcessing):

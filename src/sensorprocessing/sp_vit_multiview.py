@@ -11,7 +11,14 @@ Config.PROJECTNAME = "BerryPicker"
 from .sensor_processing import MultiViewEncoderSensorProcessing
 import torch
 import torch.nn as nn
-from torchvision import transforms
+from .vit_helper import (
+    create_image_preprocessing,
+    create_proprioceptor,
+    create_vit_backbone,
+    freeze_feature_extractor,
+    normalize_if_unit_interval,
+    resize_if_needed,
+)
 
 
 class MultiViewViTEncoder(nn.Module):
@@ -29,42 +36,12 @@ class MultiViewViTEncoder(nn.Module):
         self.num_views = exp.get("num_views", 2)  # Default to 2 views
         self.fusion_type = exp.get("fusion_type", "concat_proj")  # Default fusion method
 
-        # Load the ViT model based on configuration
-        vit_model_name = exp["vit_model"]
-        vit_weights_name = exp["vit_weights"]
+        first_model, vit_output_dim = create_vit_backbone(exp)
+        self.vit_models = nn.ModuleList(
+            [first_model] + [create_vit_backbone(exp)[0] for _ in range(self.num_views - 1)]
+        )
 
-        # Create a list to hold multiple encoders (one per view)
-        self.vit_models = nn.ModuleList()
-
-        # Handle the model and weights imports
-        for _ in range(self.num_views):
-            if vit_model_name == "vit_b_16":
-                from torchvision.models import vit_b_16, ViT_B_16_Weights
-                weights = getattr(ViT_B_16_Weights, vit_weights_name)
-                vit_model = vit_b_16(weights=weights)
-                vit_output_dim = exp.get("vit_output_dim", 768)  # ViT-B has 768 hidden dim
-            elif vit_model_name == "vit_l_16":
-                from torchvision.models import vit_l_16, ViT_L_16_Weights
-                weights = getattr(ViT_L_16_Weights, vit_weights_name)
-                vit_model = vit_l_16(weights=weights)
-                vit_output_dim = exp.get("vit_output_dim", 1024)  # ViT-L has 1024 hidden dim
-            elif vit_model_name == "vit_h_14":
-                from torchvision.models import vit_h_14, ViT_H_14_Weights
-                weights = getattr(ViT_H_14_Weights, vit_weights_name)
-                vit_model = vit_h_14(weights=weights)
-                vit_output_dim = exp.get("vit_output_dim", 1280)  # ViT-H has 1280 hidden dim
-            else:
-                raise ValueError(f"Unsupported ViT model type: {vit_model_name}")
-
-            # Replace the head with identity
-            vit_model.heads = nn.Identity()  # Remove original classification head
-            self.vit_models.append(vit_model)
-
-        # Override with config value if provided
-        if "vit_output_dim" in exp:
-            vit_output_dim = exp["vit_output_dim"]
-
-        print(f"Using {self.num_views} x {vit_model_name} with output dimension {vit_output_dim}")
+        print(f"Using {self.num_views} x {exp['vit_model']} with output dimension {vit_output_dim}")
 
         # Determine projection architecture based on fusion type
         if "projection_hidden_dim" in exp:
@@ -89,17 +66,9 @@ class MultiViewViTEncoder(nn.Module):
             print(f"Created fusion network (concat_proj): {vit_output_dim*self.num_views} → {projection_hidden_dim} → {projection_hidden_dim//2} → {self.latent_size}")
 
         elif self.fusion_type == "indiv_proj":
-            # Individual projections then fusion
-            self.view_projections = nn.ModuleList()
-            for _ in range(self.num_views):
-                projection = nn.Sequential(
-                    nn.Linear(vit_output_dim, projection_hidden_dim),
-                    nn.BatchNorm1d(projection_hidden_dim),
-                    nn.ReLU(),
-                    nn.Dropout(0.1),
-                    nn.Linear(projection_hidden_dim, self.latent_size)
-                )
-                self.view_projections.append(projection)
+            self.view_projections = self._create_view_projections(
+                vit_output_dim, projection_hidden_dim
+            )
 
             # Fusion layer to combine individual projections
             self.fusion_layer = nn.Sequential(
@@ -131,34 +100,18 @@ class MultiViewViTEncoder(nn.Module):
             print(f"Created attention fusion: {vit_output_dim} → {projection_hidden_dim} → {projection_hidden_dim//2} → {self.latent_size}")
 
         elif self.fusion_type == "weighted_sum":
-            # Project each view to latent space and apply learned weights
-            self.view_projections = nn.ModuleList()
-            for _ in range(self.num_views):
-                projection = nn.Sequential(
-                    nn.Linear(vit_output_dim, projection_hidden_dim),
-                    nn.BatchNorm1d(projection_hidden_dim),
-                    nn.ReLU(),
-                    nn.Dropout(0.1),
-                    nn.Linear(projection_hidden_dim, self.latent_size)
-                )
-                self.view_projections.append(projection)
+            self.view_projections = self._create_view_projections(
+                vit_output_dim, projection_hidden_dim
+            )
 
             # Learnable weights for each view
             self.view_weights = nn.Parameter(torch.ones(self.num_views) / self.num_views)
             print(f"Created weighted sum fusion with learnable weights")
 
         elif self.fusion_type == "gated":
-            # Gated fusion mechanism
-            # Project each view to latent space
-            self.view_projections = nn.ModuleList()
-            for _ in range(self.num_views):
-                projection = nn.Sequential(
-                    nn.Linear(vit_output_dim, projection_hidden_dim),
-                    nn.BatchNorm1d(projection_hidden_dim),
-                    nn.ReLU(),
-                    nn.Linear(projection_hidden_dim, self.latent_size)
-                )
-                self.view_projections.append(projection)
+            self.view_projections = self._create_view_projections(
+                vit_output_dim, projection_hidden_dim, dropout=False
+            )
 
             # Gate network to determine importance of each view
             self.gate_network = nn.Sequential(
@@ -166,56 +119,41 @@ class MultiViewViTEncoder(nn.Module):
                 nn.Softmax(dim=1)
             )
             print(f"Created gated fusion network")
+        else:
+            raise ValueError(f"Unsupported fusion type: {self.fusion_type}")
 
-        # Add proprioceptor for end-to-end training (not used for inference)
-        # This maps from latent space to 6d robot position
-        self.proprioceptor = nn.Sequential(
-            nn.Linear(self.latent_size, exp.get("proprio_step_1", 128)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_1", 128), exp.get("proprio_step_2", 64)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_2", 64), self.output_size)
+        self.proprioceptor = create_proprioceptor(
+            self.latent_size, self.output_size, exp
         )
 
         print(f"Created proprioceptor: {self.latent_size} → {exp.get('proprio_step_1', 128)} → {exp.get('proprio_step_2', 64)} → {self.output_size}")
 
-        # Image normalization for pre-trained ViT
-        self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )
-
-        # Create a resize transform to the required vit input size
-        # input_size = (exp["image_size"], exp["image_size"])
-        if isinstance(exp["image_size"], (list, tuple)):
-            input_size = tuple(exp["image_size"])
-        else:
-            input_size = (exp["image_size"], exp["image_size"])
-        self.resize = transforms.Resize(input_size, antialias=True)
+        self.normalize, self.resize = create_image_preprocessing(exp["image_size"])
 
         # Freeze the feature extractor if specified
         if exp.get("freeze_feature_extractor", False):
-            # Freeze all ViT parameters
             for model in self.vit_models:
-                for param in model.parameters():
-                    param.requires_grad = False
+                freeze_feature_extractor(model)
             print("Feature extractors frozen. Projection and proprioceptor layers are trainable.")
 
         # Move to device
         self.to(Config().runtime["device"])
 
+    def _create_view_projections(self, input_size, hidden_size, dropout=True):
+        layers = [
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+        ]
+        if dropout:
+            layers.append(nn.Dropout(0.1))
+        layers.append(nn.Linear(hidden_size, self.latent_size))
+        return nn.ModuleList(nn.Sequential(*layers) for _ in range(self.num_views))
+
     def encode_single_view(self, x, view_idx=0):
         """Extract features from a single view."""
-        # Resize and normalize input if needed
-        if x.size(2) != x.size(3) or x.size(2) != self.resize.size[0]:
-            x = self.resize(x)
-
-        x = self._normalize_input(x)
-
-        # Forward through base ViT (without its head)
-        features = self.vit_models[view_idx](x)
-
-        return features
+        x = resize_if_needed(x, self.resize)
+        return self.vit_models[view_idx](self._normalize_input(x))
 
     def encode(self, views_list):
         """Extract 128d latent representation from multiple views without 6d proprioceptor.
@@ -230,10 +168,10 @@ class MultiViewViTEncoder(nn.Module):
         if len(views_list) != self.num_views:
             raise ValueError(f"Expected {self.num_views} views, got {len(views_list)}")
 
-        features_list = []
-        for i, view in enumerate(views_list):
-            features = self.encode_single_view(view, i)
-            features_list.append(features)
+        features_list = [
+            self.encode_single_view(view, index)
+            for index, view in enumerate(views_list)
+        ]
 
         # Apply fusion based on the chosen method
         if self.fusion_type == "concat_proj":
@@ -243,11 +181,7 @@ class MultiViewViTEncoder(nn.Module):
 
         elif self.fusion_type == "indiv_proj":
             # Project each view individually then fuse
-            latent_views = []
-            for i, features in enumerate(features_list):
-                latent_view = self.view_projections[i](features)
-                latent_views.append(latent_view)
-
+            latent_views = self._project_views(features_list)
             combined_latents = torch.cat(latent_views, dim=1)
             latent = self.fusion_layer(combined_latents)
 
@@ -271,10 +205,7 @@ class MultiViewViTEncoder(nn.Module):
 
         elif self.fusion_type == "weighted_sum":
             # Project each view to latent space
-            latent_views = []
-            for i, features in enumerate(features_list):
-                latent_view = self.view_projections[i](features)
-                latent_views.append(latent_view)
+            latent_views = self._project_views(features_list)
 
             # Apply learnable weights
             weights = torch.softmax(self.view_weights, dim=0)
@@ -284,10 +215,7 @@ class MultiViewViTEncoder(nn.Module):
 
         elif self.fusion_type == "gated":
             # Project each view to latent space
-            latent_views = []
-            for i, features in enumerate(features_list):
-                latent_view = self.view_projections[i](features)
-                latent_views.append(latent_view)
+            latent_views = self._project_views(features_list)
 
             # Concatenate features for gate determination
             combined_features = torch.cat(features_list, dim=1)
@@ -300,13 +228,15 @@ class MultiViewViTEncoder(nn.Module):
 
         return latent
 
+    def _project_views(self, features_list):
+        return [
+            self.view_projections[index](features)
+            for index, features in enumerate(features_list)
+        ]
+
     def _normalize_input(self, x):
         """Normalize input images to ImageNet statistics."""
-        # Check if already normalized
-        if x.min() >= 0 and x.max() <= 1:
-            # Convert [0,1] to normalized range matching ImageNet stats
-            return self.normalize(x)
-        return x
+        return normalize_if_unit_interval(x, self.normalize)
 
     def forward(self, views_list):
         """Forward pass to generate latent representation and then proprioceptor (6d)
@@ -316,13 +246,7 @@ class MultiViewViTEncoder(nn.Module):
         Args:
             views_list: List of image tensors from different camera views
         """
-        # Get latent representation
-        latent = self.encode(views_list)
-
-        # Map to robot position prediction via proprioceptor
-        output = self.proprioceptor(latent)
-
-        return output
+        return self.proprioceptor(self.encode(views_list))
 
 
 class MultiViewVitSensorProcessing(MultiViewEncoderSensorProcessing):

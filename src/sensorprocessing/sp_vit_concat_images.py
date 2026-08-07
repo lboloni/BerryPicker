@@ -11,7 +11,15 @@ Config.PROJECTNAME = "BerryPicker"
 from .sensor_processing import MultiViewEncoderSensorProcessing
 import torch
 import torch.nn as nn
-from torchvision import transforms
+from torchvision.transforms import functional
+from .vit_helper import (
+    create_image_preprocessing,
+    create_projection,
+    create_proprioceptor,
+    create_vit_backbone,
+    freeze_feature_extractor,
+    normalize_if_unit_interval,
+)
 
 
 class ConcatImageViTEncoder(nn.Module):
@@ -29,85 +37,26 @@ class ConcatImageViTEncoder(nn.Module):
         self.output_size = exp["output_size"]
         self.num_views = exp.get("num_views", 2)  # Default to 2 views
 
-        # Load the ViT model based on configuration
-        vit_model_name = exp["vit_model"]
-        vit_weights_name = exp["vit_weights"]
-
-        # Handle the model and weights imports
-        if vit_model_name == "vit_b_16":
-            from torchvision.models import vit_b_16, ViT_B_16_Weights
-            weights = getattr(ViT_B_16_Weights, vit_weights_name)
-            self.vit_model = vit_b_16(weights=weights)
-            vit_output_dim = exp.get("vit_output_dim", 768)  # ViT-B has 768 hidden dim
-        elif vit_model_name == "vit_l_16":
-            from torchvision.models import vit_l_16, ViT_L_16_Weights
-            weights = getattr(ViT_L_16_Weights, vit_weights_name)
-            self.vit_model = vit_l_16(weights=weights)
-            vit_output_dim = exp.get("vit_output_dim", 1024)  # ViT-L has 1024 hidden dim
-        elif vit_model_name == "vit_h_14":
-            from torchvision.models import vit_h_14, ViT_H_14_Weights
-            weights = getattr(ViT_H_14_Weights, vit_weights_name)
-            self.vit_model = vit_h_14(weights=weights)
-            vit_output_dim = exp.get("vit_output_dim", 1280)  # ViT-H has 1280 hidden dim
-        else:
-            raise ValueError(f"Unsupported ViT model type: {vit_model_name}")
-
-        # Replace the head with identity to get features
-        self.vit_model.heads = nn.Identity()
-
-        # Override with config value if provided
-        if "vit_output_dim" in exp:
-            vit_output_dim = exp["vit_output_dim"]
-
-        print(f"Using {vit_model_name} with output dimension {vit_output_dim}")
-
-        # Determine projection architecture
-        if "projection_hidden_dim" in exp:
-            projection_hidden_dim = exp["projection_hidden_dim"]
-        else:
-            # Default to a reasonable size based on input dimension
-            projection_hidden_dim = vit_output_dim // 2
-
-        # Projection from ViT features to latent space
-        self.projection = nn.Sequential(
-            nn.Linear(vit_output_dim, projection_hidden_dim),
-            nn.BatchNorm1d(projection_hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(projection_hidden_dim, projection_hidden_dim // 2),
-            nn.BatchNorm1d(projection_hidden_dim // 2),
-            nn.ReLU(),
-            nn.Linear(projection_hidden_dim // 2, self.latent_size),
+        self.vit_model, vit_output_dim = create_vit_backbone(exp)
+        projection, projection_hidden_dim = create_projection(
+            vit_output_dim, self.latent_size, exp
         )
+        self.projection = projection
+        self.proprioceptor = create_proprioceptor(
+            self.latent_size, self.output_size, exp
+        )
+
+        print(f"Using {exp['vit_model']} with output dimension {vit_output_dim}")
         print(f"Created projection network: {vit_output_dim} → {projection_hidden_dim} → {projection_hidden_dim//2} → {self.latent_size}")
-
-        # Add proprioceptor for end-to-end training (not used for inference)
-        # This maps from latent space to 6d robot position
-        self.proprioceptor = nn.Sequential(
-            nn.Linear(self.latent_size, exp.get("proprio_step_1", 128)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_1", 128), exp.get("proprio_step_2", 64)),
-            nn.ReLU(),
-            nn.Linear(exp.get("proprio_step_2", 64), self.output_size)
-        )
 
         print(f"Created proprioceptor: {self.latent_size} → {exp.get('proprio_step_1', 128)} → {exp.get('proprio_step_2', 64)} → {self.output_size}")
 
-        # Image normalization for pre-trained ViT
-        self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        )
-
-        # Create a resize transform to the required vit input size
-        self.image_size = exp["image_size"]
-        self.resize = transforms.Resize((self.image_size, self.image_size), antialias=True)
+        self.normalize, self.resize = create_image_preprocessing(exp["image_size"])
+        self.image_size = tuple(self.resize.size)
 
         # Freeze the feature extractor if specified
         if exp.get("freeze_feature_extractor", False):
-            # Freeze all ViT parameters
-            for param in self.vit_model.parameters():
-                param.requires_grad = False
+            freeze_feature_extractor(self.vit_model)
             print("Feature extractor frozen. Projection and proprioceptor layers are trainable.")
 
         # Move to device
@@ -123,11 +72,10 @@ class ConcatImageViTEncoder(nn.Module):
             concat_image: Single concatenated image tensor
         """
         # Make sure all images are the same size before concatenation
-        resized_views = []
-        for view in views_list:
-            if view.size(2) != self.image_size or view.size(3) != self.image_size:
-                view = self.resize(view)
-            resized_views.append(view)
+        resized_views = [
+            self.resize(view) if tuple(view.shape[-2:]) != self.image_size else view
+            for view in views_list
+        ]
 
         # Concatenate along width dimension (dim=3)
         concat_image = torch.cat(resized_views, dim=3)
@@ -136,9 +84,9 @@ class ConcatImageViTEncoder(nn.Module):
         # The height stays the same but width is num_views*width
         if self.vit_model.__class__.__name__.startswith("VisionTransformer"):
             # For standard ViTs, we need to resize to a square
-            concat_image = transforms.functional.resize(
+            concat_image = functional.resize(
                 concat_image,
-                (self.image_size, self.image_size),
+                self.image_size,
                 antialias=True
             )
 
@@ -173,11 +121,7 @@ class ConcatImageViTEncoder(nn.Module):
 
     def _normalize_input(self, x):
         """Normalize input images to ImageNet statistics."""
-        # Check if already normalized
-        if x.min() >= 0 and x.max() <= 1:
-            # Convert [0,1] to normalized range matching ImageNet stats
-            return self.normalize(x)
-        return x
+        return normalize_if_unit_interval(x, self.normalize)
 
     def forward(self, views_list):
         """Forward pass to generate latent representation and then proprioceptor (6d)
@@ -187,13 +131,7 @@ class ConcatImageViTEncoder(nn.Module):
         Args:
             views_list: List of image tensors from different camera views
         """
-        # Get latent representation
-        latent = self.encode(views_list)
-
-        # Map to robot position prediction via proprioceptor
-        output = self.proprioceptor(latent)
-
-        return output
+        return self.proprioceptor(self.encode(views_list))
 
 
 class ConcatImageVitSensorProcessing(MultiViewEncoderSensorProcessing):

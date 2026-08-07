@@ -13,7 +13,7 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from sensorprocessing import helper_training_data, sensor_processing
+from sensorprocessing import helper_training_data, sensor_processing, sp_factory, vit_helper
 
 
 class TestMultiViewSensorProcessing(unittest.TestCase):
@@ -101,6 +101,40 @@ class TestEncoderSensorProcessing(unittest.TestCase):
             self.assertEqual(
                 np.asarray(processor.process(torch.tensor([[2.0]]))).item(), 6.0
             )
+
+
+class TestViTHelpers(unittest.TestCase):
+    def test_shared_heads_and_image_preprocessing(self):
+        exp = {"projection_hidden_dim": 6, "proprio_step_1": 5, "proprio_step_2": 4}
+        projection, hidden_size = vit_helper.create_projection(8, 3, exp)
+        proprioceptor = vit_helper.create_proprioceptor(3, 2, exp)
+        normalize, resize = vit_helper.create_image_preprocessing([4, 6])
+
+        self.assertEqual(hidden_size, 6)
+        self.assertEqual(projection(torch.ones(2, 8)).shape, (2, 3))
+        self.assertEqual(proprioceptor(torch.ones(2, 3)).shape, (2, 2))
+
+        image = torch.ones(1, 3, 2, 3)
+        resized = vit_helper.resize_if_needed(image, resize)
+        self.assertEqual(tuple(resized.shape[-2:]), (4, 6))
+        self.assertFalse(torch.equal(vit_helper.normalize_if_unit_interval(resized, normalize), resized))
+        normalized = torch.full_like(resized, -2.0)
+        self.assertIs(vit_helper.normalize_if_unit_interval(normalized, normalize), normalized)
+
+    def test_rejects_unknown_vit_backbone(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported ViT model type"):
+            vit_helper.create_vit_backbone(
+                {"vit_model": "not-a-vit", "vit_weights": "DEFAULT"}
+            )
+
+
+class TestSensorProcessingFactory(unittest.TestCase):
+    def test_multiview_class_registry_and_unknown_processor(self):
+        self.assertTrue(sp_factory.is_multiview_sp({"class": "Vit_multiview"}))
+        self.assertTrue(sp_factory.is_multiview_sp({"class": "Vit", "num_views": 2}))
+        self.assertFalse(sp_factory.is_multiview_sp({"class": "Vit"}))
+        with self.assertRaisesRegex(Exception, "Unknown sensor processing class"):
+            sp_factory.create_sp({"class": "unknown"})
 
 
 class TestHelperTrainingData(unittest.TestCase):

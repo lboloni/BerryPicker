@@ -126,9 +126,7 @@ class ResNetProprioTunedRegression(nn.Module):
         flatfeatures = self.flatten(features)
         latent = self.reductor(flatfeatures)
         return latent
-    
-# FIXME: these are identical, differ only in the regression component, 
-# maybe can be merged together somehow.
+
         
 class _SingleViewCNNSensorProcessing(SingleViewEncoderSensorProcessing):
     """Common runtime wrapper for a proprioception-tuned CNN encoder."""

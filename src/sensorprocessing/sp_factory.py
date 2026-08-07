@@ -18,6 +18,41 @@ from sensorprocessing import (
 )
 
 
+_PROCESSOR_CLASSES = {
+    "ConvVaeSensorProcessing": sp_conv_vae.ConvVaeSensorProcessing,
+    "ConvVaeSensorProcessing_concat_multiview": (
+        sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing
+    ),
+    "VGG19ProprioTunedSensorProcessing": (
+        sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing
+    ),
+    "ResNetProprioTunedSensorProcessing": (
+        sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing
+    ),
+    "VGG19ProprioTunedSensorProcessing_multiview": (
+        sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing
+    ),
+    "ResNetProprioTunedSensorProcessing_multiview": (
+        sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing
+    ),
+    "Aruco": sp_aruco.ArucoSensorProcessing,
+    "Vit": sp_vit.VitSensorProcessing,
+    "Vit_multiview": sp_vit_multiview.MultiViewVitSensorProcessing,
+    "Vit_concat_images": sp_vit_concat_images.ConcatImageVitSensorProcessing,
+    "MultiViewVitSensorProcessing": sp_vit_multiview.MultiViewVitSensorProcessing,
+}
+
+_MULTIVIEW_CLASSES = {
+    "ConvVaeSensorProcessing_concat_multiview",
+    "ConvVaeSensorProcessing_multiview",
+    "VGG19ProprioTunedSensorProcessing_multiview",
+    "ResNetProprioTunedSensorProcessing_multiview",
+    "Vit_multiview",
+    "Vit_concat_images",
+    "MultiViewVitSensorProcessing",
+}
+
+
 def create_sp(spexp):
     """Gets the sensor processing component specified by the experiment.
 
@@ -35,83 +70,14 @@ def create_sp(spexp):
     """
     sp_class = spexp.get("class", "")
 
-    # =========================================================================
-    # CONV-VAE MODELS
-    # =========================================================================
-
-    if sp_class == "ConvVaeSensorProcessing":
-        return sp_conv_vae.ConvVaeSensorProcessing(spexp)
-
-    if sp_class == "ConvVaeSensorProcessing_concat_multiview":
-        return sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing(spexp)
-
-
-    # =========================================================================
-    # CNN MODELS (VGG, ResNet) - SINGLE VIEW
-    # =========================================================================
-
-    if sp_class == "VGG19ProprioTunedSensorProcessing":
-        return sp_propriotuned_cnn.VGG19ProprioTunedSensorProcessing(spexp)
-
-    if sp_class == "ResNetProprioTunedSensorProcessing":
-        return sp_propriotuned_cnn.ResNetProprioTunedSensorProcessing(spexp)
-
-    # =========================================================================
-    # CNN MODELS (VGG, ResNet) - MULTI VIEW
-    # =========================================================================
-
-    if sp_class == "VGG19ProprioTunedSensorProcessing_multiview":
-        return sp_propriotuned_cnn_multiview.MultiViewVGG19SensorProcessing(spexp)
-
-    if sp_class == "ResNetProprioTunedSensorProcessing_multiview":
-        return sp_propriotuned_cnn_multiview.MultiViewResNetSensorProcessing(spexp)
-
-    # =========================================================================
-    # ARUCO MARKER
-    # =========================================================================
-
-    if sp_class == "Aruco":
-        return sp_aruco.ArucoSensorProcessing(spexp)
-
-    # =========================================================================
-    # VIT MODELS - SINGLE VIEW
-    # =========================================================================
-
-    if sp_class == "Vit":
-        return sp_vit.VitSensorProcessing(spexp)
-
-    # =========================================================================
-    # VIT MODELS - MULTI VIEW
-    # =========================================================================
-
-    if sp_class == "Vit_multiview":
-        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp)
-
-    if sp_class == "Vit_concat_images":
-        return sp_vit_concat_images.ConcatImageVitSensorProcessing(spexp)
-
-    # Also handle by name variations (for backwards compatibility)
-    if sp_class == "MultiViewVitSensorProcessing":
-        return sp_vit_multiview.MultiViewVitSensorProcessing(spexp)
-
-
-    # =========================================================================
-    # UNKNOWN CLASS
-    # =========================================================================
-
-    raise Exception(f'Unknown sensor processing class: "{sp_class}"\n'
-                    f'Available classes:\n'
-                    f'  - ConvVaeSensorProcessing\n'
-                    f'  - ConvVaeSensorProcessing_concat_multiview\n'
-                    f'  - ConvVaeSensorProcessing_multiview\n'
-                    f'  - VGG19ProprioTunedSensorProcessing\n'
-                    f'  - ResNetProprioTunedSensorProcessing\n'
-                    f'  - VGG19ProprioTunedSensorProcessing_multiview\n'
-                    f'  - ResNetProprioTunedSensorProcessing_multiview\n'
-                    f'  - Aruco\n'
-                    f'  - Vit\n'
-                    f'  - Vit_multiview\n'
-                    f'  - Vit_concat_images')
+    try:
+        return _PROCESSOR_CLASSES[sp_class](spexp)
+    except KeyError as error:
+        available = "\n".join(f"  - {name}" for name in _PROCESSOR_CLASSES)
+        raise Exception(
+            f'Unknown sensor processing class: "{sp_class}"\n'
+            f"Available classes:\n{available}"
+        ) from error
 
 
 def get_sp_class_name(sp):
@@ -153,21 +119,4 @@ def is_multiview_sp(spexp):
     """
     sp_class = spexp.get("class", "")
 
-    multiview_classes = [
-        "ConvVaeSensorProcessing_concat_multiview",
-        "ConvVaeSensorProcessing_multiview",
-        "VGG19ProprioTunedSensorProcessing_multiview",
-        "ResNetProprioTunedSensorProcessing_multiview",
-        "Vit_multiview",
-        "Vit_concat_images",
-        "MultiViewVitSensorProcessing"
-    ]
-
-    if sp_class in multiview_classes:
-        return True
-
-    # Also check num_views parameter
-    if spexp.get("num_views", 1) > 1:
-        return True
-
-    return False
+    return sp_class in _MULTIVIEW_CLASSES or spexp.get("num_views", 1) > 1
