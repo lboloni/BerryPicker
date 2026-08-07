@@ -15,13 +15,16 @@ import torch.nn.functional as F
 import numpy as np
 from typing import List, Union, Optional
 from sensorprocessing.sp_conv_vae import ConvVaeSensorProcessing as _SingleViewSP
+from sensorprocessing.sensor_processing import MultiViewDemonstrationProcessing
 
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from typing import List, Union
 
-class ConcatConvVaeSensorProcessing(_SingleViewSP):
+class ConcatConvVaeSensorProcessing(
+    MultiViewDemonstrationProcessing, _SingleViewSP
+):
     """Sensor‑processing module that accepts *N* camera views and encodes them
     either by width‑concatenating (default) **or** channel‑stacking before
     passing through a Conv‑VAE.

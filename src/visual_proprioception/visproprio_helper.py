@@ -205,27 +205,40 @@ def load_multiview_demonstrations_as_proprioception_training(
         demo = Demonstration(exp_demo, demo_name)
 
         for i in range(demo.metadata["maxsteps"]):
-            # Collect images from all cameras for this timestep
-            view_images = []
-            skip_frame = False
-
-            for camera in cameras[:num_views]:
+            process_demonstration = getattr(sp, "process_demonstration", None)
+            if callable(process_demonstration):
                 try:
-                    sensor_readings, _ = demo.get_image(
-                        i, camera=camera, transform=transform
+                    z = process_demonstration(
+                        demo, i, cameras[:num_views], transform=transform
                     )
-                    view_images.append(sensor_readings)  # Keep batch dimension
                 except Exception as e:
-                    print(f"Skipping demo {demo_name} frame {i} - missing camera {camera}: {e}")
-                    skip_frame = True
-                    break
-
-            if skip_frame:
-                continue
-
-            # Process through multiview sensor processor to get latent encoding
-            # The sp.process expects a list of image tensors (one per view)
-            z = sp.process(view_images)  # Returns encoded latent vector
+                    print(
+                        f"Skipping demo {demo_name} frame {i} - "
+                        f"could not load camera views: {e}"
+                    )
+                    continue
+            else:
+                # Compatibility path for multiview processors that have not
+                # yet adopted MultiViewSensorProcessing.
+                view_images = []
+                failed_to_load_view = False
+                for camera in cameras[:num_views]:
+                    try:
+                        sensor_readings, _ = demo.get_image(
+                            i, camera=camera, transform=transform
+                        )
+                        view_images.append(sensor_readings)
+                    except Exception as e:
+                        print(
+                            f"Skipping demo {demo_name} frame {i} - "
+                            f"missing camera {camera}: {e}"
+                        )
+                        failed_to_load_view = True
+                        break
+                if failed_to_load_view:
+                    continue
+                else:
+                    z = sp.process(view_images)
 
             # Get robot position
             rp = demo.get_action(i, "rc-position-target", exp_robot)

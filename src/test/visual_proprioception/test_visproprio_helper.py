@@ -106,6 +106,75 @@ class TestVisproprioHelper(unittest.TestCase):
         self.assertEqual(result["inputs"].shape, (1, 2))
         self.assertEqual(result["targets"].shape, (1, 2))
 
+    def test_multiview_loader_uses_the_processor_demonstration_api(self):
+        exp = {"training_data": [["demo-run", "demo-name", ["cam-2", "cam-1"]]]}
+        spexp = {"num_views": 2}
+        exp_robot = object()
+
+        class FakePosition:
+            def to_normalized_vector(self, received_exp_robot):
+                assert received_exp_robot is exp_robot
+                return np.array([0.25, 0.75], dtype=np.float32)
+
+        class FakeDemonstration:
+            metadata = {"maxsteps": 1}
+
+            def __init__(self, exp_demo, demo_name):
+                assert exp_demo == {"demo": "experiment"}
+                assert demo_name == "demo-name"
+
+            def get_action(self, index, action_name, received_exp_robot):
+                assert index == 0
+                assert action_name == "rc-position-target"
+                assert received_exp_robot is exp_robot
+                return FakePosition()
+
+        class FakeSensorProcessor:
+            def __init__(self):
+                self.calls = []
+
+            def process_demonstration(self, demo, timestep, cameras, transform):
+                self.calls.append((demo, timestep, cameras, transform))
+                return np.array([1.0, 2.0], dtype=np.float32)
+
+        processor = FakeSensorProcessor()
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = Path(directory) / "inputs.pt"
+            target_path = Path(directory) / "targets.pt"
+
+            with (
+                patch.object(
+                    visproprio_helper.Config,
+                    "get_experiment",
+                    return_value={"demo": "experiment"},
+                ),
+                patch.object(
+                    visproprio_helper,
+                    "Demonstration",
+                    FakeDemonstration,
+                ),
+                patch.object(
+                    visproprio_helper.sp_helper,
+                    "get_transform_to_sp",
+                    return_value="transform",
+                ),
+            ):
+                visproprio_helper.load_multiview_demonstrations_as_proprioception_training(
+                    processor,
+                    exp,
+                    spexp,
+                    exp_robot,
+                    "training_data",
+                    input_path,
+                    target_path,
+                )
+
+        self.assertEqual(len(processor.calls), 1)
+        _, timestep, cameras, transform = processor.calls[0]
+        self.assertEqual(timestep, 0)
+        self.assertEqual(cameras, ["cam-2", "cam-1"])
+        self.assertEqual(transform, "transform")
+
 
 if __name__ == "__main__":
     unittest.main()

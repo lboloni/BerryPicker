@@ -13,7 +13,56 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from sensorprocessing import helper_training_data
+from sensorprocessing import helper_training_data, sensor_processing
+
+
+class TestMultiViewSensorProcessing(unittest.TestCase):
+    def test_processes_an_ordered_demonstration_timestep(self):
+        class RecordingProcessor(sensor_processing.MultiViewSensorProcessing):
+            def __init__(self):
+                super().__init__({"latent_size": 2, "num_views": 2, "image_size": [8, 8]})
+                self.num_views = 2
+                self.received_views = None
+
+            def process(self, views):
+                self.received_views = views
+                return np.array([1.0, 2.0], dtype=np.float32)
+
+        class FakeDemonstration:
+            def __init__(self):
+                self.calls = []
+
+            def get_image(self, timestep, camera, transform):
+                self.calls.append((timestep, camera, transform))
+                return torch.tensor([[len(self.calls)]], dtype=torch.float32), None
+
+        processor = RecordingProcessor()
+        demonstration = FakeDemonstration()
+
+        result = processor.process_demonstration(
+            demonstration, 7, ["camera-2", "camera-1"], transform="transform"
+        )
+
+        self.assertTrue(np.array_equal(result, np.array([1.0, 2.0])))
+        self.assertEqual(
+            demonstration.calls,
+            [(7, "camera-2", "transform"), (7, "camera-1", "transform")],
+        )
+        self.assertEqual(
+            [view.item() for view in processor.received_views], [1.0, 2.0]
+        )
+        self.assertFalse(callable(processor.process_file))
+
+    def test_rejects_an_incomplete_camera_set(self):
+        class RecordingProcessor(sensor_processing.MultiViewSensorProcessing):
+            def process(self, _views):
+                raise AssertionError("process should not be called")
+
+        processor = RecordingProcessor(
+            {"latent_size": 2, "num_views": 2, "image_size": [8, 8]}
+        )
+        with self.assertRaisesRegex(ValueError, "Expected 2 camera views"):
+            processor.process_demonstration(object(), 7, ["camera-1"])
 
 
 class TestHelperTrainingData(unittest.TestCase):

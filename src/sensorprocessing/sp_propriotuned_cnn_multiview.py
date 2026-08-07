@@ -6,15 +6,15 @@ sys.path.append("..")
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from .sensor_processing import AbstractSensorProcessing
-from .sp_helper import load_picturefile_to_tensor
+from .sensor_processing import (
+    AbstractSensorProcessing,
+    MultiViewSensorProcessing,
+)
 
 import pathlib
 import torch
 import torch.nn as nn
 from torchvision import models
-from torchvision import transforms
-import numpy as np
 
 
 class VGG19ProprioTunedRegression(nn.Module):
@@ -355,7 +355,7 @@ class VGG19ProprioTunedSensorProcessing(AbstractSensorProcessing):
         z = torch.squeeze(z)
         return z.cpu().numpy()
 
-class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
+class MultiViewCNNSensorProcessing(MultiViewSensorProcessing):
     """
     Sensor processing class that handles multiple camera views using CNN encoders.
 
@@ -398,11 +398,6 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
         # Set model to evaluation mode
         self.enc.eval()
 
-        # Initialize view cache
-        self._view_cache = {}
-        self._timestep_cache = {}
-        self._current_timestep = None
-
     def process(self, sensor_readings_list):
         """
         Process multiple sensor readings (images) to produce a single embedding.
@@ -419,115 +414,6 @@ class MultiViewCNNSensorProcessing(AbstractSensorProcessing):
             z = self.enc.encode_views(sensor_readings_list)
         z = torch.squeeze(z)
         return z.cpu().numpy()
-
-    def process_multiple_files(self, file_paths, camera_ids=None):
-        """
-        Process multiple image files to produce a single embedding.
-
-        Args:
-            file_paths: List of paths to image files
-            camera_ids: Optional list of camera identifiers corresponding to each file
-
-        Returns:
-            Embedding vector as numpy array with dimensions latent_size
-        """
-        # Default camera IDs if none provided
-        if camera_ids is None:
-            camera_ids = [f"camera_{i}" for i in range(len(file_paths))]
-
-        # Ensure we have the right number of files
-        if len(file_paths) != self.enc.num_views:
-            raise ValueError(f"Expected {self.enc.num_views} view files, got {len(file_paths)}")
-
-        # Load all images - pass None as transform to use default ToTensor transform
-        views_list = []
-        for file_path in file_paths:
-            sensor_readings, _ = load_picturefile_to_tensor(file_path, transform=None)
-            views_list.append(sensor_readings)
-
-        # Process all views
-        return self.process(views_list)
-
-    def process_file(self, file_path, camera_id=None):
-        """
-        Process a single image file to produce an embedding.
-        This method maintains a cache of previously seen views and combines them
-        with the current view to generate a complete multi-view embedding.
-
-        Args:
-            file_path: Path to the image file
-            camera_id: Camera identifier (required for proper view caching)
-
-        Returns:
-            Embedding vector as numpy array with dimensions latent_size
-        """
-        # Ensure we have a camera ID
-        if camera_id is None:
-            # Try to extract camera ID from filename (format: 00001_camera.jpg)
-            try:
-                camera_id = pathlib.Path(file_path).stem.split('_')[1]
-                print(f"Extracted camera ID '{camera_id}' from filename")
-            except (IndexError, ValueError):
-                camera_id = "default_camera"
-                print(f"No camera ID provided or extracted, using '{camera_id}'")
-
-        # Load the image
-        sensor_readings, _ = load_picturefile_to_tensor(file_path, transform=None)
-
-        # Try to extract timestep from filename (format: 00001_camera.jpg)
-        try:
-            timestep = int(pathlib.Path(file_path).stem.split('_')[0])
-            self._current_timestep = timestep
-
-            # Initialize timestep in cache if needed
-            if timestep not in self._timestep_cache:
-                self._timestep_cache[timestep] = {}
-
-            # Store this view in the timestep cache
-            self._timestep_cache[timestep][camera_id] = sensor_readings
-
-        except (ValueError, IndexError):
-            # If we can't extract a timestep, just use the global cache
-            pass
-
-        # Update the global view cache with this view
-        self._view_cache[camera_id] = sensor_readings
-
-        # Prepare views for processing
-        views_list = []
-        required_cameras = self.enc.num_views
-
-        # First try to get views from the current timestep cache
-        if self._current_timestep is not None and self._current_timestep in self._timestep_cache:
-            timestep_views = self._timestep_cache[self._current_timestep]
-
-            # If we have all views for this timestep, use only those
-            if len(timestep_views) == required_cameras:
-                for camera in sorted(timestep_views.keys())[:required_cameras]:
-                    views_list.append(timestep_views[camera])
-                print(f"Using complete set of {required_cameras} views from timestep {self._current_timestep}")
-                return self.process(views_list)
-
-        # We don't have all views for the current timestep, so use the global cache
-        # Start with the current view
-        views_list = [sensor_readings]
-
-        # Add other views from the cache, avoiding the current camera
-        other_cameras = [cam for cam in sorted(self._view_cache.keys()) if cam != camera_id]
-
-        # Add views until we reach the required number
-        while len(views_list) < required_cameras and other_cameras:
-            camera = other_cameras.pop(0)
-            views_list.append(self._view_cache[camera])
-
-        # If we still don't have enough views, duplicate the current view
-        while len(views_list) < required_cameras:
-            views_list.append(sensor_readings)
-
-        print(f"Using {len(set(self._view_cache.keys()))} unique views (with {required_cameras - len(set(self._view_cache.keys()))} duplicated)")
-
-        # Process the views
-        return self.process(views_list)
 
 class MultiViewVGG19SensorProcessing(MultiViewCNNSensorProcessing):
     """Convenience class for VGG19-based multi-view sensor processing"""
