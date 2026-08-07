@@ -13,6 +13,7 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
+from exp_run_config import Experiment
 from sensorprocessing import (
     helper_training_data,
     sensor_processing,
@@ -219,6 +220,39 @@ class TestSensorProcessingFactory(unittest.TestCase):
             processor_class.call_args_list[1].args[0]["model"],
             "VGG19ProprioTunedRegression",
         )
+
+    def test_cnn_factory_accepts_experiment_objects_without_copying_them(self):
+        generic_exp = Experiment(
+            {
+                "class": "ProprioTunedCNN",
+                "model": "ResNetProprioTunedRegression",
+            }
+        )
+        legacy_exp = Experiment(
+            {
+                "class": "VGG19ProprioTunedSensorProcessing_multiview",
+                "model": "unchanged",
+            }
+        )
+
+        with (
+            patch.object(
+                sp_factory.sp_propriotuned_cnn,
+                "ProprioTunedCNNSensorProcessing",
+            ) as singleview_processor,
+            patch.object(
+                sp_factory.sp_propriotuned_cnn_multiview,
+                "MultiViewCNNSensorProcessing",
+            ) as multiview_processor,
+        ):
+            sp_factory.create_sp(generic_exp)
+            sp_factory.create_sp(legacy_exp)
+
+        self.assertIs(singleview_processor.call_args.args[0], generic_exp)
+        legacy_values = multiview_processor.call_args.args[0]
+        self.assertIsInstance(legacy_values, dict)
+        self.assertEqual(legacy_values["model"], "MultiViewVGG19Model")
+        self.assertEqual(legacy_exp["model"], "unchanged")
 
 
 class TestHelperTrainingData(unittest.TestCase):

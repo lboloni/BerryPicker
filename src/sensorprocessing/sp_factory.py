@@ -20,20 +20,31 @@ from sensorprocessing import (
 )
 
 
+def _cnn_exp_with_model(spexp, model=None):
+    """Return ``spexp`` unchanged, or detached values with a model override."""
+    if model is None:
+        return spexp
+
+    values = getattr(spexp, "values", spexp)
+    if callable(values):  # ``dict.values`` is a method, unlike Experiment.values.
+        values = spexp
+    cnn_exp = values.copy()
+    cnn_exp["model"] = model
+    return cnn_exp
+
+
 def _create_multiview_cnn(spexp, model=None):
     """Instantiate the generic multi-view CNN processor with an optional model."""
-    cnn_exp = spexp.copy()
-    if model is not None:
-        cnn_exp["model"] = model
-    return sp_propriotuned_cnn_multiview.MultiViewCNNSensorProcessing(cnn_exp)
+    return sp_propriotuned_cnn_multiview.MultiViewCNNSensorProcessing(
+        _cnn_exp_with_model(spexp, model)
+    )
 
 
 def _create_singleview_cnn(spexp, model=None):
     """Instantiate the generic single-view CNN processor with an optional model."""
-    cnn_exp = spexp.copy()
-    if model is not None:
-        cnn_exp["model"] = model
-    return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(cnn_exp)
+    return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(
+        _cnn_exp_with_model(spexp, model)
+    )
 
 
 _PROCESSOR_CLASSES = {
