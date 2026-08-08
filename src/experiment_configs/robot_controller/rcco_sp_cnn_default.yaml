@@ -1,0 +1,3 @@
+rcco_type: SP_CNN
+sp_experiment: "sensorprocessing_propriotuned_cnn"
+sp_run: "resnet50_128"

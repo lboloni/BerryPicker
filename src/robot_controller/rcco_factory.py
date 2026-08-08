@@ -38,10 +38,12 @@ def create_component(exp):
         return RCCO_Input(exp)
     if exp["rcco-type"] == "Output":
         return RCCO_Output(exp)
-    if exp["rcco-type"] == "VAE":
-        import rcco_vae; return rcco_vae.RCCO_VAE(exp)
+    if exp["rcco-type"] == "SP_VAE":
+        import robot_controller.rcco_sp_vae as rcco_sp_vae; return rcco_sp_vae.RCCO_SP_VAE(exp)
+    if exp["rcco-type"] == "SP_CNN":
+        import robot_controller.rcco_sp_cnn as rcco_sp_cnn; return rcco_sp_cnn.RCCO_SP_CNN(exp)
     if exp["rcco-rype"] == "LSTM":
-        import rcco_lstm; return rcco_lstm.RCCO_LSTM(exp)
+        import robot_controller.rcco_robotdrive_lstm as rcco_robotdrive_lstm; return rcco_robotdrive_lstm.RCCO_LSTM(exp)
     if exp["rcco-rype"] == "Z-combinator":
-        import rcco_z_combinator; return rcco_lstm.RCCO_Z_Combinator(exp)
+        import rcco_z_combinator; return rcco_robotdrive_lstm.RCCO_Z_Combinator(exp)
     raise Exception(f"Unknown rcco type {exp['rcco-type']}")
