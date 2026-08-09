@@ -17,6 +17,7 @@ from exp_run_config import Experiment
 from sensorprocessing import (
     helper_training_data,
     sensor_processing,
+    sp_conv_vae_concat_multiview,
     sp_factory,
     sp_propriotuned_cnn,
     vit_helper,
@@ -107,6 +108,55 @@ class TestEncoderSensorProcessing(unittest.TestCase):
             self.assertFalse(processor.enc.training)
             self.assertEqual(
                 np.asarray(processor.process(torch.tensor([[2.0]]))).item(), 6.0
+            )
+
+
+class TestConcatConvVaeSensorProcessing(unittest.TestCase):
+    @staticmethod
+    def _processor(model, latent_size=2):
+        processor = object.__new__(
+            sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing
+        )
+        processor.model = model
+        processor.latent_size = latent_size
+        processor.debug = False
+        return processor
+
+    def test_process_returns_the_vae_latent_mean(self):
+        class Encoder:
+            @staticmethod
+            def encode(inputs):
+                return torch.tensor(
+                    [[1.0, 2.0]], device=inputs.device
+                ), torch.zeros(1, 2, device=inputs.device)
+
+        result = self._processor(Encoder()).process(torch.zeros(1, 3, 64, 64))
+
+        self.assertTrue(np.array_equal(result, np.array([1.0, 2.0])))
+
+    def test_process_raises_instead_of_using_a_synthetic_latent(self):
+        class BrokenEncoder:
+            @staticmethod
+            def encode(_inputs):
+                raise RuntimeError("checkpoint does not match the architecture")
+
+        processor = self._processor(BrokenEncoder())
+        with self.assertRaisesRegex(
+            RuntimeError, "Conv-VAE encoding failed for composite input"
+        ) as error:
+            processor.process(torch.zeros(1, 3, 64, 64))
+
+        self.assertIsInstance(error.exception.__cause__, RuntimeError)
+
+    def test_process_rejects_an_unexpected_latent_shape(self):
+        class WrongShapeEncoder:
+            @staticmethod
+            def encode(inputs):
+                return (torch.zeros(inputs.size(0), 3, device=inputs.device),)
+
+        with self.assertRaisesRegex(ValueError, r"expected \(1, 2\)"):
+            self._processor(WrongShapeEncoder()).process(
+                torch.zeros(1, 3, 64, 64)
             )
 
 

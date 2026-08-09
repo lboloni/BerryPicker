@@ -139,73 +139,54 @@ class ConcatConvVaeSensorProcessing(
             # Case 2: Single tensor (already concatenated views)
             composite = views
 
-        # Process through the VAE model directly
+        if not isinstance(composite, torch.Tensor):
+            raise TypeError(
+                "views must be a list of tensors or a preprocessed tensor"
+            )
+
+        # Process through the VAE model directly.  Do not manufacture a
+        # substitute latent when the encoder is incompatible with the input or
+        # checkpoint: callers must not continue with data that did not come
+        # from the trained VAE.
         with torch.no_grad():
             # Ensure input is on the correct device
             composite = composite.to(Config().runtime["device"])
 
             try:
-                # Extract the latent representation directly from the encoder.
                 encoder_output = self.model.encode(composite)
+            except Exception as error:
+                raise RuntimeError(
+                    "Conv-VAE encoding failed for composite input "
+                    f"with shape {tuple(composite.shape)}"
+                ) from error
 
-                # Get mu directly - this is the latent representation
-                if isinstance(encoder_output, tuple):
-                    # Some VAEs return (mu, logvar, z)
-                    mu = encoder_output[0]
-                else:
-                    # If it's not a tuple, use a fixed-size slice of the output
-                    # This handles the case where we just get a flattened feature vector
-                    encoder_output = encoder_output.view(encoder_output.size(0), -1)
-                    mu = encoder_output[:, :self.latent_size]
+            if not isinstance(encoder_output, (tuple, list)):
+                raise TypeError(
+                    "Conv-VAE encode() must return a tuple or list whose first "
+                    "item is the latent mean"
+                )
+            if not encoder_output or not isinstance(encoder_output[0], torch.Tensor):
+                raise TypeError(
+                    "Conv-VAE encode() must return a tensor latent mean as its "
+                    "first item"
+                )
 
-                # Ensure it's the right size
-                if mu.shape[1] != self.latent_size:
-                    if self.debug:
-                        print(f"Warning: mu shape {mu.shape} doesn't match latent_size {self.latent_size}")
-                    # Resize to expected latent size
-                    if mu.shape[1] > self.latent_size:
-                        mu = mu[:, :self.latent_size]
-                    else:
-                        # Pad with zeros if smaller (unlikely)
-                        pad = torch.zeros(mu.size(0), self.latent_size - mu.size(1), device=mu.device)
-                        mu = torch.cat([mu, pad], dim=1)
+            mu = encoder_output[0]
+            expected_shape = (composite.size(0), self.latent_size)
+            if tuple(mu.shape) != expected_shape:
+                raise ValueError(
+                    "Conv-VAE latent mean has shape "
+                    f"{tuple(mu.shape)}; expected {expected_shape}"
+                )
 
-                # Convert to numpy and remove batch dimension if size 1
-                latent = mu.cpu().numpy()
-                if latent.shape[0] == 1:
-                    latent = latent.squeeze(0)
+            latent = mu.cpu().numpy()
+            if latent.shape[0] == 1:
+                latent = latent.squeeze(0)
 
-                if self.debug:
-                    print(f"Final latent shape: {latent.shape}, size: {latent.size}")
+            if self.debug:
+                print(f"Final latent shape: {latent.shape}, size: {latent.size}")
 
-                return latent
-
-            except Exception as e:
-                # Fallback: If direct access fails, create a fixed size vector filled with zeros
-                # This allows training to continue even with errors
-                if self.debug:
-                    print(f"Error in VAE processing: {e}")
-                    import traceback
-                    traceback.print_exc()
-
-                print(f"Using fallback method: creating a fixed-size latent vector")
-                # Try manual feature extraction as fallback
-                try:
-                    # Flatten input
-                    flat_input = composite.view(composite.size(0), -1)
-                    # Take a subset of values and normalize
-                    subset = flat_input[:, :self.latent_size]
-                    # Normalize to have similar distribution as VAE latents
-                    normalized = F.normalize(subset, p=2, dim=1)
-                    latent = normalized.cpu().numpy()
-                    if latent.shape[0] == 1:
-                        latent = latent.squeeze(0)
-                    return latent
-                except Exception as e2:
-                    print(f"Fallback also failed: {e2}. Creating zeros vector.")
-                    # Last resort: return zeros
-                    latent = np.zeros(self.latent_size, dtype=np.float32)
-                    return latent
+            return latent
 
     # Convenience alias.
     encode = process
