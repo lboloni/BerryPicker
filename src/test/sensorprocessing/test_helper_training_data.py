@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import numpy as np
 import torch
+from PIL import Image
 
 
 SOURCE_ROOT = Path(__file__).parents[2]
@@ -71,6 +72,27 @@ class TestMultiViewSensorProcessing(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "Expected 2 camera views"):
             processor.process_demonstration(object(), 7, ["camera-1"])
+
+
+class TestSingleViewFileProcessing(unittest.TestCase):
+    def test_process_file_uses_the_configured_training_transform(self):
+        class RecordingProcessor(sensor_processing.SingleViewEncoderSensorProcessing):
+            def __init__(self):
+                super().__init__({"latent_size": 2, "image_size": [4, 4]})
+                self.received_tensor = None
+
+            def process(self, sensor_readings):
+                self.received_tensor = sensor_readings
+                return np.zeros(2, dtype=np.float32)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            image_path = Path(temporary_directory) / "camera.png"
+            Image.new("RGB", (12, 8), color="white").save(image_path)
+
+            processor = RecordingProcessor()
+            processor.process_file(image_path)
+
+        self.assertEqual(tuple(processor.received_tensor.shape), (1, 3, 4, 4))
 
 
 class TestEncoderSensorProcessing(unittest.TestCase):

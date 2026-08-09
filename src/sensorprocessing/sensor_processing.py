@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
 import torch
-from torchvision import transforms
 from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
 
 
@@ -16,9 +15,11 @@ class AbstractSensorProcessing(ABC):
 
     def __init__(self, exp):
         self.exp = exp
-        self.transform = transforms.Compose([
-          transforms.ToTensor(),
-        ])
+        # File-based inference must use the same geometric preprocessing as
+        # the data used to train the processor.  A bare ToTensor() left CNNs
+        # at the camera's native resolution and could make VGG's fixed head
+        # incompatible with its input.
+        self.transform = get_transform_to_sp(exp)
         self.latent_size = exp["latent_size"]
 
     @abstractmethod
