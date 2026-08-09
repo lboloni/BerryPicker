@@ -5,7 +5,7 @@ latent_size: 256
 encoding_size: 256
 training_task: 'proprio_sp_training'
 epochs: 300
-image_size: 128
+image_size: [128, 128]
 stack_mode: 'width'
 num_views: 2
 output_size: 6

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
 import torch
-from .sp_helper import get_transform_to_sp, load_picturefile_to_tensor
+from .sp_helper import SensorPreprocessor
 
 
 class AbstractSensorProcessing(ABC):
@@ -15,11 +15,7 @@ class AbstractSensorProcessing(ABC):
 
     def __init__(self, exp):
         self.exp = exp
-        # File-based inference must use the same geometric preprocessing as
-        # the data used to train the processor.  A bare ToTensor() left CNNs
-        # at the camera's native resolution and could make VGG's fixed head
-        # incompatible with its input.
-        self.transform = get_transform_to_sp(exp)
+        self.preprocessor = SensorPreprocessor(exp)
         self.latent_size = exp["latent_size"]
 
     @abstractmethod
@@ -31,9 +27,7 @@ class AbstractSensorProcessing(ABC):
     def process_file(self, sensor_image_file):
         """Processes the sensor image from a file. This probably does not need to be overwritten. 
         """
-        sensor_readings, _ = load_picturefile_to_tensor(sensor_image_file, self.transform)
-        output = self.process(sensor_readings)
-        return output
+        return self.process(self.preprocessor.from_file(sensor_image_file))
 
 
 class MultiViewDemonstrationProcessing:
@@ -49,6 +43,23 @@ class MultiViewDemonstrationProcessing:
     # camera set, so it deliberately has no file-oriented API.
     process_file = None
 
+    def _expected_view_count(self):
+        expected_views = getattr(self, "num_views", None)
+        if expected_views is None:
+            expected_views = getattr(
+                getattr(self, "enc", None), "num_views", self.exp.get("num_views", 1)
+            )
+        return expected_views
+
+    def _validate_view_count(self, views, description):
+        if isinstance(views, str):
+            raise TypeError(f"{description} must be an ordered sequence")
+        expected_views = self._expected_view_count()
+        if len(views) != expected_views:
+            raise ValueError(
+                f"Expected {expected_views} {description}, got {len(views)}"
+            )
+
     def process_demonstration(self, demonstration, timestep, cameras, transform=None):
         """Encode ordered camera views from one ``Demonstration`` timestep.
 
@@ -56,21 +67,10 @@ class MultiViewDemonstrationProcessing:
         demonstration object supplies the image tensors, so this works for
         demonstrations stored either as image files or as video.
         """
-        if isinstance(cameras, str):
-            raise TypeError("cameras must be an ordered sequence of camera IDs")
-
-        expected_views = getattr(self, "num_views", None)
-        if expected_views is None:
-            expected_views = getattr(
-                getattr(self, "enc", None), "num_views", self.exp.get("num_views", 1)
-            )
-        if len(cameras) != expected_views:
-            raise ValueError(
-                f"Expected {expected_views} camera views, got {len(cameras)}"
-            )
+        self._validate_view_count(cameras, "camera views")
 
         if transform is None:
-            transform = get_transform_to_sp(self.exp)
+            transform = self.preprocessor.transform
 
         views = []
         for camera in cameras:
@@ -82,6 +82,18 @@ class MultiViewDemonstrationProcessing:
                     f"Could not load timestep {timestep} from camera {camera}"
                 )
             views.append(sensor_readings)
+        return self.process(views)
+
+    def process_captures(self, captures):
+        """Encode an ordered sequence of RGB camera frames.
+
+        Each frame is preprocessed with this processor's shared inference
+        preprocessor before it is passed to the multi-view model.
+        """
+        self._validate_view_count(captures, "camera captures")
+        views = [
+            self.preprocessor.from_capture(capture) for capture in captures
+        ]
         return self.process(views)
 
 

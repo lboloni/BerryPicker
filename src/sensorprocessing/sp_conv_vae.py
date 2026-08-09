@@ -46,7 +46,6 @@ import argparse
 # from mpl_toolkits.axes_grid1 import ImageGrid
 
 from sensorprocessing.conv_vae import get_conv_vae_config
-from .sp_helper import get_transform_to_sp
 from .sensor_processing import AbstractSensorProcessing
 
 class ConvVaeSensorProcessing (AbstractSensorProcessing):
@@ -78,9 +77,6 @@ class ConvVaeSensorProcessing (AbstractSensorProcessing):
         # prepare model for testing
         self.model = self.model.to(Config().runtime["device"])
         self.model.eval()
-        self.transform = get_transform_to_sp(exp)
-
-
     def process(self, sensor_readings):
         """Process a sensor readings object - in this case it must be an image prepared into a batch by load_image_to_tensor or load_capture_to_tensor. 
         Returns the z encoding in the form of a numpy array."""

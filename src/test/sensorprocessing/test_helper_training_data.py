@@ -20,6 +20,7 @@ from sensorprocessing import (
     sensor_processing,
     sp_conv_vae_concat_multiview,
     sp_factory,
+    sp_helper,
     sp_propriotuned_cnn,
     vit_helper,
 )
@@ -73,6 +74,34 @@ class TestMultiViewSensorProcessing(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Expected 2 camera views"):
             processor.process_demonstration(object(), 7, ["camera-1"])
 
+    def test_process_demonstration_defaults_to_the_shared_transform(self):
+        class RecordingProcessor(sensor_processing.MultiViewSensorProcessing):
+            def process(self, _views):
+                return np.zeros(2, dtype=np.float32)
+
+        class FakeDemonstration:
+            def __init__(self):
+                self.transforms = []
+
+            def get_image(self, _timestep, camera, transform):
+                self.transforms.append((camera, transform))
+                return torch.zeros(1, 3, 4, 4), None
+
+        processor = RecordingProcessor(
+            {"latent_size": 2, "image_size": [4, 4], "num_views": 2}
+        )
+        demonstration = FakeDemonstration()
+
+        processor.process_demonstration(demonstration, 7, ["cam-1", "cam-2"])
+
+        self.assertEqual(
+            demonstration.transforms,
+            [
+                ("cam-1", processor.preprocessor.transform),
+                ("cam-2", processor.preprocessor.transform),
+            ],
+        )
+
 
 class TestSingleViewFileProcessing(unittest.TestCase):
     def test_process_file_uses_the_configured_training_transform(self):
@@ -93,6 +122,76 @@ class TestSingleViewFileProcessing(unittest.TestCase):
             processor.process_file(image_path)
 
         self.assertEqual(tuple(processor.received_tensor.shape), (1, 3, 4, 4))
+
+
+class TestSensorPreprocessor(unittest.TestCase):
+    def test_uses_the_configured_image_size_pair(self):
+        preprocessor = sp_helper.SensorPreprocessor({"image_size": [4, 6]})
+        image = Image.new("RGB", (12, 8), color="white")
+
+        self.assertEqual(
+            tuple(preprocessor.from_image(image).shape), (1, 3, 4, 6)
+        )
+
+    def test_rejects_a_scalar_image_size_through_normal_access(self):
+        with self.assertRaises(TypeError):
+            sp_helper.SensorPreprocessor({"image_size": 4})
+
+    def test_file_and_capture_entry_points_produce_the_same_batch(self):
+        preprocessor = sp_helper.SensorPreprocessor({"image_size": [4, 4]})
+        capture = np.full((8, 12, 3), 255, dtype=np.uint8)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            image_path = Path(temporary_directory) / "camera.png"
+            Image.fromarray(capture).save(image_path)
+            from_file = preprocessor.from_file(image_path)
+
+        from_capture = preprocessor.from_capture(capture)
+        self.assertTrue(torch.equal(from_file, from_capture))
+        self.assertEqual(tuple(from_capture.shape), (1, 3, 4, 4))
+
+
+class TestMultiViewCaptureProcessing(unittest.TestCase):
+    def test_process_captures_uses_the_shared_preprocessor_in_order(self):
+        class RecordingProcessor(sensor_processing.MultiViewSensorProcessing):
+            def __init__(self):
+                super().__init__(
+                    {"latent_size": 2, "image_size": [4, 4], "num_views": 2}
+                )
+                self.num_views = 2
+                self.received_views = None
+
+            def process(self, views):
+                self.received_views = views
+                return np.array([1.0, 2.0], dtype=np.float32)
+
+        processor = RecordingProcessor()
+        captures = [
+            np.zeros((8, 12, 3), dtype=np.uint8),
+            np.full((8, 12, 3), 255, dtype=np.uint8),
+        ]
+
+        result = processor.process_captures(captures)
+
+        self.assertTrue(np.array_equal(result, np.array([1.0, 2.0])))
+        self.assertEqual(
+            [tuple(view.shape) for view in processor.received_views],
+            [(1, 3, 4, 4), (1, 3, 4, 4)],
+        )
+        self.assertEqual(
+            [view.mean().item() for view in processor.received_views], [0.0, 1.0]
+        )
+
+    def test_process_captures_rejects_an_incomplete_camera_set(self):
+        class RecordingProcessor(sensor_processing.MultiViewSensorProcessing):
+            def process(self, _views):
+                raise AssertionError("process should not be called")
+
+        processor = RecordingProcessor(
+            {"latent_size": 2, "image_size": [4, 4], "num_views": 2}
+        )
+        with self.assertRaisesRegex(ValueError, "Expected 2 camera captures"):
+            processor.process_captures([np.zeros((8, 8, 3), dtype=np.uint8)])
 
 
 class TestEncoderSensorProcessing(unittest.TestCase):

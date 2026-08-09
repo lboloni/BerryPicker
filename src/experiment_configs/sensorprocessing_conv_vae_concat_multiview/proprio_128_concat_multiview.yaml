@@ -4,7 +4,7 @@
 latent_size: 128
 
 
-image_size: 128
+image_size: [128, 128]
 training_task: 'proprio_sp_training'
 epochs: 300
 stack_mode: 'width'
@@ -17,7 +17,7 @@ validation_demo: '2025_03_08__14_29_07'
 
 # Add multi-view specific parameters
 # Adaptive multi-view parameters
-image_size: 128  # Target size for concatenated images
+image_size: [128, 128]  # Target size for concatenated images
 num_views: 2  # Maximum number of views to use
 min_views_required: 1  # Minimum views required (allows single-view if that's all we have)
 

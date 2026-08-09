@@ -14,7 +14,7 @@ projection_hidden_dim: 1024  # For vit_b_16, recommended values: 384-512
 
 latent_size: 128       # Size of the latent embedding to generate
 # image_size: 224        # Required input size for the ViT model
-image_size: 518       # Required input size for the ViT Huge mode
+image_size: [518, 518] # Required input size for the ViT Huge mode
 loss: "MSE"
 # Training parameters
 batch_size: 32
