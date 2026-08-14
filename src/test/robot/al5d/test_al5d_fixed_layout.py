@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-sys.path.append(str(pathlib.Path(__file__).parents[2]))
+sys.path.append(str(pathlib.Path(__file__).parents[3]))
 
 from robot.al5d import PositionController, RobotPosition, SimulatedPositionController
 from robot.al5d.angle_controller import AngleController
@@ -100,6 +100,12 @@ class TestAL5DFixedLayout(unittest.TestCase):
         self.assertEqual(move_towards(1.0, 2.0, 0.0), 1.0)
         with self.assertRaises(ValueError):
             move_towards(1.0, 2.0, -1.0)
+        with self.assertRaises(ValueError):
+            move_position_by(self.robot_exp, current, {"unknown": 1.0})
+        with self.assertRaises(ValueError):
+            move_position_towards(self.robot_exp, current, target, {})
+        with self.assertRaises(ValueError):
+            move_position_by(self.robot_exp, current, {"height": np.nan})
 
 
 if __name__ == "__main__":
