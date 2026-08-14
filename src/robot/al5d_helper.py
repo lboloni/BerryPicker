@@ -56,6 +56,11 @@ class RobotHelper:
         pulse = RobotHelper.map_ranges(
             angle, exp_angle["CST_ANGLE_MIN"], exp_angle["CST_ANGLE_MAX"], exp_pulse["CST_PULSE_MIN"], exp_pulse["CST_PULSE_MAX"])
         corrected_pulse = int(pulse) + exp_pulse["PULSE_CORRECTION"][servo]
+        if not exp_pulse["CST_PULSE_MIN"] <= corrected_pulse <= exp_pulse["CST_PULSE_MAX"]:
+            raise ValueError(
+                f"Servo {servo} corrected pulse {corrected_pulse} is outside "
+                f"[{exp_pulse['CST_PULSE_MIN']}, {exp_pulse['CST_PULSE_MAX']}]"
+            )
         return corrected_pulse, constrained
 
 

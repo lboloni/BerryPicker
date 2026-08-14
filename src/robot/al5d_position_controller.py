@@ -106,9 +106,12 @@ class PositionController:
         self.exp_angle = Config().get_experiment(exp["exp_anglecontroller"], exp["run_anglecontroller"])
         self.device = self.exp_pulse["device"]
         self.pulse_controller = PulseController(self.exp_pulse)
-        self.pulse_controller.start_robot()
         self.angle_controller = AngleController(self.exp_angle, self.pulse_controller)
         self.pos = RobotPosition(exp)
+
+    def start_robot(self):
+        """Move the robot to its configured default position."""
+        self.pulse_controller.start_robot()
         self.move(self.pos)
 
     def get_position(self):
@@ -152,6 +155,8 @@ class PositionController:
 
     def move(self, target: RobotPosition):
         """Move to the specified target position: new version with one shot commands"""
+        if not RobotPosition.limit(self.exp, target):
+            raise ValueError(f"Unsafe robot target:\n{target}")
         normalpos = RobotPosition.to_normalized_vector(target, self.exp)
         logger.info(f"PositionController.move moving robot to target: {target},\n abs: {normalpos}")
         angle_z = 90 + target["heading"]
@@ -166,4 +171,3 @@ class PositionController:
         angles[self.exp["SERVO_Z"]] = angle_z
         self.angle_controller.control_angles(angles, target["gripper"])
         self.pos = target
-
