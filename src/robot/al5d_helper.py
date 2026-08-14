@@ -46,13 +46,15 @@ class RobotHelper:
         return int(pulse), constrained
 
     @staticmethod
-    def servo_angle_to_pulse(exp_angle: Experiment, exp_pulse: Experiment, servo, angle, constrain=True):
+    def servo_angle_to_pulse(exp_angle: Experiment, exp_pulse: Experiment, servo, angle):
         """Performs the angle to pulse transformation on a servo-specific basis, while taking into consideration the specific limits and adding pulse corrections"""
-        if constrain:
-            min_value = exp_angle["ANGLE_LIMITS"][servo][0]
-            max_value = exp_angle["ANGLE_LIMITS"][servo][2]
-            angle, constrained = RobotHelper.constrain(
-                angle, min_value, max_value)
+        min_value = exp_angle["ANGLE_LIMITS"][servo][0]
+        max_value = exp_angle["ANGLE_LIMITS"][servo][2]
+        if not min_value <= angle <= max_value:
+            raise ValueError(
+                f"Servo {servo} angle {angle} is outside "
+                f"[{min_value}, {max_value}]"
+            )
         pulse = RobotHelper.map_ranges(
             angle, exp_angle["CST_ANGLE_MIN"], exp_angle["CST_ANGLE_MAX"], exp_pulse["CST_PULSE_MIN"], exp_pulse["CST_PULSE_MAX"])
         corrected_pulse = int(pulse) + exp_pulse["PULSE_CORRECTION"][servo]
@@ -61,7 +63,7 @@ class RobotHelper:
                 f"Servo {servo} corrected pulse {corrected_pulse} is outside "
                 f"[{exp_pulse['CST_PULSE_MIN']}, {exp_pulse['CST_PULSE_MAX']}]"
             )
-        return corrected_pulse, constrained
+        return corrected_pulse, False
 
 
     @staticmethod

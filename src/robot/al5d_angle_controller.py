@@ -28,12 +28,13 @@ class AngleController:
             retval[i] = v.item()
         return retval
 
-    def control_servo_angle(self, exp_angle: Experiment, exp_pulse: Experiment, servo, angle):
+    def control_servo_angle(self, servo, angle):
         """Controls the servo through angle, by converting the angle to pulse. It sets the position assuming success. Works only for the 5 angle servos."""
-        speed = self.exp["CST_SPEED_DEFAULT"]
-        pulse, _ = RobotHelper.servo_angle_to_pulse(exp_angle, exp_pulse, servo, angle)
-        if servo < 0 or servo >= self.exp["no_servos"]:
-            raise Exception(f"Invalid servo for control_servo_angle {servo}")
+        if not 0 <= servo < self.pulse_controller.cnt_servos - 1:
+            raise ValueError(f"Invalid angle-servo index: {servo}")
+        pulse, _ = RobotHelper.servo_angle_to_pulse(
+            self.exp, self.pulse_controller.exp, servo, angle)
+        speed = self.pulse_controller.exp["CST_SPEED_DEFAULT"]
         self.pulse_controller.control_servo_pulse(servo, pulse, speed)
         self.positions[servo] = angle
 
@@ -45,9 +46,12 @@ class AngleController:
 
     def control_gripper(self, distance):
         """Sets the gripper to a certain opening distance [0..100]"""
-        speed = self.exp["CST_SPEED_DEFAULT"]
+        if not 0 <= distance <= 100:
+            raise ValueError(f"Invalid gripper distance: {distance}")
         pulse = self.calculate_gripper(distance)
-        self.pulse_controller.control_servo_pulse("SERVO_GRIP", pulse, speed)
+        servo = self.pulse_controller.cnt_servos - 1
+        speed = self.pulse_controller.exp["CST_SPEED_DEFAULT"]
+        self.pulse_controller.control_servo_pulse(servo, pulse, speed)
         self.gripper_distance = distance
 
     def control_angles(self, positions, gripper_distance):

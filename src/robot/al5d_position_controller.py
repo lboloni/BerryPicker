@@ -113,11 +113,17 @@ class PositionController:
         self.pulse_controller = PulseController(self.exp_pulse)
         self.angle_controller = AngleController(self.exp_angle, self.pulse_controller)
         self.pos = RobotPosition(exp)
+        self.started = False
 
     def start_robot(self):
         """Move the robot to its configured default position."""
         self.pulse_controller.start_robot()
-        self.move(self.pos)
+        self.started = True
+        try:
+            self.move(self.pos)
+        except Exception:
+            self.started = False
+            raise
 
     def get_position(self):
         return copy(self.pos)
@@ -125,6 +131,7 @@ class PositionController:
     def stop_robot(self):
         print("***al5d_position_controller: Initiating the stopping of the robot")
         self.pulse_controller.stop_robot()
+        self.started = False
         print("***al5d_position_controller: Robot stopped")
 
     @staticmethod
@@ -160,6 +167,8 @@ class PositionController:
 
     def move(self, target: RobotPosition):
         """Move to the specified target position: new version with one shot commands"""
+        if not self.started:
+            raise RuntimeError("Robot is not started")
         if not RobotPosition.limit(self.exp, target):
             raise ValueError(f"Unsafe robot target:\n{target}")
         normalpos = RobotPosition.to_normalized_vector(target, self.exp)
