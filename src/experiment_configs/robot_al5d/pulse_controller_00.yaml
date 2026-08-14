@@ -1,7 +1,6 @@
 # Baseline configuration for the pulse controller for the AL5D robot
 
 name: "pulse_controller_00"
-no_servos: 6
 pulse_position_default: 1500
 #device: '/dev/ttyUSB1' # first device to try
 #device_backup: '/dev/ttyUSB0' # second device to try

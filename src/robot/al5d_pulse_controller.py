@@ -12,6 +12,7 @@ import serial
 import sys
 import time
 from .al5d_helper import RobotHelper
+from .al5d_constants import SERVO_COUNT
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -25,7 +26,6 @@ class PulseController:
 
     def __init__(self, exp):
         self.exp = exp
-        self.cnt_servos = exp["no_servos"]
         # the position taken by every motor when we are starting up
         # the robot
         self.pulse_position_default = exp["pulse_position_default"]
@@ -34,7 +34,7 @@ class PulseController:
         # self.pulse_position_zero = 0
         # tracking the positions of the robot in terms of the pulse positions at the servos
         self.positions_pulse = np.ones(
-            self.cnt_servos) * self.pulse_position_default
+            SERVO_COUNT) * self.pulse_position_default
         # if sp == None:
         #     if device == None:
         #         raise Exception("No device specified")                
@@ -56,13 +56,13 @@ class PulseController:
     def as_dict(self):
         """Returns the pulse configuration as a dictionary of lists, to be put into a saved yaml file"""
         retval = {}
-        for i in range(self.cnt_servos):
+        for i in range(SERVO_COUNT):
             retval[i] = self.positions_pulse[i].item()
         return retval
             
     def start_robot(self, speed=100):
         """ Starts the robot and brings all the motors to the default position"""
-        for servo in range(0, self.cnt_servos):
+        for servo in range(SERVO_COUNT):
             self.control_servo_pulse(servo, self.pulse_position_default, speed)
 
     def stop_robot(self):
@@ -71,7 +71,7 @@ class PulseController:
         self.start_robot(self.exp["robot_start_speed"])
         time.sleep(5)
         self.command_finished = False
-        for servo in range(0, self.cnt_servos):
+        for servo in range(SERVO_COUNT):
             command = f"#{servo} P{0}\r"
             self.sp.write(command.encode())
 
@@ -101,21 +101,11 @@ class PulseController:
             self.command_finished = False
         raise TimeoutError(f"Robot command did not finish within {timeout} seconds")
 
-    def query_position(self, i):
-        """Query the position of i"""
-        command = f"QP {i}\r"
-        self.sp.write(command.encode())
-        time.sleep(0.1)
-        readbyte = self.sp.read()
-        val = 10 * ord(readbyte)
-        return val
-
-
     def control_pulses(self, target_pulses):
         """Sends a command to set all the motors simultaneously"""
         time=self.exp["TIME_DEFAULT"]
         command = ""
-        for i in range(6):
+        for i in range(SERVO_COUNT):
             command += f"#{i} P {target_pulses[i]} "
         command += f" T{time}\r"
         logger.info(command)

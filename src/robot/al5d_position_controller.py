@@ -10,6 +10,7 @@ import numpy as np
 from .al5d_helper import RobotHelper
 from .al5d_pulse_controller import PulseController
 from .al5d_angle_controller import AngleController
+from .al5d_constants import ANGLE_SERVO_COUNT, SERVO_Z, SERVO_SHOULDER, SERVO_ELBOW, SERVO_WRIST, SERVO_WRIST_ROTATION
 from math import sqrt, atan, acos, fabs, degrees
 from copy import copy
 import logging
@@ -177,11 +178,11 @@ class PositionController:
         angle_shoulder, angle_elbow, angle_wrist = self.ik_shoulder_elbow_wrist(target)
         angle_wrist_rotation = target["wrist_rotation"]        
         # safety check here
-        angles = np.zeros(5)
-        angles[self.exp["SERVO_ELBOW"]] = angle_elbow
-        angles[self.exp["SERVO_SHOULDER"]] = angle_shoulder
-        angles[self.exp["SERVO_WRIST"]] = angle_wrist
-        angles[self.exp["SERVO_WRIST_ROTATION"]] = angle_wrist_rotation
-        angles[self.exp["SERVO_Z"]] = angle_z
+        angles = np.zeros(ANGLE_SERVO_COUNT)
+        angles[SERVO_Z] = angle_z
+        angles[SERVO_SHOULDER] = angle_shoulder
+        angles[SERVO_ELBOW] = angle_elbow
+        angles[SERVO_WRIST] = angle_wrist
+        angles[SERVO_WRIST_ROTATION] = angle_wrist_rotation
         self.angle_controller.control_angles(angles, target["gripper"])
         self.pos = copy(target)
