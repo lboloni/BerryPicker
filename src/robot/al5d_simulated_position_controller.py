@@ -25,5 +25,4 @@ class SimulatedPositionController:
 
     def move(self, target: RobotPosition):
         """Move to the specified target position: new version with one shot commands"""
-        self.pos = target
-
+        self.pos = copy(target)

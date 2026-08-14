@@ -46,11 +46,11 @@ class PulseController:
         # else:
         #     self.sp = sp
         try:
-            self.sp = serial.Serial(exp["device"], 9600)
+            self.sp = serial.Serial(exp["device"], 9600, timeout=1)
             self.command_finished = True
         except serial.SerialException as se:
             print(f"Try out the backup {exp['device_backup']}")
-            self.sp = serial.Serial(exp["device_backup"], 9600)
+            self.sp = serial.Serial(exp["device_backup"], 9600, timeout=1)
             self.command_finished = True
 
     def as_dict(self):
@@ -87,9 +87,10 @@ class PulseController:
         self.wait_until_complete()
         self.positions_pulse[servo] = pulse
 
-    def wait_until_complete(self):
+    def wait_until_complete(self, timeout=30):
         """Wait until all the commands are complete"""
-        while True:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
             command = "Q\r"
             self.sp.write(command.encode())
             readbytes = self.sp.read()
@@ -97,8 +98,9 @@ class PulseController:
             if readbytes == b'+':
                 #print("command executed done")
                 self.command_finished = True
-                break
+                return
             self.command_finished = False
+        raise TimeoutError(f"Robot command did not finish within {timeout} seconds")
 
     def query_position(self, i):
         """Query the position of i"""

@@ -41,6 +41,11 @@ class RobotPosition:
     def __setitem__(self, key, value):
         self.values[key] = value
 
+    def __copy__(self):
+        position = object.__new__(RobotPosition)
+        position.values = copy(self.values)
+        return position
+
     @staticmethod
     def limit(exp: Experiment, posc):
         """Verifies whether the given position is safe, defined between the mind and the max"""
@@ -170,4 +175,4 @@ class PositionController:
         angles[self.exp["SERVO_WRIST_ROTATION"]] = angle_wrist_rotation
         angles[self.exp["SERVO_Z"]] = angle_z
         self.angle_controller.control_angles(angles, target["gripper"])
-        self.pos = target
+        self.pos = copy(target)

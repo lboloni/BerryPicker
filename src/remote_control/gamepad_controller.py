@@ -112,12 +112,9 @@ class GamepadController(AbstractController):
         target["wrist_angle"] += delta_wrist_angle
         target["wrist_rotation"] += delta_wrist_rotation
         target["gripper"] += delta_gripper
-        # applying a safety reset which prevents us going out of range
-        ok = RobotPosition.limit(self.robot_controller.exp, self.pos_target)
-        if ok:
-            self.pos_target = copy.copy(target)
-        else:
-            logger.warning(f"DANGER! exceeded range! {self.pos_target}")
+        if not RobotPosition.limit(self.robot_controller.exp, target):
+            raise ValueError(f"Unsafe robot target:\n{target}")
+        self.pos_target = target
         logger.info(f"Target: {self.pos_target}")
 
 
