@@ -3,8 +3,8 @@ gamepad_controller.py
 
 Gamepad-based controller for the AL5D robot
 """
-from robot.al5d_position_controller import PositionController
-from robot.helper_al5d_move import move_position_by
+from robot.al5d import PositionController
+from robot.al5d.move import move_position_by
 from approxeng.input.selectbinder import ControllerResource, ControllerNotFoundError
 from . import double_demo_controller
 import time

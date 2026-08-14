@@ -16,7 +16,7 @@ import pathlib
 import torch
 import numpy as np
 from demonstration.demonstration import Demonstration
-from robot.al5d_position_controller import RobotPosition
+from robot.al5d import RobotPosition
 import sensorprocessing.sp_helper as sp_helper
 import sensorprocessing.sp_factory as sp_factory
 
@@ -493,7 +493,7 @@ def collate_multiview(batch):
 # from demonstration.demonstration import Demonstration
 # # from demonstration.encoded_demonstrations import BCDemonstration
 
-# from robot.al5d_position_controller import RobotPosition
+# from robot.al5d import RobotPosition
 
 # import sensorprocessing.sp_helper as sp_helper
 

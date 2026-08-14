@@ -14,7 +14,7 @@ import pprint
 import pathlib
 from sensorprocessing.sp_helper import load_picturefile_to_tensor, load_capture_to_tensor
 from torchvision import transforms
-from robot.al5d_position_controller import RobotPosition
+from robot.al5d import RobotPosition
 
 
 def list_demos(exp, prefix = None):

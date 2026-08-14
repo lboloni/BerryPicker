@@ -6,7 +6,7 @@ Abstract based class for the controller for the AL5D robot
 from abc import ABC, abstractmethod
 from copy import copy
 
-from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.al5d import RobotPosition, PositionController
 
 import logging
 logger = logging.getLogger(__name__)

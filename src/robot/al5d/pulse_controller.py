@@ -1,5 +1,5 @@
 """
-al5d_pulse_controller.py
+pulse_controller.py
 
 A low-level position controller for the al5d robot
 """
@@ -11,8 +11,8 @@ import numpy as np
 import serial
 import sys
 import time
-from .al5d_helper import RobotHelper
-from .al5d_constants import SERVO_COUNT
+from .helper import RobotHelper
+from .constants import SERVO_COUNT
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)

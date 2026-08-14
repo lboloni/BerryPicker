@@ -3,8 +3,8 @@ automove_controller.py
 
 Automove controller for the AL5D robot. Generates moving patterns useful for demonstrations, such as various kinds of random. 
 """
-from robot.al5d_position_controller import RobotPosition, PositionController
-from robot.helper_al5d_move import move_position_towards
+from robot.al5d import RobotPosition, PositionController
+from robot.al5d.move import move_position_towards
 from .abstract_controller import AbstractController
 from exp_run_config import Experiment
 
@@ -113,4 +113,3 @@ class AutoMoveController(AbstractController):
             self.last_interval = execution_time
             time_to_sleep = max(0.0, self.controller_interval - execution_time) 
             time.sleep(time_to_sleep) 
-

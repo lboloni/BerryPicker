@@ -3,7 +3,7 @@ widowx_controller.py
 
 A controller for the AL5D robot based on a backdriven WidowX robot
 """
-from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.al5d import RobotPosition, PositionController
 from .abstract_controller import AbstractController
 
 import logging

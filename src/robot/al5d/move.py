@@ -3,7 +3,7 @@
 from math import isfinite
 from typing import Mapping
 
-from .al5d_position_controller import RobotPosition
+from .position import RobotPosition
 
 
 def move_towards(current: float, target: float, max_step: float) -> float:

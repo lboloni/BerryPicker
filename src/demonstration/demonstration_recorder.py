@@ -8,7 +8,7 @@ import sys
 sys.path.append("..")
 
 from exp_run_config import Config
-from robot.al5d_position_controller import PositionController
+from robot.al5d import PositionController
 from camera.camera_controller import CameraController
 import pathlib
 import cv2

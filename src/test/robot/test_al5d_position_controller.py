@@ -10,7 +10,7 @@ import json
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-from robot.al5d_position_controller import RobotPosition
+from robot.al5d import RobotPosition
 
 class TestPosition(unittest.TestCase):
     """Unit tests for the position object"""

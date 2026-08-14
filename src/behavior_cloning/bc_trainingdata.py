@@ -21,7 +21,7 @@ import pathlib
 #from pprint import pformat
 #import numpy as np
 #from sensorprocessing.sp_helper import load_picturefile_to_tensor
-from robot.al5d_position_controller import RobotPosition
+from robot.al5d import RobotPosition
 from sensorprocessing.sp_helper import get_transform_to_sp
 from sensorprocessing.sp_factory import create_sp
 from demonstration.demonstration import Demonstration

@@ -7,7 +7,7 @@ Functionality to support the double control of an AL5D and WidowX, for instance 
 import pathlib
 import time
 import yaml
-from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.al5d import RobotPosition, PositionController
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R

@@ -3,8 +3,8 @@ keyboard_controller.py
 
 Keyboard based controller for the AL5D robot
 """
-from robot.al5d_position_controller import PositionController
-from robot.helper_al5d_move import move_position_by
+from robot.al5d import PositionController
+from robot.al5d.move import move_position_by
 from .abstract_controller import AbstractController
 
 import time

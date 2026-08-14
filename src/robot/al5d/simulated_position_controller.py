@@ -1,11 +1,11 @@
 """
-al5d_simulated_position_controller.py
+simulated_position_controller.py
 
 A simulated version of the position controller. It can be run without having access to the robot.
 """
 from exp_run_config import Config, Experiment
 Config.PROJECTNAME = "BerryPicker"
-from .al5d_position_controller import RobotPosition
+from .position import RobotPosition
 from copy import copy
 
 class SimulatedPositionController:

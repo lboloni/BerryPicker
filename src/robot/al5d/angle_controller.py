@@ -1,8 +1,7 @@
 import numpy as np
-# from . import al5d_constants
-from .al5d_helper import RobotHelper
-from .al5d_pulse_controller import PulseController
-from .al5d_constants import ANGLE_SERVO_COUNT, SERVO_COUNT, SERVO_GRIPPER
+from .helper import RobotHelper
+from .pulse_controller import PulseController
+from .constants import ANGLE_SERVO_COUNT, SERVO_COUNT, SERVO_GRIPPER
 from exp_run_config import Config, Experiment
 
 class AngleController:

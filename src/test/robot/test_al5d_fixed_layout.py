@@ -6,11 +6,11 @@ import numpy as np
 
 sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
-from robot.al5d_angle_controller import AngleController
-from robot.al5d_constants import SERVO_COUNT
-from robot.helper_al5d_move import move_position_by, move_position_towards, move_towards
-from robot.al5d_position_controller import RobotPosition
-from robot.al5d_pulse_controller import PulseController
+from robot.al5d import PositionController, RobotPosition, SimulatedPositionController
+from robot.al5d.angle_controller import AngleController
+from robot.al5d.constants import SERVO_COUNT
+from robot.al5d.move import move_position_by, move_position_towards, move_towards
+from robot.al5d.pulse_controller import PulseController
 
 
 class CapturingPulseController:
@@ -41,6 +41,12 @@ class TestAL5DFixedLayout(unittest.TestCase):
             "wrist_angle": 0.0, "wrist_rotation": 90.0, "gripper": 100.0,
         },
     }
+
+    def test_public_package_api(self):
+        self.assertEqual(
+            {PositionController.__name__, RobotPosition.__name__, SimulatedPositionController.__name__},
+            {"PositionController", "RobotPosition", "SimulatedPositionController"},
+        )
 
     def test_angle_controller_uses_six_fixed_channels(self):
         controller = AngleController.__new__(AngleController)
