@@ -57,7 +57,12 @@ class AngleController:
 
     def control_angles(self, positions, gripper_distance):
         """Controls all the angles and the gripper in one shot"""
-        target_pulses = np.zeros(SERVO_COUNT)
+        positions = np.asarray(positions, dtype=float)
+        if positions.shape != (ANGLE_SERVO_COUNT,) or not np.all(np.isfinite(positions)):
+            raise ValueError(f"Expected {ANGLE_SERVO_COUNT} finite angle values")
+        if not 0 <= gripper_distance <= 100:
+            raise ValueError(f"Invalid gripper distance: {gripper_distance}")
+        target_pulses = np.zeros(SERVO_COUNT, dtype=int)
         for i in range(ANGLE_SERVO_COUNT):
             target_pulses[i], _ = RobotHelper.servo_angle_to_pulse(self.exp, self.pulse_controller.exp, i, positions[i])
         target_pulses[SERVO_GRIPPER] = self.calculate_gripper(gripper_distance)

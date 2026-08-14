@@ -48,6 +48,17 @@ class RobotPosition:
         return position
 
     @staticmethod
+    def _vector(values, normalized=False):
+        values = np.asarray(values, dtype=float)
+        if values.shape != (len(RobotPosition.FIELDS),):
+            raise ValueError(f"Expected {len(RobotPosition.FIELDS)} values, got {values.shape}")
+        if not np.all(np.isfinite(values)):
+            raise ValueError("Position values must be finite")
+        if normalized and not np.all((0.0 <= values) & (values <= 1.0)):
+            raise ValueError("Normalized position values must be in [0, 1]")
+        return values
+
+    @staticmethod
     def limit(exp: Experiment, posc):
         """Verifies whether the given position is safe, defined between the mind and the max"""
         for fld in RobotPosition.FIELDS:
@@ -65,6 +76,8 @@ class RobotPosition:
 
     def to_normalized_vector(self, exp: Experiment):
         """Converts the positions from dictionary to a normalized vector"""
+        if not RobotPosition.limit(exp, self):
+            raise ValueError(f"Unsafe robot position:\n{self}")
         retval = np.zeros(6, dtype = np.float32)
         for i, fld in enumerate(RobotPosition.FIELDS):
             retval[i] = RobotHelper.map_ranges(self.values[fld], exp["POS_MIN"][fld], exp["POS_MAX"][fld])
@@ -73,17 +86,23 @@ class RobotPosition:
     @staticmethod
     def from_normalized_vector(exp: Experiment, values):
         """Creates the rp from a normalized numpy vector"""
+        values = RobotPosition._vector(values, normalized=True)
         rp = RobotPosition(exp)
         for i, fld in enumerate(RobotPosition.FIELDS):
             rp.values[fld] = RobotHelper.map_ranges(values[i], 0.0, 1.0, exp["POS_MIN"][fld], exp["POS_MAX"][fld])
+        if not RobotPosition.limit(exp, rp):
+            raise ValueError(f"Unsafe robot position:\n{rp}")
         return rp
 
     @staticmethod
     def from_vector(exp: Experiment, values):
         """Creates a RobotPosition from a numpy vector"""
+        values = RobotPosition._vector(values)
         rp = RobotPosition(exp)
         for i, fld in enumerate(RobotPosition.FIELDS):
             rp.values[fld] = values[i]
+        if not RobotPosition.limit(exp, rp):
+            raise ValueError(f"Unsafe robot position:\n{rp}")
         return rp
 
     def empirical_distance(self, exp: Experiment, other):

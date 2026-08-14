@@ -33,8 +33,8 @@ class PulseController:
         # the robot
         # self.pulse_position_zero = 0
         # tracking the positions of the robot in terms of the pulse positions at the servos
-        self.positions_pulse = np.ones(
-            SERVO_COUNT) * self.pulse_position_default
+        self.positions_pulse = np.full(
+            SERVO_COUNT, self.pulse_position_default, dtype=int)
         # if sp == None:
         #     if device == None:
         #         raise Exception("No device specified")                
@@ -103,6 +103,15 @@ class PulseController:
 
     def control_pulses(self, target_pulses):
         """Sends a command to set all the motors simultaneously"""
+        target_pulses = np.asarray(target_pulses, dtype=float)
+        if target_pulses.shape != (SERVO_COUNT,) or not np.all(np.isfinite(target_pulses)):
+            raise ValueError(f"Expected {SERVO_COUNT} finite pulse values")
+        if not np.all(target_pulses == np.floor(target_pulses)):
+            raise ValueError("Pulse values must be integers")
+        if not np.all((self.exp["CST_PULSE_MIN"] <= target_pulses) &
+                      (target_pulses <= self.exp["CST_PULSE_MAX"])):
+            raise ValueError("Pulse values are outside configured limits")
+        target_pulses = target_pulses.astype(int)
         time=self.exp["TIME_DEFAULT"]
         command = ""
         for i in range(SERVO_COUNT):
