@@ -4,6 +4,7 @@ automove_controller.py
 Automove controller for the AL5D robot. Generates moving patterns useful for demonstrations, such as various kinds of random. 
 """
 from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.helper_al5d_move import move_position_towards
 from .abstract_controller import AbstractController
 from exp_run_config import Experiment
 
@@ -12,38 +13,6 @@ import logging
 import random
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
-
-
-def move_towards(current, target, max_velocity):
-    if abs(target - current) <= max_velocity:
-        # If the distance to the target is less than the max velocity, snap to target
-        return target
-    elif target > current:
-        # Move up towards the target
-        return current + max_velocity
-    else:
-        # Move down towards the target
-        return current - max_velocity
-
-def move_position_towards(current: RobotPosition, 
-    target: RobotPosition, ctrl, exp):
-    """Move a position towards the target with specific velocities"""
-    rv = RobotPosition(exp)
-    rv["height"] = move_towards(current["height"], target["height"], 
-                             ctrl.v_height * ctrl.robot_interval)
-    rv["distance"] = move_towards(current["distance"], target["distance"], 
-                               ctrl.v_distance * ctrl.robot_interval)
-    rv["heading"] = move_towards(current["heading"], target["heading"], 
-                             ctrl.v_heading * ctrl.robot_interval)
-    rv["wrist_angle"] = move_towards(
-        current["wrist_angle"], target["wrist_angle"],
-        ctrl.v_wrist_angle * ctrl.robot_interval)
-    rv["wrist_rotation"] = move_towards(current["wrist_rotation"], 
-                                     target["wrist_rotation"], 
-                                     ctrl.v_wrist_rotation * ctrl.robot_interval)
-    rv["gripper"] = move_towards(current["gripper"], target["gripper"],
-                              ctrl.v_gripper * ctrl.robot_interval)
-    return rv
 
 
 class AutoMoveController(AbstractController):
@@ -102,7 +71,12 @@ class AutoMoveController(AbstractController):
                 return None
             wp = self.waypoints[0]
             print(f"New waypoint: {wp}")
-        self.pos_target = move_position_towards(self.pos_current, wp, self, self.robot_controller.exp)
+        max_steps = {
+            field: getattr(self, f"v_{field}") * self.robot_interval
+            for field in RobotPosition.FIELDS
+        }
+        self.pos_target = move_position_towards(
+            self.robot_controller.exp, self.pos_current, wp, max_steps)
         return self.pos_target
 
     def control(self):
@@ -139,5 +113,4 @@ class AutoMoveController(AbstractController):
             self.last_interval = execution_time
             time_to_sleep = max(0.0, self.controller_interval - execution_time) 
             time.sleep(time_to_sleep) 
-
 

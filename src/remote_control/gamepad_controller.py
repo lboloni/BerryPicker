@@ -3,7 +3,8 @@ gamepad_controller.py
 
 Gamepad-based controller for the AL5D robot
 """
-from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.al5d_position_controller import PositionController
+from robot.helper_al5d_move import move_position_by
 from approxeng.input.selectbinder import ControllerResource, ControllerNotFoundError
 from . import double_demo_controller
 import time
@@ -104,17 +105,11 @@ class GamepadController(AbstractController):
         if self.exp["button_home"] in presses.names:
             self.pos_target = copy.copy(self.pos_home)
             return
-        # applying the changes 
-        target = copy.copy(self.pos_target)
-        target["distance"] += delta_distance
-        target["height"] += delta_height
-        target["heading"] += delta_heading
-        target["wrist_angle"] += delta_wrist_angle
-        target["wrist_rotation"] += delta_wrist_rotation
-        target["gripper"] += delta_gripper
-        if not RobotPosition.limit(self.robot_controller.exp, target):
-            raise ValueError(f"Unsafe robot target:\n{target}")
-        self.pos_target = target
+        self.pos_target = move_position_by(self.robot_controller.exp, self.pos_target, {
+            "distance": delta_distance, "height": delta_height,
+            "heading": delta_heading, "wrist_angle": delta_wrist_angle,
+            "wrist_rotation": delta_wrist_rotation, "gripper": delta_gripper,
+        })
         logger.info(f"Target: {self.pos_target}")
 
 

@@ -8,6 +8,7 @@ sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
 from robot.al5d_angle_controller import AngleController
 from robot.al5d_constants import SERVO_COUNT
+from robot.helper_al5d_move import move_position_by, move_position_towards, move_towards
 from robot.al5d_position_controller import RobotPosition
 from robot.al5d_pulse_controller import PulseController
 
@@ -70,6 +71,29 @@ class TestAL5DFixedLayout(unittest.TestCase):
             controller.control_pulses([1500.5] * SERVO_COUNT)
         with self.assertRaises(ValueError):
             controller.control_pulses([3000] * SERVO_COUNT)
+
+    def test_position_motion_is_copied_and_limited(self):
+        current = RobotPosition(self.robot_exp)
+        target = move_position_by(self.robot_exp, current, {"height": -1.0})
+        self.assertEqual(target["height"], 4.0)
+        self.assertEqual(current["height"], 5.0)
+        with self.assertRaises(ValueError):
+            move_position_by(self.robot_exp, current, {"height": 1.0})
+
+    def test_position_motion_towards_uses_per_field_steps(self):
+        current = RobotPosition(self.robot_exp)
+        target = RobotPosition(self.robot_exp, {
+            "height": 3.0, "distance": 7.0, "heading": 10.0,
+            "wrist_angle": -60.0, "wrist_rotation": 80.0, "gripper": 50.0,
+        })
+        steps = dict.fromkeys(RobotPosition.FIELDS, 1.0)
+        moved = move_position_towards(self.robot_exp, current, target, steps)
+        self.assertEqual(moved["height"], 4.0)
+        self.assertEqual(moved["distance"], 6.0)
+        self.assertEqual(moved["heading"], 1.0)
+        self.assertEqual(move_towards(1.0, 2.0, 0.0), 1.0)
+        with self.assertRaises(ValueError):
+            move_towards(1.0, 2.0, -1.0)
 
 
 if __name__ == "__main__":

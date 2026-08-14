@@ -3,7 +3,8 @@ keyboard_controller.py
 
 Keyboard based controller for the AL5D robot
 """
-from robot.al5d_position_controller import RobotPosition, PositionController
+from robot.al5d_position_controller import PositionController
+from robot.helper_al5d_move import move_position_by
 from .abstract_controller import AbstractController
 
 import time
@@ -127,15 +128,9 @@ class KeyboardController(AbstractController):
         if keycode == ord(self.exp["home_ord"]):
             self.pos_target = copy.copy(self.pos_home)
             return
-        # applying the changes 
-        self.pos_target["distance"] += delta_distance
-        self.pos_target["height"] += delta_height
-        self.pos_target["heading"] += delta_heading
-        self.pos_target["wrist_angle"] += delta_wrist_angle
-        self.pos_target["wrist_rotation"] += delta_wrist_rotation
-        self.pos_target["gripper"] += delta_gripper
-        # FIXME: applying a safety reset which prevents us going out of range
-        ok = RobotPosition.limit(self.robot_controller.exp, self.pos_target)
-        if not ok:
-            logger.warning(f"DANGER! exceeded range! {self.pos_target}")
+        self.pos_target = move_position_by(self.robot_controller.exp, self.pos_target, {
+            "distance": delta_distance, "height": delta_height,
+            "heading": delta_heading, "wrist_angle": delta_wrist_angle,
+            "wrist_rotation": delta_wrist_rotation, "gripper": delta_gripper,
+        })
         logger.warning(f"Target: {self.pos_target}")
