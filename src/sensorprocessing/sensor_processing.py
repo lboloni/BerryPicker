@@ -60,6 +60,20 @@ class MultiViewDemonstrationProcessing:
                 f"Expected {expected_views} {description}, got {len(views)}"
             )
 
+    def _warn_on_camera_order(self, cameras):
+        """Warn when the requested camera order differs from the trained one.
+
+        Multi-view models are trained with an ordered camera list (stored in
+        ``exp["cameras"]``); feeding the views in another order silently
+        degrades the latent.
+        """
+        trained_order = getattr(self, "cameras", None)
+        if trained_order and list(cameras) != list(trained_order):
+            print(
+                f"WARNING: camera order {list(cameras)} differs from the order "
+                f"this model was trained with {list(trained_order)}"
+            )
+
     def process_demonstration(self, demonstration, timestep, cameras, transform=None):
         """Encode ordered camera views from one ``Demonstration`` timestep.
 
@@ -68,6 +82,7 @@ class MultiViewDemonstrationProcessing:
         demonstrations stored either as image files or as video.
         """
         self._validate_view_count(cameras, "camera views")
+        self._warn_on_camera_order(cameras)
 
         if transform is None:
             transform = self.preprocessor.transform
@@ -133,6 +148,9 @@ class EncoderSensorProcessing:
         state_dict = torch.load(
             checkpoint_path, map_location=Config().runtime["device"]
         )
+        # Full training checkpoints wrap the weights in "model_state_dict".
+        if isinstance(state_dict, dict) and "model_state_dict" in state_dict:
+            state_dict = state_dict["model_state_dict"]
         self.enc.load_state_dict(state_dict)
         self.enc.eval()
         return checkpoint_path

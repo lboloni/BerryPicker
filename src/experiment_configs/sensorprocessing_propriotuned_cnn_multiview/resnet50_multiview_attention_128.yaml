@@ -1,0 +1,4 @@
+name: "resnet50-128-multiview-attention"
+model: "MultiViewResNetModel"
+latent_size: 128
+fusion_type: "attention"

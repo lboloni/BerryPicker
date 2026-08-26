@@ -1,0 +1,4 @@
+name: "vgg19-128-multiview-indiv_proj"
+model: "MultiViewVGG19Model"
+latent_size: 128
+fusion_type: "indiv_proj"

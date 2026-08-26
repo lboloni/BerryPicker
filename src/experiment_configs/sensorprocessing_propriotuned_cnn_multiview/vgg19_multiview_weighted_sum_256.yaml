@@ -1,0 +1,4 @@
+name: "vgg19-256-multiview-weighted_sum"
+model: "MultiViewVGG19Model"
+latent_size: 256
+fusion_type: "weighted_sum"

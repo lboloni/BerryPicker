@@ -16,7 +16,8 @@ from sensorprocessing import (
     sp_vit_multiview,
     sp_vit_concat_images,
     sp_propriotuned_cnn_multiview,
-    sp_conv_vae_concat_multiview
+    sp_conv_vae_concat_multiview,
+    sp_conv_vae_multiview,
 )
 
 
@@ -40,6 +41,11 @@ def _create_multiview_cnn(spexp, model=None):
     )
 
 
+def _create_multiview_conv_encoder(spexp):
+    """Instantiate the from-scratch multi-view conv encoder processor."""
+    return sp_conv_vae_multiview.MultiViewConvVAESensorProcessing(spexp)
+
+
 def _create_singleview_cnn(spexp, model=None):
     """Instantiate the generic single-view CNN processor with an optional model."""
     return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(
@@ -52,6 +58,8 @@ _PROCESSOR_CLASSES = {
     "ConvVaeSensorProcessing_concat_multiview": (
         sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing
     ),
+    "ConvVaeSensorProcessing_multiview": _create_multiview_conv_encoder,
+    "MultiViewConvVAESensorProcessing": _create_multiview_conv_encoder,
     "VGG19ProprioTunedSensorProcessing": partial(
         _create_singleview_cnn, model="VGG19ProprioTunedRegression"
     ),
@@ -78,6 +86,7 @@ _PROCESSOR_CLASSES = {
 _MULTIVIEW_CLASSES = {
     "ConvVaeSensorProcessing_concat_multiview",
     "ConvVaeSensorProcessing_multiview",
+    "MultiViewConvVAESensorProcessing",
     "VGG19ProprioTunedSensorProcessing_multiview",
     "ResNetProprioTunedSensorProcessing_multiview",
     "MultiViewCNNSensorProcessing",

@@ -118,6 +118,8 @@ def train_model(
     start_epoch=0,
     best_val_loss=float("inf"),
     keep_checkpoints=2,
+    early_stopping_patience=None,
+    early_stopping_min_delta=0.0,
 ):
     """Train and save a model using model-specific epoch callbacks.
 
@@ -132,9 +134,15 @@ def train_model(
     file and to ``checkpoints/best_model.pth``. Epoch checkpoints contain the
     state needed to resume training, and only the most recent
     ``keep_checkpoints`` are kept.
+
+    When ``early_stopping_patience`` is set, training stops once the
+    validation loss has not improved by more than ``early_stopping_min_delta``
+    for that many consecutive epochs (the counter is stored in the epoch
+    checkpoints so a resumed run continues where it left off).
     """
     if keep_checkpoints < 1:
         raise ValueError("keep_checkpoints must be at least 1")
+    epochs_without_improvement = 0
 
     modelfile = _model_file(exp)
     if epochs is None:
@@ -156,17 +164,25 @@ def train_model(
         oldest_checkpoint.unlink()
         print(f"Deleted old checkpoint: {oldest_checkpoint}")
 
+    latest_checkpoint, _ = find_latest_checkpoint(modelfile.parent)
+    if latest_checkpoint is not None and start_epoch > 0:
+        resumed = torch.load(latest_checkpoint, map_location="cpu", weights_only=True)
+        epochs_without_improvement = resumed.get("epochs_without_improvement", 0)
+
     for epoch in range(start_epoch, epochs):
         avg_train_loss = model_training_step(model, optimizer)
         avg_val_loss = model_eval_step(model)
 
-        if avg_val_loss < best_val_loss:
+        if avg_val_loss < best_val_loss - early_stopping_min_delta:
             best_val_loss = avg_val_loss
+            epochs_without_improvement = 0
             torch.save(model.state_dict(), best_model_path)
             print(
                 "  New best model saved with validation loss: "
                 f"{best_val_loss:.4f}"
             )
+        else:
+            epochs_without_improvement += 1
 
         if scheduler is not None:
             scheduler.step(avg_val_loss)
@@ -179,6 +195,7 @@ def train_model(
             "best_val_loss": best_val_loss,
             "train_loss": avg_train_loss,
             "val_loss": avg_val_loss,
+            "epochs_without_improvement": epochs_without_improvement,
         }
         if scheduler is not None:
             checkpoint["scheduler_state_dict"] = scheduler.state_dict()
@@ -202,6 +219,16 @@ def train_model(
                 f"Train Loss: {avg_train_loss:.4f}, "
                 f"Val Loss: {avg_val_loss:.4f}"
             )
+
+        if (
+            early_stopping_patience is not None
+            and epochs_without_improvement >= early_stopping_patience
+        ):
+            print(
+                f"Early stopping at epoch {epoch + 1}: no improvement for "
+                f"{epochs_without_improvement} epochs"
+            )
+            break
 
     print(f"Training complete. Best validation loss: {best_val_loss:.4f}")
 
@@ -229,8 +256,20 @@ def load_or_train(
     scheduler=None,
     log_interval=1,
     keep_checkpoints=2,
+    early_stopping_patience=None,
+    early_stopping_min_delta=0.0,
 ):
-    """Load a completed model, resume a checkpoint, or train from scratch."""
+    """Load a completed model, resume a checkpoint, or train from scratch.
+
+    ``early_stopping_patience`` / ``early_stopping_min_delta`` are forwarded to
+    :func:`train_model`; when they are ``None`` the values are read from
+    ``exp["early_stopping_patience"]`` / ``exp["early_stopping_min_delta"]``
+    (both optional).
+    """
+    if early_stopping_patience is None:
+        early_stopping_patience = exp.get("early_stopping_patience")
+    if not early_stopping_min_delta:
+        early_stopping_min_delta = exp.get("early_stopping_min_delta", 0.0)
     device = Config().runtime["device"]
     model = model.to(device)
     modelfile = _model_file(exp)
@@ -282,4 +321,6 @@ def load_or_train(
         start_epoch=start_epoch,
         best_val_loss=best_val_loss,
         keep_checkpoints=keep_checkpoints,
+        early_stopping_patience=early_stopping_patience,
+        early_stopping_min_delta=early_stopping_min_delta,
     )

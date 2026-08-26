@@ -1,0 +1,4 @@
+name: "resnet50-128-multiview-gated"
+model: "MultiViewResNetModel"
+latent_size: 128
+fusion_type: "gated"

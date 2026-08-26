@@ -1,0 +1,22 @@
+# Visual-proprioception regressor on top of a multi-view sensor processor.
+name: "resnet50-256-multiview-weighted_sum"
+sensor_processing: "ResNetProprioTunedSensorProcessing_multiview"
+sp_experiment: "sensorprocessing_propriotuned_cnn_multiview"
+sp_run: "resnet50_multiview_weighted_sum_256"
+
+num_views: 2
+cameras: ["dev2", "dev3"]
+encoding_size: 256
+regressor_hidden_size_1: 64
+regressor_hidden_size_2: 64
+output_size: 6
+loss: "MSE"
+batch_size: 32
+epochs: 100
+
+# Entries are demonstration run, demonstration name, and ordered camera views.
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", ["dev2", "dev3"]]
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]

@@ -1,0 +1,3 @@
+name: "conv-encoder-256-multiview-indiv_proj"
+latent_size: 256
+fusion_type: "indiv_proj"

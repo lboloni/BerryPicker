@@ -1,0 +1,9 @@
+# All fusion heads, conv encoder, latent 128
+name: "comp_conv_multiview_128"
+
+tocompare:
+  - "vp_conv_multiview_concat_proj_128"
+  - "vp_conv_multiview_indiv_proj_128"
+  - "vp_conv_multiview_attention_128"
+  - "vp_conv_multiview_weighted_sum_128"
+  - "vp_conv_multiview_gated_128"

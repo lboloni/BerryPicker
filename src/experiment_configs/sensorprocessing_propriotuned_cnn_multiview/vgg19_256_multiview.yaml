@@ -1,13 +1,5 @@
-name : 'vgg19-256'
+# Legacy run name; equivalent to vgg19_multiview_concat_proj_256
+name: "vgg19-256-multiview"
+model: "MultiViewVGG19Model"
 latent_size: 256
-model: 'VGG19ProprioTunedRegression_multiview'
-loss: 'MSELoss' # alternatively it could be L1Loss
-epochs: 300
-learning_rate: 0.001
-batch_size: 32
-output_size: 6
-
-freeze_feature_extractor: True
-
-proprioception_training_task: 'proprio_sp_training'
-proprioception_testing_task: 'proprio_sp_validation'
+fusion_type: "concat_proj"

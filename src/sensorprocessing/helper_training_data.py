@@ -14,6 +14,71 @@ Config.PROJECTNAME = "BerryPicker"
 MULTIVIEW_CACHE_VERSION = 1
 
 
+class MultiViewDataset(torch.utils.data.Dataset):
+    """Dataset over ordered per-view image tensors and their targets.
+
+    ``view_inputs`` is a list with one tensor per camera view, each of shape
+    ``[N, C, H, W]``; ``targets`` has shape ``[N, output_dim]``. Every item is
+    a ``(list_of_view_tensors, target)`` pair; use :func:`collate_multiview`
+    as the DataLoader ``collate_fn``.
+    """
+
+    def __init__(self, view_inputs, targets):
+        self.view_inputs = list(view_inputs)
+        self.targets = targets
+        self.num_views = len(self.view_inputs)
+        self.num_samples = len(targets)
+        for view_index, view in enumerate(self.view_inputs):
+            if len(view) != self.num_samples:
+                raise ValueError(
+                    f"view {view_index} has {len(view)} samples; targets have "
+                    f"{self.num_samples}"
+                )
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, index):
+        return [view[index] for view in self.view_inputs], self.targets[index]
+
+
+def collate_multiview(batch):
+    """Collate ``(views, target)`` items into ``(list_of_view_batches, targets)``."""
+    num_views = len(batch[0][0])
+    batched_views = [
+        torch.stack([item[0][view_index] for item in batch])
+        for view_index in range(num_views)
+    ]
+    targets = torch.stack([item[1] for item in batch])
+    return batched_views, targets
+
+
+def make_multiview_loaders(tr, batch_size, *, drop_last_training=True, shuffle=True):
+    """Build training/validation DataLoaders from a ``load_multiview_images_as_proprioception_training`` result.
+
+    ``drop_last_training`` defaults to ``True`` because the fusion heads use
+    BatchNorm1d, which raises on a training batch of a single sample.
+    """
+    train_dataset = MultiViewDataset(tr["view_inputs_training"], tr["targets_training"])
+    validation_dataset = MultiViewDataset(
+        tr["view_inputs_validation"], tr["targets_validation"]
+    )
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        collate_fn=collate_multiview,
+        drop_last=drop_last_training and len(train_dataset) > batch_size,
+    )
+    validation_loader = torch.utils.data.DataLoader(
+        validation_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=collate_multiview,
+    )
+    return train_loader, validation_loader
+
+
 def _validate_multiview_tensors(view_inputs, targets, num_views, description):
     """Validate the cached or newly built multiview tensor structure."""
     if not isinstance(view_inputs, (list, tuple)):

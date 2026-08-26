@@ -1,0 +1,4 @@
+name: "vgg19-128-multiview-attention"
+model: "MultiViewVGG19Model"
+latent_size: 128
+fusion_type: "attention"

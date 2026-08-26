@@ -1,0 +1,9 @@
+# All fusion heads, ViT base, latent 128
+name: "comp_vit_multiview_base_128"
+
+tocompare:
+  - "vit_base_multiview"
+  - "vit_base_multiview_indiv_proj"
+  - "vit_base_multiview_attention"
+  - "vit_base_multiview_weighted_sum"
+  - "vit_base_multiview_gated"

@@ -1,0 +1,14 @@
+# All fusion heads, VGG19 and ResNet50, latent 256
+name: "comp_cnn_multiview_256"
+
+tocompare:
+  - "vp_vgg19_multiview_concat_proj_256"
+  - "vp_vgg19_multiview_indiv_proj_256"
+  - "vp_vgg19_multiview_attention_256"
+  - "vp_vgg19_multiview_weighted_sum_256"
+  - "vp_vgg19_multiview_gated_256"
+  - "vp_resnet50_multiview_concat_proj_256"
+  - "vp_resnet50_multiview_indiv_proj_256"
+  - "vp_resnet50_multiview_attention_256"
+  - "vp_resnet50_multiview_weighted_sum_256"
+  - "vp_resnet50_multiview_gated_256"

@@ -1,0 +1,3 @@
+name: "conv-encoder-128-multiview-attention"
+latent_size: 128
+fusion_type: "attention"

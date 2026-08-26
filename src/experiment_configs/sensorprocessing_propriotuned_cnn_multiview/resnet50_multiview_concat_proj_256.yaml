@@ -1,0 +1,4 @@
+name: "resnet50-256-multiview-concat_proj"
+model: "MultiViewResNetModel"
+latent_size: 256
+fusion_type: "concat_proj"

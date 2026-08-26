@@ -1,0 +1,4 @@
+name: "resnet50-256-multiview-weighted_sum"
+model: "MultiViewResNetModel"
+latent_size: 256
+fusion_type: "weighted_sum"

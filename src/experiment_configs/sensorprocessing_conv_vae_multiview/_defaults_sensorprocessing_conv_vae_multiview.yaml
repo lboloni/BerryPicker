@@ -1,0 +1,43 @@
+# Multi-view conv encoder trained from scratch on proprioception.
+# NOTE: despite the experiment name this model has no decoder / KL term; it
+# reuses the Conv-VAE encoder architecture but is trained supervised, like the
+# propriotuned CNN and ViT models. See sensorprocessing/sp_conv_vae_multiview.py
+class: "ConvVaeSensorProcessing_multiview"
+model_name: "conv_encoder_multiview"
+
+latent_size: 128
+image_size: [64, 64]
+num_views: 2
+cameras: ["dev2", "dev3"]
+fusion_type: "concat_proj"
+shared_backbone: true
+batched_backbone: true
+encoder_channels: [32, 64, 128, 256]
+
+output_size: 6
+proprio_step_1: 64
+proprio_step_2: 32
+
+loss: "MSELoss"
+learning_rate: 0.001
+weight_decay: 0.0001
+batch_size: 32
+epochs: 300
+early_stopping_patience: 50
+grad_clip_norm: 1.0
+
+proprioception_mlp_model_file: "proprioception_mlp.pth"
+proprioception_input_file: "train_inputs.pt"
+proprioception_target_file: "train_targets.pt"
+proprioception_test_input_file: "test_inputs.pt"
+proprioception_test_target_file: "test_targets.pt"
+
+robot_exp: "robot_al5d"
+robot_run: "position_controller_00"
+
+# Entries are demonstration run, demonstration name, and ordered camera views.
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", ["dev2", "dev3"]]
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]
