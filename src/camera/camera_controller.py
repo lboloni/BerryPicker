@@ -26,13 +26,15 @@ class CameraController:
         self.capture_devs = {}
         for i in exp["active_camera_list"]:
             cap = cv2.VideoCapture(i) 
-            ret, frame = cap.read()
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.img_size[0])
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.img_size[1])
             cap.set(cv2.CAP_PROP_FPS, self.exp["fps"])
 
             if cap is None or not cap.isOpened():
-                print(f"Warning: unable to open video source: {i}")
+                if cap is not None:
+                    cap.release()
+                self.stop()
+                raise RuntimeError(f"Unable to open configured camera dev{i}")
             else:
                 self.capture_devs[f"dev{i}"] = cap
                 self.caption += f"dev{i} "

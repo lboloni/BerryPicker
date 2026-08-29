@@ -12,6 +12,7 @@ sys.path.append("..")
 
 import pprint
 import pathlib
+import textwrap
 from sensorprocessing.sp_helper import load_picturefile_to_tensor, load_capture_to_tensor
 from torchvision import transforms
 from robot.al5d import RobotPosition
@@ -104,7 +105,8 @@ class Demonstration:
         annotation_path = pathlib.Path(self.demo_dir, "_annotation.yaml")
         with open(annotation_path, "w") as file:
             yaml.dump(self.annotations, file, indent=4)
-        print(f"Saved demonstration metadata to\n\t{metadata_path}")
+        formatted_path = "\n".join(textwrap.wrap(str(metadata_path), width=80))
+        print(f"Saved demonstration metadata to\n{formatted_path}")
 
     def get_annotation(self, i, type="reward"):
         """Returns the annotation, by default the reward"""
