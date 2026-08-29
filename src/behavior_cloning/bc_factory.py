@@ -78,6 +78,7 @@ def external_setup(setupname, rootdir: pathlib.Path):
     Config().copy_experiment("robot_al5d")
     Config().copy_experiment("automate")
     Config().copy_experiment("behavior_cloning")
+    Config().copy_experiment("behavior_cloning_machine")
     Config().copy_experiment("controllers")
 
     return expruns_path, results_path

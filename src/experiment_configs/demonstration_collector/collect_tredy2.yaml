@@ -1,4 +1,4 @@
-# A demonstration setup for tredy2 for collecting automated demonstrations. This file has all the generic components, uses the xbox controller and puts the demonstrations in the "freeform" directory. 
+# Demonstration collection configuration for tredy2.
 
 demonstration_name: "freeform"
 

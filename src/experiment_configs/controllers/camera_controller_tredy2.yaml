@@ -1,10 +1,13 @@
 # configuration for the cameras on tredy2
+# 
+# Instructions: run the Verify_Cameras.ipynb 
+# It will detect the active cameras (which will look like dev0, dev1, dev4 etc). Out of this list, choose the ones you want to use, and list them here
 
 # active_camera_list: [0, 1]
 # for Jan 9, 2026
 # active_camera_list: [2, 3]
-# for April 2026
-active_camera_list: [0, 2]
+# for August 2026
+active_camera_list: [0, 1]
 # Changed in April 2026 from:
 # saved_image_size: [256, 256]
 saved_image_size: [512, 512]

@@ -1,0 +1,3 @@
+available_gamepad: True
+available_robot: True
+preferred_camera: "dev0"

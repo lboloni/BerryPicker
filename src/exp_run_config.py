@@ -303,7 +303,7 @@ class Config:
         #
         experiment_run_indep = pathlib.Path(self.experiment_path, experiment_name, run_name + ".yaml")
         if not experiment_run_indep.exists():
-            raise Exception(f"Missing experiment file\n {experiment_run_indep}")
+            raise Exception(f"No configuration file {experiment_run_indep} found")
         with experiment_run_indep.open("rt") as handle:
             indep_config = yaml.safe_load(handle)
         if indep_config == None:

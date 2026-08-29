@@ -1,7 +1,4 @@
-# the most default demonstration collector - it collects demos into the freeform demonstration
-# note that these can be later moved to other ones
-
-
+# Demonstration collection configuration for raven.
 
 demonstration_name: "freeform-raven"
 
