@@ -1,0 +1,4 @@
+# Copy to <experiment_system_dependent_dir>/robot_al5d/pulse_controller_00_sysdep.yaml.
+# Serial-device bindings are machine-local and must not be committed.
+device: "/dev/ttyUSB0"
+device_backup: "/dev/ttyUSB1"

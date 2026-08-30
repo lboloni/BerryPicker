@@ -1,0 +1,14 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: cameras
+    binding: fixed_cameras
+  - name: widowx
+    binding: widowx_leader
+    emits: al5d_target
+    target_robot: al5d
+  - name: al5d
+    binding: al5d
+    command: al5d_target

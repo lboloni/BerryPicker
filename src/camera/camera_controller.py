@@ -24,8 +24,16 @@ class CameraController:
         # create the capture devices
         self.caption = "Cameras: "
         self.capture_devs = {}
-        for i in exp["active_camera_list"]:
-            cap = cv2.VideoCapture(i) 
+        if "views" in exp:
+            cameras = []
+            for view_name, view_config in exp["views"].items():
+                if "device" not in view_config:
+                    raise ValueError(f"Camera view {view_name} is missing its device")
+                cameras.append((view_name, view_config["device"]))
+        else:
+            cameras = [(f"dev{i}", i) for i in exp["active_camera_list"]]
+        for view_name, device in cameras:
+            cap = cv2.VideoCapture(device)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.img_size[0])
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.img_size[1])
             cap.set(cv2.CAP_PROP_FPS, self.exp["fps"])
@@ -34,11 +42,11 @@ class CameraController:
                 if cap is not None:
                     cap.release()
                 self.stop()
-                raise RuntimeError(f"Unable to open configured camera dev{i}")
+                raise RuntimeError(f"Unable to open configured camera {view_name} on device {device}")
             else:
-                self.capture_devs[f"dev{i}"] = cap
-                self.caption += f"dev{i} "
-                print(f"cap{i} works")
+                self.capture_devs[view_name] = cap
+                self.caption += f"{view_name} "
+                print(f"camera {view_name} on device {device} works")
         self.caption += "Press q to quit"
         self.images = {}
         self.visualize = True # if true, visualizes the captured images

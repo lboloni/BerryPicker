@@ -1,0 +1,6 @@
+# Copy to <experiment_system_dependent_dir>/controllers/fixed_cameras_sysdep.yaml.
+# Camera indices and physical view names are machine-local and must not be committed.
+views:
+  overhead:
+    device: 0
+saved_image_size: [512, 512]

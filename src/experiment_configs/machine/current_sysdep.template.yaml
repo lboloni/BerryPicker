@@ -1,0 +1,64 @@
+# Copy this file to:
+# <experiment_system_dependent_dir>/machine/current_sysdep.yaml
+# Do not commit the copied file. It identifies machine-local hardware.
+machine_name: "replace-with-machine-name"
+
+bindings:
+  xbox:
+    factory: xbox_leader
+    exp: controllers
+    run: gamepad_x360_controller
+    available: false
+
+  keyboard:
+    factory: keyboard_leader
+    exp: controllers
+    run: keyboard_controller
+    available: false
+
+  automove:
+    factory: automove_leader
+    exp: automove
+    run: automove_random_waypoint_6D_00
+    available: true
+
+  al5d:
+    factory: al5d_hardware
+    exp: robot_al5d
+    run: position_controller_00
+    available: false
+    resources: [al5d]
+
+  simulated_al5d:
+    factory: al5d_simulated
+    exp: robot_al5d
+    run: position_controller_00
+    available: true
+
+  fixed_cameras:
+    factory: fixed_cameras
+    exp: controllers
+    run: fixed_cameras
+    available: false
+    resources: [fixed_cameras]
+
+  widowx_leader:
+    factory: widowx_leader
+    exp: controllers
+    run: rc_widowx_00
+    available: false
+    resources: [widowx_leader]
+
+  widowx_observer:
+    factory: widowx_observer
+    exp: controllers
+    run: rc_widowx_00
+    available: false
+    resources: [widowx_observer]
+
+  mobile_camera:
+    factory: mobile_camera
+    exp: controllers
+    run: mobile_camera_controller_00
+    available: false
+    resources: [mobile_camera]

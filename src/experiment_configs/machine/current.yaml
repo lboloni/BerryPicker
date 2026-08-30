@@ -1,0 +1,3 @@
+# Hardware bindings are deliberately supplied only by current_sysdep.yaml.
+machine_name: null
+bindings: {}

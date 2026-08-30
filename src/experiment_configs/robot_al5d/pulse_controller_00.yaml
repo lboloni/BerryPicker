@@ -2,10 +2,8 @@
 
 name: "pulse_controller_00"
 pulse_position_default: 1500
-#device: '/dev/ttyUSB1' # first device to try
-#device_backup: '/dev/ttyUSB0' # second device to try
-device: '/dev/ttyUSB0' # first device to try
-device_backup: '/dev/ttyUSB1' # second device to try
+# device and device_backup are machine-local; configure them in
+# robot_al5d/pulse_controller_00_sysdep.yaml.
 
 robot_start_speed: 100 # the speed with which the robot is brought to default
 

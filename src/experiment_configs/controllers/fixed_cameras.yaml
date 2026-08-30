@@ -1,0 +1,3 @@
+# Generic fixed-camera policy. Device/view bindings belong in fixed_cameras_sysdep.yaml.
+fps: 10
+visualize: true

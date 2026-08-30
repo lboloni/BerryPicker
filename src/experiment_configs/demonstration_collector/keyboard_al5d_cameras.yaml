@@ -1,0 +1,15 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  # The camera must be first because it supplies the OpenCV key to the keyboard leader.
+  - name: cameras
+    binding: fixed_cameras
+  - name: keyboard
+    binding: keyboard
+    emits: al5d_target
+    target_robot: al5d
+  - name: al5d
+    binding: al5d
+    command: al5d_target

@@ -1,0 +1,14 @@
+demonstration:
+  exp: demonstration
+  run: freeform-sim-112
+tick_interval: 0.1
+participants:
+  - name: automove
+    binding: automove
+    emits: al5d_target
+    target_robot: al5d
+  - name: al5d
+    binding: simulated_al5d
+    command: al5d_target
+  - name: cameras
+    binding: fixed_cameras
