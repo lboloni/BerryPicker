@@ -1,0 +1,26 @@
+# Reproducible straight-line movement on the horizontal end-effector plane z = 5 inches.
+automove_type: random_ee_plane
+random_seed: 73017
+waypoint_count: 10
+max_timesteps: 1000
+max_sampling_attempts: 10000
+interactive_confirm: false
+controller_interval: 0.1
+robot_interval: 0.1
+waypoint_reached_distance: 0.001
+
+end_effector_plane:
+  fixed:
+    z: 5.0
+  ranges:
+    x: [3.0, 7.0]
+    y: [-2.0, 2.0]
+
+end_effector_fixed_robot_position:
+  wrist_angle: -45.0
+  wrist_rotation: 75.0
+  gripper: 100.0
+
+motion:
+  type: end_effector_linear_velocity
+  linear_velocity: 0.75

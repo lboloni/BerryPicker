@@ -21,4 +21,4 @@ exp_gamepad_controller: "controllers"
 run_gamepad_controller: "gamepad_x360_controller"
 
 exp_automove_controller: "automove"
-run_automove_controller: "automove_random_waypoint_6D_00"
+run_automove_controller: "automove_random_robot_position_00"

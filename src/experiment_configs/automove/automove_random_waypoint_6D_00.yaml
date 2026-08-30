@@ -1,6 +1,0 @@
-automove_type: random_waypoint_6D
-max_timesteps: 1000
-interactive_confirm: False
-# FIXME: unclear why only these are specified numerically here
-v_wrist_rotation: 5.0
-v_wrist_angle: 15.0

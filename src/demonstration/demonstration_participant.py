@@ -244,7 +244,11 @@ class AutoMoveLeaderParticipant(_AL5DLeaderParticipant):
 
     def sample(self, context):
         return DemonstrationSample(
-            telemetry={"target": copy(self.controller.pos_target.values)}
+            telemetry={
+                "target": copy(self.controller.pos_target.values),
+                "automove_type": self.controller.automove_type,
+                "random_seed": self.controller.random_seed,
+            }
         )
 
 
@@ -426,9 +430,15 @@ def create_participants(collection_exp, machine_exp):
             if resource in resources:
                 raise RuntimeError(f"Machine resource {resource} is assigned more than once")
             resources.add(resource)
-        participants[name] = factories[factory_name](
-            name, spec, _load_binding_experiment(binding)
-        )
+        binding_exp = _load_binding_experiment(binding)
+        if factory_name == "automove_leader":
+            tick_interval = collection_exp.get("tick_interval", 0.1)
+            if binding_exp["robot_interval"] != tick_interval:
+                raise ValueError(
+                    f"Automove robot_interval {binding_exp['robot_interval']} must equal "
+                    f"collection tick_interval {tick_interval}"
+                )
+        participants[name] = factories[factory_name](name, spec, binding_exp)
     for participant in participants.values():
         participant.bind(participants)
     return list(participants.values())
