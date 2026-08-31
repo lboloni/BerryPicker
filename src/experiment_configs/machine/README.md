@@ -5,7 +5,9 @@
 selects the physical devices and must not be committed.
 
 Use `current_sysdep.template.yaml` as the starting point. A binding must name a
-supported participant `factory`, its `exp`/`run`, and whether it is available.
+supported participant `factory` and whether it is available. Hardware bindings
+also name their local `exp`/`run`; behavior-specific runs such as AutoMove can
+be supplied by the collection recipe instead.
 `resources` prevent a collection recipe from acquiring the same physical device
 twice.
 

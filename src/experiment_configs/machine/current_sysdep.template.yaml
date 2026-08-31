@@ -18,8 +18,6 @@ bindings:
 
   automove:
     factory: automove_leader
-    exp: automove
-    run: automove_random_robot_position_00
     available: true
 
   al5d:

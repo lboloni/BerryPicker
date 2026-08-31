@@ -7,7 +7,7 @@ import time
 
 import cv2
 
-from demonstration.demonstration_participant import DemonstrationContext, create_participants
+from demonstration_participant import DemonstrationContext, create_participants
 
 
 class DemonstrationRecorder:

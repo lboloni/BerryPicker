@@ -382,11 +382,12 @@ class MobileCameraParticipant(DemonstrationParticipant):
         self.controller.stop()
 
 
-def _load_binding_experiment(binding):
-    try:
-        return Config().get_experiment(binding["exp"], binding["run"])
-    except KeyError as error:
-        raise ValueError(f"Machine binding is missing exp/run: {binding}") from error
+def _load_participant_experiment(spec, binding):
+    exp_name = spec.get("exp", binding.get("exp"))
+    run_name = spec.get("run", binding.get("run"))
+    if exp_name is None or run_name is None:
+        raise ValueError(f"Participant {spec['name']} must define exp/run in its spec or binding")
+    return Config().get_experiment(exp_name, run_name)
 
 
 def create_participants(collection_exp, machine_exp):
@@ -430,7 +431,7 @@ def create_participants(collection_exp, machine_exp):
             if resource in resources:
                 raise RuntimeError(f"Machine resource {resource} is assigned more than once")
             resources.add(resource)
-        binding_exp = _load_binding_experiment(binding)
+        binding_exp = _load_participant_experiment(spec, binding)
         if factory_name == "automove_leader":
             tick_interval = collection_exp.get("tick_interval", 0.1)
             if binding_exp["robot_interval"] != tick_interval:

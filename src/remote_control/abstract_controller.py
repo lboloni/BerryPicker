@@ -30,6 +30,7 @@ class AbstractController(ABC):
         self.controller_interval = 0.1
         # the actual interval
         self.last_interval = self.controller_interval
+        self.exit_control = False
         # the interval at which we are updating the robot
         self.robot_interval = 0.1
         # the velocities corresponding to maximum push

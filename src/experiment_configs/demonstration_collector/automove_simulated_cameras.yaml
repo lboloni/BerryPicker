@@ -5,6 +5,8 @@ tick_interval: 0.1
 participants:
   - name: automove
     binding: automove
+    exp: automove
+    run: automove_random_robot_position_00
     emits: al5d_target
     target_robot: al5d
   - name: al5d

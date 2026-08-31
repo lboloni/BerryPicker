@@ -71,7 +71,7 @@ must show the new mobile-camera viewpoint.
 Select the recipe:
 
 ```python
-"automove_al5d_cameras"
+"automove_al5d_cameras_random_robot_position_00"
 ```
 
 For a machine without the physical AL5D, select:
@@ -80,22 +80,21 @@ For a machine without the physical AL5D, select:
 "automove_simulated_cameras"
 ```
 
-The machine profile's `automove` binding selects the AutoMove run. The normal
-run is `automove_random_robot_position_00`, which has a required random seed,
-fixed wrist/gripper values, and explicit velocities for every `RobotPosition`
-field.
+The collector recipe selects the AutoMove run. The machine profile's
+`automove` binding only says whether this machine can run AutoMove and which
+participant factory to use.
 
 Other supplied AutoMove runs are:
 
 ```text
-automove_random_ee_box_00
-automove_random_ee_plane_z5_00
+automove_al5d_cameras_random_ee_box_00
+automove_al5d_cameras_random_ee_plane_z5_00
 ```
 
-To use one, change the `run` in the local machine profile's `automove` binding.
-Each run is reproducible with its `random_seed`; change that integer to collect
-a different path. The collector records the AutoMove type and seed with every
-demonstration timestep.
+Each collector recipe points to an `automove` experiment config. That config
+contains the AutoMove type, random seed, workspace bounds or plane definition,
+and motion parameters. Add a new `automove/*.yaml` and matching
+`demonstration_collector/*.yaml` recipe to collect a different parameter set.
 
 For end-effector box or plane runs, the AL5D initial position must already be
 inside the configured box or plane. The collector raises an exception instead

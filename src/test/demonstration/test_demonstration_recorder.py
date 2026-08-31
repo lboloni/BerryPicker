@@ -4,10 +4,15 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+sys.path.append(str(pathlib.Path(__file__).parents[2] / "demonstration"))
 sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
-from demonstration.demonstration_participant import DemonstrationParticipant, DemonstrationSample
-from demonstration.demonstration_recorder import DemonstrationRecorder
+from demonstration_participant import (
+    DemonstrationParticipant,
+    DemonstrationSample,
+    _load_participant_experiment,
+)
+from demonstration_recorder import DemonstrationRecorder
 
 
 class FakeDemonstration:
@@ -65,6 +70,21 @@ class FakeCameraParticipant(DemonstrationParticipant):
 
 
 class TestDemonstrationRecorder(unittest.TestCase):
+    def test_participant_experiment_overrides_machine_binding_experiment(self):
+        spec = {"name": "automove", "exp": "automove", "run": "automove_random_ee_box_00"}
+        binding = {"exp": "machine_default", "run": "machine_default_run"}
+        with patch("demonstration_participant.Config") as config_class:
+            config = config_class.return_value
+            config.get_experiment.return_value = "loaded-exp"
+
+            self.assertEqual(_load_participant_experiment(spec, binding), "loaded-exp")
+
+        config.get_experiment.assert_called_once_with("automove", "automove_random_ee_box_00")
+
+    def test_participant_experiment_fails_without_spec_or_binding_experiment(self):
+        with self.assertRaisesRegex(ValueError, "must define exp/run"):
+            _load_participant_experiment({"name": "automove"}, {})
+
     def test_runs_participants_and_saves_one_synchronized_timestep(self):
         demonstration = FakeDemonstration()
         robot = FakeActionParticipant()
@@ -73,7 +93,7 @@ class TestDemonstrationRecorder(unittest.TestCase):
             recorder = DemonstrationRecorder(
                 demonstration, [robot, camera], directory, tick_interval=0.0
             )
-            with patch("demonstration.demonstration_recorder.cv2.imwrite", return_value=True) as write:
+            with patch("demonstration_recorder.cv2.imwrite", return_value=True) as write:
                 recorder.run()
 
         self.assertEqual(robot.events, ["start", "update", "update", "stop"])
