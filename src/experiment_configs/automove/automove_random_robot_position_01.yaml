@@ -1,0 +1,28 @@
+# Reproducible random movement across the expanded RobotPosition workspace.
+automove_type: random_robot_position
+random_seed: 73017
+waypoint_count: 10
+max_timesteps: 1000
+max_sampling_attempts: 10000
+interactive_confirm: false
+controller_interval: 0.1
+robot_interval: 0.1
+waypoint_reached_distance: 0.001
+
+robot_position:
+  height: {random: [1.0, 5.0]}
+  distance: {random: [3.0, 8.0]}
+  heading: {random: [-60.0, 60.0]}
+  wrist_angle: {random: [-75.0, -15.0]}
+  wrist_rotation: {random: [45.0, 105.0]}
+  gripper: {choices: [0.0, 100.0]}
+
+motion:
+  type: robot_position_velocity
+  velocity:
+    height: 1.0
+    distance: 1.0
+    heading: 15.0
+    wrist_angle: 15.0
+    wrist_rotation: 5.0
+    gripper: 50.0

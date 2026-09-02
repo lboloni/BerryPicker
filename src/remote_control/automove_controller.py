@@ -4,7 +4,7 @@ import math
 import random
 import time
 
-from exp_run_config import Experiment
+from exp_run_config import Config, Experiment
 from robot.al5d import PositionController, RobotPosition
 from robot.al5d.move import move_position_towards
 
@@ -25,7 +25,8 @@ class AutoMoveController(AbstractController):
         self.exp = exp
         self.robot_controller = robot_controller
         self.automove_type = exp["automove_type"]
-        self.random_seed = exp["random_seed"]
+        self.random_seed = Config().runtime.get(
+            "automove_random_seed", exp["random_seed"])
         if type(self.random_seed) is not int:
             raise ValueError("AutoMove random_seed must be an integer")
         self.rng = random.Random(self.random_seed)
@@ -73,6 +74,14 @@ class AutoMoveController(AbstractController):
             raise ValueError(f"{name} minimum must not exceed its maximum")
         return float(low), float(high)
 
+    @staticmethod
+    def _choices(value, name):
+        if not isinstance(value, list) or not value:
+            raise ValueError(f"{name} must be a nonempty list")
+        if not all(isinstance(item, (int, float)) and math.isfinite(item) for item in value):
+            raise ValueError(f"{name} must contain finite numbers")
+        return tuple(float(item) for item in value)
+
     def _initialize_robot_position_configuration(self):
         fields = self.exp["robot_position"]
         if set(fields) != set(RobotPosition.FIELDS):
@@ -80,18 +89,25 @@ class AutoMoveController(AbstractController):
         self.position_fields = {}
         for field in RobotPosition.FIELDS:
             definition = fields[field]
-            if not isinstance(definition, dict) or set(definition) not in ({"fixed"}, {"random"}):
+            if not isinstance(definition, dict) or set(definition) not in (
+                    {"fixed"}, {"random"}, {"choices"}):
                 raise ValueError(
-                    f"robot_position.{field} must contain exactly one of fixed or random"
+                    f"robot_position.{field} must contain exactly one of "
+                    "fixed, random, or choices"
                 )
             if "fixed" in definition:
                 value = definition["fixed"]
                 if not isinstance(value, (int, float)) or not math.isfinite(value):
                     raise ValueError(f"robot_position.{field}.fixed must be finite")
                 self.position_fields[field] = ("fixed", float(value))
-            else:
+            elif "random" in definition:
                 self.position_fields[field] = (
                     "random", self._range(definition["random"], f"robot_position.{field}.random")
+                )
+            else:
+                self.position_fields[field] = (
+                    "choices", self._choices(
+                        definition["choices"], f"robot_position.{field}.choices")
                 )
         minimum = RobotPosition(self.robot_controller.exp)
         maximum = RobotPosition(self.robot_controller.exp)
@@ -99,8 +115,10 @@ class AutoMoveController(AbstractController):
             if kind == "fixed":
                 minimum[field] = value
                 maximum[field] = value
-            else:
+            elif kind == "random":
                 minimum[field], maximum[field] = value
+            else:
+                minimum[field], maximum[field] = min(value), max(value)
         self._validate_position(minimum)
         self._validate_position(maximum)
         motion = self.exp["motion"]
@@ -242,7 +260,12 @@ class AutoMoveController(AbstractController):
     def _sample_robot_position(self):
         position = RobotPosition(self.robot_controller.exp)
         for field, (kind, value) in self.position_fields.items():
-            position[field] = value if kind == "fixed" else self.rng.uniform(*value)
+            if kind == "fixed":
+                position[field] = value
+            elif kind == "random":
+                position[field] = self.rng.uniform(*value)
+            else:
+                position[field] = self.rng.choice(value)
         return position
 
     def _sample_end_effector_point(self):

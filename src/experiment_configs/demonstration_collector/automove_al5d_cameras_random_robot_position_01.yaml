@@ -1,0 +1,16 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: automove
+    binding: automove
+    exp: automove
+    run: automove_random_robot_position_01
+    emits: al5d_target
+    target_robot: al5d
+  - name: al5d
+    binding: al5d
+    command: al5d_target
+  - name: cameras
+    binding: fixed_cameras

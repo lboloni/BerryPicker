@@ -3,10 +3,11 @@ import math
 import pathlib
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
-from exp_run_config import Experiment
+from exp_run_config import Config, Experiment
 from remote_control.automove_controller import AutoMoveController
 from robot.al5d import SimulatedPositionController
 
@@ -21,11 +22,11 @@ def robot_exp():
         },
         "POS_MIN": {
             "height": 1.0, "distance": 3.0, "heading": -90.0,
-            "wrist_angle": -90.0, "wrist_rotation": 60.0, "gripper": 0.0,
+            "wrist_angle": -90.0, "wrist_rotation": 45.0, "gripper": 0.0,
         },
         "POS_MAX": {
             "height": 5.0, "distance": 10.0, "heading": 90.0,
-            "wrist_angle": 0.0, "wrist_rotation": 90.0, "gripper": 100.0,
+            "wrist_angle": 0.0, "wrist_rotation": 105.0, "gripper": 100.0,
         },
     })
 
@@ -78,6 +79,7 @@ class TestAutoMoveController(unittest.TestCase):
     def test_robot_position_seed_is_reproducible_and_fixed_fields_do_not_move(self):
         first = self.make_controller(robot_position_config())
         second = self.make_controller(robot_position_config())
+        self.assertEqual(first.random_seed, 17)
         first.generate_waypoints()
         second.generate_waypoints()
         first_values = [waypoint.values for waypoint in first.waypoints]
@@ -87,6 +89,45 @@ class TestAutoMoveController(unittest.TestCase):
             self.assertEqual(values["wrist_angle"], -45.0)
             self.assertEqual(values["wrist_rotation"], 75.0)
             self.assertEqual(values["gripper"], 100.0)
+
+    def test_runtime_seed_overrides_experiment_seed(self):
+        with patch.dict(Config().runtime, {"automove_random_seed": 29}):
+            controller = self.make_controller(robot_position_config())
+
+        self.assertEqual(controller.random_seed, 29)
+
+    def test_rejects_invalid_runtime_seed(self):
+        with patch.dict(Config().runtime, {"automove_random_seed": "29"}):
+            with self.assertRaisesRegex(ValueError, "random_seed must be an integer"):
+                self.make_controller(robot_position_config())
+
+    def test_robot_position_choices_sample_only_configured_values(self):
+        config = robot_position_config()
+        config["waypoint_count"] = 20
+        config["robot_position"]["gripper"] = {"choices": [0.0, 100.0]}
+        controller = self.make_controller(config)
+
+        controller.generate_waypoints()
+
+        self.assertEqual(
+            {waypoint["gripper"] for waypoint in controller.waypoints},
+            {0.0, 100.0},
+        )
+
+    def test_rejects_empty_robot_position_choices(self):
+        config = robot_position_config()
+        config["robot_position"]["gripper"] = {"choices": []}
+        with self.assertRaisesRegex(ValueError, "choices must be a nonempty list"):
+            self.make_controller(config)
+
+    def test_rejects_invalid_robot_position_choices(self):
+        for choices, message in (([0.0, math.nan], "finite numbers"),
+                                 ([0.0, 101.0], "outside AL5D limits")):
+            with self.subTest(choices=choices):
+                config = robot_position_config()
+                config["robot_position"]["gripper"] = {"choices": choices}
+                with self.assertRaisesRegex(ValueError, message):
+                    self.make_controller(config)
 
     def test_box_waypoints_are_inside_the_box_and_use_linear_speed(self):
         config = base_config("random_ee_box")

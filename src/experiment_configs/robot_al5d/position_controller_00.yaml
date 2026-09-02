@@ -19,20 +19,18 @@ POS_DEFAULT:
   "wrist_rotation": 75.0
   "gripper": 100
 
-# Handwired wrist-rotation for a much shorter range as it was creating problems.
-
-POS_MIN: 
+POS_MIN:
   "height": 1.0
   "distance": 3.0
   "heading": -90.0
   "wrist_angle": -90.0
-  "wrist_rotation": 60.0
+  "wrist_rotation": 45.0
   "gripper": 0
 
-POS_MAX: 
+POS_MAX:
   "height": 5.0
   "distance": 10.0
   "heading": 90.0
   "wrist_angle": 0.0
-  "wrist_rotation": 90.0
+  "wrist_rotation": 105.0
   "gripper": 100

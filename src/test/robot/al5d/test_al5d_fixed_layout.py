@@ -34,11 +34,11 @@ class TestAL5DFixedLayout(unittest.TestCase):
         },
         "POS_MIN": {
             "height": 1.0, "distance": 3.0, "heading": -90.0,
-            "wrist_angle": -90.0, "wrist_rotation": 60.0, "gripper": 0.0,
+            "wrist_angle": -90.0, "wrist_rotation": 45.0, "gripper": 0.0,
         },
         "POS_MAX": {
             "height": 5.0, "distance": 10.0, "heading": 90.0,
-            "wrist_angle": 0.0, "wrist_rotation": 90.0, "gripper": 100.0,
+            "wrist_angle": 0.0, "wrist_rotation": 105.0, "gripper": 100.0,
         },
     }
 
