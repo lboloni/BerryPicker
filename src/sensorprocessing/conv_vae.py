@@ -28,6 +28,46 @@ import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
+
+import trainer.trainer as _vae_trainer_module
+
+
+class _PlainMetricTracker:
+    """Drop-in replacement for the Conv-VAE package's MetricTracker.
+
+    The vendored MetricTracker stores its counters in a pandas DataFrame and
+    updates them through assignments that raise ValueError (assignment
+    destination is read-only) under the copy-on-write semantics that became
+    mandatory in pandas 3. Only plain per-key running averages are needed, so
+    this implementation keeps them in dictionaries; it is installed into the
+    vendored trainer module below, so the downloaded package stays unmodified.
+    """
+
+    def __init__(self, *keys, writer=None):
+        self.writer = writer
+        self._keys = list(keys)
+        self.reset()
+
+    def reset(self):
+        self._total = {key: 0.0 for key in self._keys}
+        self._counts = {key: 0 for key in self._keys}
+        self._average = {key: 0.0 for key in self._keys}
+
+    def update(self, key, value, n=1):
+        if self.writer is not None:
+            self.writer.add_scalar(key, value)
+        self._total[key] += value * n
+        self._counts[key] += n
+        self._average[key] = self._total[key] / self._counts[key]
+
+    def avg(self, key):
+        return self._average[key]
+
+    def result(self):
+        return dict(self._average)
+
+
+_vae_trainer_module.MetricTracker = _PlainMetricTracker
 # end of Conv-VAE-Torch imports
 
 from PIL import Image
