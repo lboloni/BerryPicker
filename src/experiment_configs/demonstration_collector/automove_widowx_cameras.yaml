@@ -1,0 +1,17 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: automove
+    binding: widowx_automove
+    exp: automove
+    run: automove_widowx_random_pose_00
+    emits: widowx_target
+    target_robot: widowx
+  - name: widowx
+    binding: widowx_robot
+    command: widowx_target
+    blocking: false
+  - name: cameras
+    binding: fixed_cameras

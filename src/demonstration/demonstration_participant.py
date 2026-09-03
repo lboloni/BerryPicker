@@ -9,6 +9,12 @@ import math
 
 from exp_run_config import Config
 from robot.al5d import PositionController, SimulatedPositionController
+from robot.widowx import (
+    PositionController as WidowXPositionController,
+    SimulatedPositionController as SimulatedWidowXPositionController,
+    WidowXCommand,
+    WidowXPose,
+)
 
 
 @dataclass
@@ -94,6 +100,50 @@ class AL5DParticipant(DemonstrationParticipant):
     def stop(self, context):
         if not self.simulated:
             self.controller.stop_robot()
+
+
+class WidowXParticipant(DemonstrationParticipant):
+    """Apply native WidowX commands and record target and observed robot state."""
+
+    def __init__(self, name, spec, exp, simulated):
+        super().__init__(name, spec, exp)
+        self.controller = (
+            SimulatedWidowXPositionController(exp)
+            if simulated
+            else WidowXPositionController(exp)
+        )
+        self.command_name = spec["command"]
+        self.target = WidowXCommand(WidowXPose(exp))
+
+    def start(self, context):
+        self.controller.start_robot()
+        self.target = WidowXCommand(self.controller.get_target())
+
+    def update(self, context, dt):
+        if self.command_name not in context.commands:
+            return
+        command = context.commands[self.command_name]
+        if isinstance(command, WidowXPose):
+            command = WidowXCommand(command)
+        if not isinstance(command, WidowXCommand):
+            raise TypeError(
+                f"WidowX participant {self.name} received an invalid command"
+            )
+        self.target = copy(command)
+        self.controller.move(
+            self.target,
+            moving_time=self.spec.get("moving_time", self.exp.get("moving_time")),
+            blocking=self.spec.get("blocking", False),
+        )
+
+    def sample(self, context):
+        return DemonstrationSample(
+            action={"widowx-command": self.target.as_dict()},
+            telemetry=self.controller.get_state(),
+        )
+
+    def stop(self, context):
+        self.controller.stop_robot()
 
 
 class FixedCameraParticipant(DemonstrationParticipant):
@@ -252,6 +302,68 @@ class AutoMoveLeaderParticipant(_AL5DLeaderParticipant):
         )
 
 
+class WidowXAutoMoveLeaderParticipant(DemonstrationParticipant):
+    """Emit reachable native-pose commands for a WidowX robot participant."""
+
+    def __init__(self, name, spec, exp):
+        super().__init__(name, spec, exp)
+        self.command_name = spec["emits"]
+        self.target_robot_name = spec["target_robot"]
+        self.target_robot = None
+        self.controller = None
+        self.autonomous_countdown = 0
+
+    def bind(self, participants):
+        try:
+            self.target_robot = participants[self.target_robot_name]
+        except KeyError as error:
+            raise ValueError(
+                f"Participant {self.name} refers to unknown target robot "
+                f"{self.target_robot_name}"
+            ) from error
+        if not isinstance(self.target_robot, WidowXParticipant):
+            raise TypeError(
+                f"Participant {self.name} target {self.target_robot_name} "
+                "is not a native WidowX participant"
+            )
+        from remote_control.widowx_automove_controller import WidowXAutoMoveController
+
+        self.controller = WidowXAutoMoveController(
+            self.exp, self.target_robot.controller
+        )
+        self.controller.generate_waypoints()
+
+    def update(self, context, dt):
+        if self.controller.max_timesteps <= 0:
+            context.request_stop()
+            return
+        command = self.controller.next_command(dt)
+        if command is None:
+            context.request_stop()
+            return
+        self.autonomous_countdown -= 1
+        if self.controller.interactive_confirm and self.autonomous_countdown <= 0:
+            proceed = input(
+                f"Proposed next WidowX target: {command.pose}. "
+                "Proceed? [stop/y/<number>]"
+            )
+            if proceed == "stop":
+                context.request_stop()
+                return
+            if proceed.isdigit():
+                self.autonomous_countdown = int(proceed)
+        context.commands[self.command_name] = copy(command)
+        self.controller.max_timesteps -= 1
+
+    def sample(self, context):
+        return DemonstrationSample(telemetry={
+            "target": self.controller.pos_target.as_dict(),
+            "automove_type": self.controller.automove_type,
+            "random_seed": self.controller.random_seed,
+            "remaining_waypoints": len(self.controller.waypoints),
+        })
+
+
 class WidowXLeaderParticipant(_AL5DLeaderParticipant):
     """Backdriven WidowX leader that emits an AL5D target."""
 
@@ -405,6 +517,13 @@ def create_participants(collection_exp, machine_exp):
         "xbox_leader": XboxLeaderParticipant,
         "keyboard_leader": KeyboardLeaderParticipant,
         "automove_leader": AutoMoveLeaderParticipant,
+        "widowx_hardware": lambda name, spec, exp: WidowXParticipant(
+            name, spec, exp, False
+        ),
+        "widowx_simulated": lambda name, spec, exp: WidowXParticipant(
+            name, spec, exp, True
+        ),
+        "widowx_automove_leader": WidowXAutoMoveLeaderParticipant,
         "widowx_leader": WidowXLeaderParticipant,
         "widowx_observer": WidowXObserverParticipant,
         "mobile_camera": MobileCameraParticipant,
@@ -432,7 +551,7 @@ def create_participants(collection_exp, machine_exp):
                 raise RuntimeError(f"Machine resource {resource} is assigned more than once")
             resources.add(resource)
         binding_exp = _load_participant_experiment(spec, binding)
-        if factory_name == "automove_leader":
+        if factory_name in ("automove_leader", "widowx_automove_leader"):
             tick_interval = collection_exp.get("tick_interval", 0.1)
             if binding_exp["robot_interval"] != tick_interval:
                 raise ValueError(

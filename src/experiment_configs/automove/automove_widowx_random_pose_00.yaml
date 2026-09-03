@@ -1,0 +1,33 @@
+# Reproducible native WidowX Cartesian waypoints (meters and radians).
+# Review this collision workspace for the physical setup before enabling hardware.
+automove_type: random_widowx_pose
+random_seed: 73017
+waypoint_count: 10
+max_timesteps: 1000
+max_sampling_attempts: 10000
+interactive_confirm: false
+controller_interval: 0.1
+robot_interval: 0.1
+waypoint_reached_distance: 0.001
+
+pose:
+  x: {random: [0.22, 0.38]}
+  y: {random: [-0.15, 0.15]}
+  z: {random: [0.12, 0.32]}
+  roll: {fixed: 0.0}
+  pitch: {random: [-0.60, 0.20]}
+  yaw: {fixed: 0.0}
+
+# The action is issued once, after the corresponding pose has been reached.
+gripper_actions: [hold, grasp, release]
+gripper_pressure: 0.5
+
+motion:
+  type: widowx_pose_velocity
+  velocity:
+    x: 0.08
+    y: 0.08
+    z: 0.08
+    roll: 0.50
+    pitch: 0.50
+    yaw: 0.50

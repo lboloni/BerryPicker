@@ -1,0 +1,41 @@
+# Native task-space controller for a WidowX 250s. Distances are meters and angles radians.
+robot_name: widowx
+controller_type: position_controller
+
+robot_model: wx250s
+interbotix_robot_name: wx250s
+group_name: arm
+gripper_name: gripper
+moving_time: 0.1
+accel_time: 0.05
+gripper_pressure: 0.5
+gripper_delay: 0.0
+
+# "hold" leaves the arm where it is when collection starts. "sleep" parks it on stop.
+startup_pose: hold
+shutdown_pose: sleep
+
+POSE_DEFAULT:
+  x: 0.30
+  y: 0.00
+  z: 0.20
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+# Representable pose envelope. AutoMove has a smaller, setup-specific sampling workspace.
+POSE_MIN:
+  x: -0.60
+  y: -0.60
+  z: -0.20
+  roll: -3.141592654
+  pitch: -3.141592654
+  yaw: -3.141592654
+
+POSE_MAX:
+  x: 0.60
+  y: 0.60
+  z: 0.80
+  roll: 3.141592654
+  pitch: 3.141592654
+  yaw: 3.141592654

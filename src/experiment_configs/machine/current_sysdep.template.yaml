@@ -20,6 +20,10 @@ bindings:
     factory: automove_leader
     available: true
 
+  widowx_automove:
+    factory: widowx_automove_leader
+    available: true
+
   al5d:
     factory: al5d_hardware
     exp: robot_al5d
@@ -31,6 +35,19 @@ bindings:
     factory: al5d_simulated
     exp: robot_al5d
     run: position_controller_00
+    available: true
+
+  widowx_robot:
+    factory: widowx_hardware
+    exp: robot_widowx
+    run: position_controller_wx250s_00
+    available: false
+    resources: [widowx_robot]
+
+  simulated_widowx:
+    factory: widowx_simulated
+    exp: robot_widowx
+    run: position_controller_wx250s_00
     available: true
 
   fixed_cameras:
