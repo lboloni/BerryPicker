@@ -240,6 +240,85 @@ class XboxLeaderParticipant(_AL5DLeaderParticipant):
             self.joystick = None
 
 
+class WidowXXboxLeaderParticipant(DemonstrationParticipant):
+    """Use an Xbox-style controller to emit native WidowX commands."""
+
+    def __init__(self, name, spec, exp):
+        super().__init__(name, spec, exp)
+        self.command_name = spec["emits"]
+        self.target_robot_name = spec["target_robot"]
+        self.target_robot = None
+        self.controller = None
+        self.resource = None
+        self.joystick = None
+
+    def bind(self, participants):
+        try:
+            self.target_robot = participants[self.target_robot_name]
+        except KeyError as error:
+            raise ValueError(
+                f"Participant {self.name} refers to unknown target robot "
+                f"{self.target_robot_name}"
+            ) from error
+        if not isinstance(self.target_robot, WidowXParticipant):
+            raise TypeError(
+                f"Participant {self.name} target {self.target_robot_name} "
+                "is not a native WidowX participant"
+            )
+        from remote_control.widowx_gamepad_controller import (
+            WidowXGamepadController,
+        )
+
+        self.controller = WidowXGamepadController(
+            self.exp, self.target_robot.controller
+        )
+
+    def start(self, context):
+        if self.resource is not None:
+            raise RuntimeError("WidowX Xbox controller is already acquired")
+        try:
+            from approxeng.input.selectbinder import (
+                ControllerNotFoundError,
+                ControllerResource,
+            )
+        except ModuleNotFoundError as error:
+            raise RuntimeError(
+                "WidowX Xbox collection requires the approxeng input package"
+            ) from error
+
+        self.resource = ControllerResource()
+        try:
+            self.joystick = self.resource.__enter__()
+        except ControllerNotFoundError as error:
+            self.resource = None
+            raise RuntimeError("Unable to acquire configured Xbox controller") from error
+        if self.joystick is None:
+            self.resource.__exit__(None, None, None)
+            self.resource = None
+            raise RuntimeError("Unable to acquire configured Xbox controller")
+
+    def update(self, context, dt):
+        if not self.joystick.connected:
+            context.request_stop()
+            return
+        if not self.controller.synchronized:
+            self.controller.synchronize(self.target_robot.controller.get_position())
+        command = self.controller.poll_controller(self.joystick, dt)
+        if self.controller.exit_control:
+            context.request_stop()
+            return
+        context.commands[self.command_name] = copy(command)
+
+    def sample(self, context):
+        return DemonstrationSample(telemetry=self.controller.get_state())
+
+    def stop(self, context):
+        if self.resource is not None:
+            self.resource.__exit__(None, None, None)
+            self.resource = None
+        self.joystick = None
+
+
 class KeyboardLeaderParticipant(_AL5DLeaderParticipant):
     """Use the key captured by the fixed-camera participant to emit AL5D targets."""
 
@@ -515,6 +594,7 @@ def create_participants(collection_exp, machine_exp):
         "al5d_simulated": lambda name, spec, exp: AL5DParticipant(name, spec, exp, True),
         "fixed_cameras": FixedCameraParticipant,
         "xbox_leader": XboxLeaderParticipant,
+        "widowx_xbox_leader": WidowXXboxLeaderParticipant,
         "keyboard_leader": KeyboardLeaderParticipant,
         "automove_leader": AutoMoveLeaderParticipant,
         "widowx_hardware": lambda name, spec, exp: WidowXParticipant(

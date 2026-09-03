@@ -1,0 +1,15 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: xbox
+    binding: widowx_xbox
+    emits: widowx_target
+    target_robot: widowx
+  - name: widowx
+    binding: widowx_robot
+    command: widowx_target
+    blocking: false
+  - name: cameras
+    binding: fixed_cameras

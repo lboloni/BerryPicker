@@ -44,6 +44,25 @@ def move_pose_by(exp, current, deltas):
     return target
 
 
+def move_pose_by_clamped(exp, current, deltas):
+    """Apply pose deltas while saturating at the configured task-space limits."""
+    unknown = set(deltas) - set(WidowXPose.FIELDS)
+    if unknown:
+        raise ValueError(f"Unknown WidowX pose fields: {sorted(unknown)}")
+    target = current.__copy__()
+    for field, delta in deltas.items():
+        if not isinstance(delta, (int, float)) or not isfinite(delta):
+            raise ValueError("WidowX pose deltas must be finite")
+        value = target[field] + delta
+        if field in ANGULAR_FIELDS:
+            value = _wrap_angle(value)
+        target[field] = min(
+            exp["POSE_MAX"][field], max(exp["POSE_MIN"][field], value)
+        )
+    target.validate(exp)
+    return target
+
+
 def move_pose_towards(exp, current, target, max_steps):
     if set(max_steps) != set(WidowXPose.FIELDS):
         raise ValueError("WidowX maximum steps must specify every pose field")

@@ -9,6 +9,14 @@ bindings:
     exp: controllers
     run: gamepad_x360_controller
     available: false
+    resources: [xbox]
+
+  widowx_xbox:
+    factory: widowx_xbox_leader
+    exp: controllers
+    run: gamepad_widowx_00
+    available: false
+    resources: [xbox]
 
   keyboard:
     factory: keyboard_leader

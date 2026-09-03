@@ -11,7 +11,11 @@ sys.path.extend([
 ])
 
 from robot.widowx import WidowXCommand, WidowXPose
-from robot.widowx.move import move_pose_towards, move_towards
+from robot.widowx.move import (
+    move_pose_by_clamped,
+    move_pose_towards,
+    move_towards,
+)
 from widowx_test_support import robot_exp
 
 
@@ -59,6 +63,12 @@ class TestWidowXPosition(unittest.TestCase):
             WidowXCommand(pose, "close")
         with self.assertRaises(ValueError):
             WidowXCommand(pose, gripper_pressure=1.1)
+
+    def test_clamped_movement_saturates_at_task_space_limits(self):
+        pose = WidowXPose(robot_exp())
+        moved = move_pose_by_clamped(robot_exp(), pose, {"x": 10.0, "z": -10.0})
+        self.assertEqual(moved["x"], robot_exp()["POSE_MAX"]["x"])
+        self.assertEqual(moved["z"], robot_exp()["POSE_MIN"]["z"])
 
 
 if __name__ == "__main__":
