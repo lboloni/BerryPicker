@@ -1,4 +1,4 @@
-"""Xbox-style gamepad mapping for native WidowX pose commands."""
+"""XBox input mapped to Cartesian WidowX end-effector commands."""
 
 from copy import copy
 from math import isfinite
@@ -10,25 +10,25 @@ from robot.widowx.move import move_pose_by_clamped
 logger = logging.getLogger(__name__)
 
 
-class WidowXGamepadController:
-    """Convert gamepad input into bounded, IK-checked WidowX commands.
+class WidowXXboxEndEffectorController:
+    """Convert XBox input into bounded, IK-checked end-effector commands.
 
-    The sticks control x/y/z/yaw. The trigger difference controls either roll
-    or pitch, selected by the orientation-mode button.
+    The sticks control x/y/z/yaw, the trigger difference controls roll, and
+    the vertical D-pad axis controls pitch. All rotations are nonmodal.
     """
 
-    ORIENTATION_MODES = ("roll", "pitch")
     BUTTON_FIELDS = (
         "button_exit",
         "button_home",
-        "button_orientation_mode",
         "button_release",
         "button_grasp",
     )
 
     def __init__(self, exp, robot_controller):
         if robot_controller is None:
-            raise ValueError("WidowXGamepadController requires a robot controller")
+            raise ValueError(
+                "WidowXXboxEndEffectorController requires a robot controller"
+            )
         self.exp = exp
         self.robot_controller = robot_controller
         self.velocity = self._read_velocity(exp["velocity"])
@@ -42,11 +42,6 @@ class WidowXGamepadController:
                 gripper_pressure=self.gripper_pressure,
             )
         self.buttons = self._read_buttons(exp)
-        self.orientation_mode = exp.get("initial_orientation_mode", "roll")
-        if self.orientation_mode not in self.ORIENTATION_MODES:
-            raise ValueError(
-                "WidowX gamepad initial_orientation_mode must be roll or pitch"
-            )
 
         self.pos_target = copy(robot_controller.get_target())
         self.pos_home = None
@@ -63,13 +58,17 @@ class WidowXGamepadController:
             or not isfinite(value)
             or value <= 0
         ):
-            raise ValueError(f"WidowX gamepad {name} must be positive and finite")
+            raise ValueError(
+                f"WidowX XBox end-effector {name} must be positive and finite"
+            )
         return float(value)
 
     @classmethod
     def _read_velocity(cls, velocity):
         if not isinstance(velocity, dict) or set(velocity) != set(WidowXPose.FIELDS):
-            raise ValueError("WidowX gamepad velocity must specify every pose field")
+            raise ValueError(
+                "WidowX XBox end-effector velocity must specify every pose field"
+            )
         return {
             field: cls._positive_finite(value, f"velocity.{field}")
             for field, value in velocity.items()
@@ -81,27 +80,35 @@ class WidowXGamepadController:
         for field in cls.BUTTON_FIELDS:
             value = exp[field]
             if not isinstance(value, str) or not value:
-                raise ValueError(f"WidowX gamepad {field} must be a nonempty string")
+                raise ValueError(
+                    f"WidowX XBox end-effector {field} must be a nonempty string"
+                )
             buttons[field] = value
         if len(set(buttons.values())) != len(buttons):
-            raise ValueError("WidowX gamepad buttons must be distinct")
+            raise ValueError("WidowX XBox end-effector buttons must be distinct")
         return buttons
 
     @staticmethod
     def _axis(joystick, name):
         value = getattr(joystick, name)
         if not isinstance(value, (int, float)) or not isfinite(value):
-            raise ValueError(f"WidowX gamepad axis {name} must be finite")
+            raise ValueError(f"WidowX XBox end-effector axis {name} must be finite")
         if not -1.0 <= value <= 1.0:
-            raise ValueError(f"WidowX gamepad axis {name} must be in [-1, 1]")
+            raise ValueError(
+                f"WidowX XBox end-effector axis {name} must be in [-1, 1]"
+            )
         return float(value)
 
     def synchronize(self, actual_pose):
         """Capture the actual startup pose as the initial target and home pose."""
         if self.synchronized:
-            raise RuntimeError("WidowX gamepad controller is already synchronized")
+            raise RuntimeError(
+                "WidowX XBox end-effector controller is already synchronized"
+            )
         if not isinstance(actual_pose, WidowXPose):
-            raise TypeError("WidowX gamepad synchronization requires a WidowXPose")
+            raise TypeError(
+                "WidowX XBox end-effector synchronization requires a WidowXPose"
+            )
         actual_pose.validate(self.robot_controller.exp)
         self.pos_target = copy(actual_pose)
         self.pos_home = copy(actual_pose)
@@ -111,7 +118,9 @@ class WidowXGamepadController:
     def poll_controller(self, joystick, dt):
         """Read one gamepad sample and return its native WidowX command."""
         if not self.synchronized:
-            raise RuntimeError("WidowX gamepad controller is not synchronized")
+            raise RuntimeError(
+                "WidowX XBox end-effector controller is not synchronized"
+            )
         dt = self._positive_finite(dt, "timestep")
         elapsed_dt = dt
         moving_time = self._positive_finite(
@@ -124,9 +133,6 @@ class WidowXGamepadController:
         if self.buttons["button_exit"] in pressed:
             self.exit_control = True
             return None
-        if self.buttons["button_orientation_mode"] in pressed:
-            index = self.ORIENTATION_MODES.index(self.orientation_mode)
-            self.orientation_mode = self.ORIENTATION_MODES[1 - index]
 
         release = self.buttons["button_release"] in pressed
         grasp = self.buttons["button_grasp"] in pressed
@@ -138,7 +144,10 @@ class WidowXGamepadController:
             elapsed_dt, dt, moving_time, sorted(pressed), release_held, grasp_held,
         )
         if release_held and grasp_held:
-            raise ValueError("WidowX gamepad cannot grasp and release simultaneously")
+            raise ValueError(
+                "WidowX XBox end-effector controller cannot grasp and "
+                "release simultaneously"
+            )
         if release and grasp:
             # Press history has no ordering. Prefer the button still held; if
             # both have been released, retain the gripper state until a fresh press.
@@ -152,9 +161,11 @@ class WidowXGamepadController:
         if self.buttons["button_home"] in pressed:
             candidate = copy(self.pos_home)
         else:
-            axes = {name: self._axis(joystick, name)
-                    for name in ("lx", "ly", "rx", "ry", "lt", "rt")}
-            logger.info("Gamepad axes=%s orientation_mode=%s", axes, self.orientation_mode)
+            axes = {
+                name: self._axis(joystick, name)
+                for name in ("lx", "ly", "rx", "ry", "lt", "rt", "dy")
+            }
+            logger.info("XBox end-effector axes=%s", axes)
             trigger_axis = max(
                 -1.0,
                 min(
@@ -166,13 +177,10 @@ class WidowXGamepadController:
                 "x": axes["ly"] * self.velocity["x"] * dt,
                 "y": axes["lx"] * self.velocity["y"] * dt,
                 "z": axes["ry"] * self.velocity["z"] * dt,
-                "roll": 0.0,
-                "pitch": 0.0,
+                "roll": trigger_axis * self.velocity["roll"] * dt,
+                "pitch": -axes["dy"] * self.velocity["pitch"] * dt,
                 "yaw": axes["rx"] * self.velocity["yaw"] * dt,
             }
-            deltas[self.orientation_mode] = (
-                trigger_axis * self.velocity[self.orientation_mode] * dt
-            )
             candidate = move_pose_by_clamped(
                 self.robot_controller.exp, self.pos_target, deltas
             )
@@ -185,7 +193,11 @@ class WidowXGamepadController:
                 candidate.as_dict(),
             )
             reachable = self.robot_controller.can_reach(candidate)
-            logger.info("Gamepad IK accepted=%s gripper_action=%s", reachable, gripper_action)
+            logger.info(
+                "Gamepad IK accepted=%s gripper_action=%s",
+                reachable,
+                gripper_action,
+            )
             if reachable:
                 self.pos_target = candidate
             else:
@@ -201,7 +213,6 @@ class WidowXGamepadController:
     def get_state(self):
         return {
             "target": self.pos_target.as_dict(),
-            "orientation_mode": self.orientation_mode,
             "last_target_rejected": self.last_target_rejected,
             "rejected_target_count": self.rejected_target_count,
         }

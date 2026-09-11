@@ -11,10 +11,10 @@ bindings:
     available: false
     resources: [xbox]
 
-  widowx_xbox:
-    factory: widowx_xbox_leader
+  widowx_xbox_end_effector:
+    factory: widowx_xbox_end_effector_leader
     exp: controllers
-    run: gamepad_widowx_00
+    run: widowx_xbox_end_effector_controller_00
     available: false
     resources: [xbox]
 

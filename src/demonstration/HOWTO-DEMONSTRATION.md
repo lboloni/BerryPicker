@@ -80,6 +80,10 @@ The configured participant order is meaningful. In particular, a mobile camera
 must be placed after the AL5D and before fixed cameras if fixed camera images
 must show the new mobile-camera viewpoint.
 
+The WidowX XBox recipes use Cartesian end-effector control. See
+[the WidowX XBox end-effector controller guide](../remote_control/HOWTO-WIDOWX-XBOX-END-EFFECTOR-CONTROLLER.md)
+for its axis and button mappings.
+
 ## AL5D robot with USB cameras
 
 This configuration talks directly to the physical AL5D and collects every view
@@ -194,7 +198,7 @@ python src/robot/widowx/simulation/run_gazebo.py
 ```
 
 Wait for the launcher to print that the Gazebo camera and Interbotix controller
-are ready. The machine configuration must enable `widowx_xbox`,
+are ready. The machine configuration must enable `widowx_xbox_end_effector`,
 `gazebo_widowx`, and `gazebo_cameras`. Enable `fixed_cameras` as well when USB
 views will be recorded.
 
@@ -294,8 +298,8 @@ Gazebo namespace.
 
 ### 4. Collect the physical demonstration
 
-The machine configuration must enable `widowx_xbox`, `widowx_robot`, and
-`fixed_cameras`. Select the existing real-robot recipe:
+The machine configuration must enable `widowx_xbox_end_effector`,
+`widowx_robot`, and `fixed_cameras`. Select the existing real-robot recipe:
 
 ```python
 collector_run = "xbox_widowx_cameras"
@@ -314,7 +318,7 @@ demonstration:
 tick_interval: 0.1
 participants:
   - name: xbox
-    binding: widowx_xbox
+    binding: widowx_xbox_end_effector
     emits: widowx_target
     target_robot: widowx
   - name: widowx

@@ -129,8 +129,9 @@ class PositionController:
             blocking=blocking,
         )
         if not reachable:
-            #raise ValueError(f"Interbotix could not reach WidowX target:\n{command.pose}")
-            logger.warning("Interbotix could not reach WidowX target:\n%s", command.pose)
+            raise ValueError(
+                f"Interbotix could not reach WidowX target:\n{command.pose}"
+            )
         self._apply_gripper(command)
         self.target = copy(command.pose)
 

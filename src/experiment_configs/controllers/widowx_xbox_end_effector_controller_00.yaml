@@ -1,13 +1,11 @@
-# Xbox-style control of a native WidowX pose (meters and radians).
-# Left stick: x/y; right stick: z/yaw; LT-RT: selected roll/pitch axis.
+# XBox control of a WidowX Cartesian end-effector pose (meters and radians).
+# Left stick: x/y; right stick: z/yaw; LT-RT: roll; vertical D-pad: pitch.
 # Controller button names can vary; these names match the existing Voyee setup.
 button_exit: square
 button_home: home
-button_orientation_mode: triangle
 button_release: l1
 button_grasp: r1
 
-initial_orientation_mode: roll
 max_input_dt: 0.25
 gripper_pressure: 0.5
 

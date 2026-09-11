@@ -267,8 +267,8 @@ class XboxLeaderParticipant(_AL5DLeaderParticipant):
             self.joystick = None
 
 
-class WidowXXboxLeaderParticipant(DemonstrationParticipant):
-    """Use an Xbox-style controller to emit native WidowX commands."""
+class WidowXXboxEndEffectorLeaderParticipant(DemonstrationParticipant):
+    """Use an XBox controller to emit WidowX end-effector commands."""
 
     def __init__(self, name, spec, exp):
         super().__init__(name, spec, exp)
@@ -292,17 +292,19 @@ class WidowXXboxLeaderParticipant(DemonstrationParticipant):
                 f"Participant {self.name} target {self.target_robot_name} "
                 "is not a native WidowX participant"
             )
-        from remote_control.widowx_gamepad_controller import (
-            WidowXGamepadController,
+        from remote_control.widowx_xbox_end_effector_controller import (
+            WidowXXboxEndEffectorController,
         )
 
-        self.controller = WidowXGamepadController(
+        self.controller = WidowXXboxEndEffectorController(
             self.exp, self.target_robot.controller
         )
 
     def start(self, context):
         if self.resource is not None:
-            raise RuntimeError("WidowX Xbox controller is already acquired")
+            raise RuntimeError(
+                "WidowX XBox end-effector controller is already acquired"
+            )
         try:
             from approxeng.input.selectbinder import (
                 ControllerNotFoundError,
@@ -310,7 +312,8 @@ class WidowXXboxLeaderParticipant(DemonstrationParticipant):
             )
         except ModuleNotFoundError as error:
             raise RuntimeError(
-                "WidowX Xbox collection requires the approxeng input package"
+                "WidowX XBox end-effector collection requires the approxeng "
+                "input package"
             ) from error
 
         self.resource = ControllerResource()
@@ -318,11 +321,13 @@ class WidowXXboxLeaderParticipant(DemonstrationParticipant):
             self.joystick = self.resource.__enter__()
         except ControllerNotFoundError as error:
             self.resource = None
-            raise RuntimeError("Unable to acquire configured Xbox controller") from error
+            raise RuntimeError(
+                "Unable to acquire configured XBox controller"
+            ) from error
         if self.joystick is None:
             self.resource.__exit__(None, None, None)
             self.resource = None
-            raise RuntimeError("Unable to acquire configured Xbox controller")
+            raise RuntimeError("Unable to acquire configured XBox controller")
 
     def update(self, context, dt):
         if not self.joystick.connected:
@@ -622,7 +627,9 @@ def create_participants(collection_exp, machine_exp):
         "fixed_cameras": FixedCameraParticipant,
         "ros_image_cameras": RosImageCameraParticipant,
         "xbox_leader": XboxLeaderParticipant,
-        "widowx_xbox_leader": WidowXXboxLeaderParticipant,
+        "widowx_xbox_end_effector_leader": (
+            WidowXXboxEndEffectorLeaderParticipant
+        ),
         "keyboard_leader": KeyboardLeaderParticipant,
         "automove_leader": AutoMoveLeaderParticipant,
         "widowx_hardware": lambda name, spec, exp: WidowXParticipant(

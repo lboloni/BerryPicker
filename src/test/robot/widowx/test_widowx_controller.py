@@ -76,9 +76,16 @@ class TestWidowXPositionController(unittest.TestCase):
         controller.move(WidowXCommand(target, "grasp", 0.8))
         self.assertEqual(bot.gripper.pressures, [0.8])
         self.assertEqual(bot.gripper.actions, [("grasp", 1.0)])
+
+        target_before_rejection = controller.get_target().as_dict()
+        rejected_target = WidowXPose(robot_exp())
+        rejected_target["x"] = 0.5
         bot.arm.reachable = False
         with self.assertRaisesRegex(ValueError, "could not reach"):
-            controller.move(target)
+            controller.move(WidowXCommand(rejected_target, "release", 0.4))
+        self.assertEqual(controller.get_target().as_dict(), target_before_rejection)
+        self.assertEqual(bot.gripper.pressures, [0.8])
+        self.assertEqual(bot.gripper.actions, [("grasp", 1.0)])
 
     def test_ik_uses_fresh_measured_joints_for_checks_and_moves(self):
         controller, _, bot = self.make_controller()
