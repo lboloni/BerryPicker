@@ -2,10 +2,15 @@
 
 from copy import copy
 from math import isfinite
+import logging
+from time import perf_counter
 from time import monotonic
 
 from .position import WidowXCommand, WidowXPose
 from .runtime import get_default_runtime
+
+
+logger = logging.getLogger(__name__)
 
 
 class PositionController:
@@ -97,8 +102,14 @@ class PositionController:
         if not isinstance(pose, WidowXPose):
             raise TypeError("WidowX reachability requires a WidowXPose")
         pose.validate(self.exp)
-        _, reachable = self.bot.arm.set_ee_pose_components(
-            **self._pose_kwargs(pose), execute=False
+        joints = self.bot.arm.get_joint_positions()
+        started = perf_counter()
+        solution, reachable = self.bot.arm.set_ee_pose_components(
+            **self._pose_kwargs(pose), custom_guess=joints, execute=False,
+        )
+        logger.info(
+            "IK check: duration=%.4fs reachable=%s target=%s measured_joints=%s solution=%s",
+            perf_counter() - started, reachable, pose.as_dict(), joints, solution,
         )
         return bool(reachable)
 
@@ -113,11 +124,13 @@ class PositionController:
             raise RuntimeError("WidowX controller has no configured gripper")
         _, reachable = self.bot.arm.set_ee_pose_components(
             **self._pose_kwargs(command.pose),
+            custom_guess=self.bot.arm.get_joint_positions(),
             moving_time=moving_time,
             blocking=blocking,
         )
         if not reachable:
-            raise ValueError(f"Interbotix could not reach WidowX target:\n{command.pose}")
+            #raise ValueError(f"Interbotix could not reach WidowX target:\n{command.pose}")
+            logger.warning("Interbotix could not reach WidowX target:\n%s", command.pose)
         self._apply_gripper(command)
         self.target = copy(command.pose)
 

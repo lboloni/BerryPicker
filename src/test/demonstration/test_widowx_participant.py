@@ -29,6 +29,9 @@ class FakeJoystick:
     lt = 0.0
     rt = 0.0
 
+    def __getitem__(self, name):
+        return None
+
     @staticmethod
     def check_presses():
         return SimpleNamespace(names=[])

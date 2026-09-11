@@ -1,6 +1,10 @@
 #import numpy as np
 #from pathlib import Path
 import cv2
+import logging
+from time import perf_counter
+
+logger = logging.getLogger(__name__)
 #import time
 
 class CameraController:
@@ -67,19 +71,28 @@ class CameraController:
         """
         for index in self.capture_devs:
             cap = self.capture_devs[index]
-            success, image = cap.read()
+            started = perf_counter()
+            try:
+                success, image = cap.read()
+            finally:
+                logger.info("camera[%s] read=%.4fs", index, perf_counter() - started)
             if not success:
                 continue
             if self.img_size != None:
                 image = cv2.resize(image, self.img_size)
             self.images[index] = image
-        # create a list of concatenated images
-        imglist = list(self.images.values())
-        concatenated_image = cv2.hconcat(imglist)
-        try:
-            if self.visualize:
+        if self.visualize:
+            started = perf_counter()
+            concatenated_image = cv2.hconcat(list(self.images.values()))
+            logger.info("camera display hconcat=%.4fs", perf_counter() - started)
+            started = perf_counter()
+            try:
                 cv2.imshow(self.caption, concatenated_image)
+            finally:
+                logger.info("camera display imshow=%.4fs", perf_counter() - started)
+            started = perf_counter()
+            try:
                 key = cv2.waitKey(1)
-                return (key & 0xFF) == ord('q')
-        except:
-            print("Error at visualization? ")
+            finally:
+                logger.info("camera display waitKey=%.4fs", perf_counter() - started)
+            return (key & 0xFF) == ord('q')

@@ -30,7 +30,7 @@ def gamepad_exp():
 class FakeJoystick:
     def __init__(
         self, *, lx=0.0, ly=0.0, rx=0.0, ry=0.0, lt=0.0, rt=0.0,
-        presses=(), connected=True,
+        presses=(), connected=True, held=(),
     ):
         self.lx = lx
         self.ly = ly
@@ -40,6 +40,10 @@ class FakeJoystick:
         self.rt = rt
         self.presses = list(presses)
         self.connected = connected
+        self.held = set(held)
+
+    def __getitem__(self, name):
+        return 0.0 if name in self.held else None
 
     def check_presses(self):
         presses, self.presses = self.presses, []
@@ -90,7 +94,7 @@ class TestWidowXGamepadController(unittest.TestCase):
     def test_caps_large_timestep_and_saturates_pose_limit(self):
         controller, _ = self.make_controller()
         command = controller.poll_controller(FakeJoystick(ly=1.0), 2.0)
-        self.assertAlmostEqual(command.pose["x"], 0.55)
+        self.assertAlmostEqual(command.pose["x"], 0.4)
 
         near_limit = command.pose.__copy__()
         near_limit["x"] = 0.99
@@ -124,12 +128,26 @@ class TestWidowXGamepadController(unittest.TestCase):
         controller, _ = self.make_controller()
         with self.assertRaisesRegex(ValueError, "simultaneously"):
             controller.poll_controller(
-                FakeJoystick(presses=["l1", "r1"]), 0.1
+                FakeJoystick(presses=["l1", "r1"], held=["l1", "r1"]), 0.1
             )
         self.assertIsNone(controller.poll_controller(
             FakeJoystick(presses=["square"]), 0.1
         ))
         self.assertTrue(controller.exit_control)
+
+    def test_sequential_gripper_presses_use_held_state_or_hold(self):
+        controller, _ = self.make_controller()
+        for held, expected in [(["r1"], "grasp"), (["l1"], "release"), ([], "hold")]:
+            command = controller.poll_controller(
+                FakeJoystick(presses=["l1", "r1"], held=held), 2.0
+            )
+            self.assertEqual(command.gripper_action, expected)
+
+    def test_displacement_respects_shorter_robot_movement_time(self):
+        controller, robot = self.make_controller()
+        robot.exp["moving_time"] = 0.05
+        command = controller.poll_controller(FakeJoystick(ly=1.0), 2.0)
+        self.assertAlmostEqual(command.pose["x"], 0.35)
 
     def test_rejects_duplicate_buttons_and_incomplete_velocity(self):
         exp = gamepad_exp()

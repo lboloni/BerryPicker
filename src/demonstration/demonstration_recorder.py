@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 import pathlib
 import time
 
 import cv2
 
 from demonstration_participant import DemonstrationContext, create_participants
+
+
+logger = logging.getLogger(__name__)
 
 
 class DemonstrationRecorder:
@@ -46,15 +50,35 @@ class DemonstrationRecorder:
                 dt = started - previous_time
                 previous_time = started
                 for participant in self.participants:
-                    participant.update(context, dt)
+                    phase_started = time.monotonic()
+                    try:
+                        participant.update(context, dt)
+                    finally:
+                        logger.info("tick=%d update[%s]=%.4fs", self.counter,
+                                    participant.name, time.monotonic() - phase_started)
                 if context.stop_requested:
                     continue
-                samples = {
-                    participant.name: participant.sample(context)
-                    for participant in self.participants
-                }
+                samples = {}
+                for participant in self.participants:
+                    phase_started = time.monotonic()
+                    try:
+                        samples[participant.name] = participant.sample(context)
+                    finally:
+                        logger.info("tick=%d sample[%s]=%.4fs", self.counter,
+                                    participant.name, time.monotonic() - phase_started)
+                phase_started = time.monotonic()
                 self.save(samples)
+                save_duration = time.monotonic() - phase_started
+                work_duration = time.monotonic() - started
+                logger.info(
+                    "tick=%d elapsed_dt=%.4fs work=%.4fs save=%.4fs overrun=%.4fs",
+                    self.counter - 1, dt, work_duration, save_duration,
+                    max(0.0, work_duration - self.tick_interval),
+                )
                 time.sleep(max(0.0, self.tick_interval - (time.monotonic() - started)))
+        except Exception:
+            logger.exception("Collection failed at tick=%d", self.counter)
+            raise
         finally:
             for participant in reversed(started_participants):
                 participant.stop(context)

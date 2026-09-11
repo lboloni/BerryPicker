@@ -80,6 +80,19 @@ class TestWidowXPositionController(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "could not reach"):
             controller.move(target)
 
+    def test_ik_uses_fresh_measured_joints_for_checks_and_moves(self):
+        controller, _, bot = self.make_controller()
+        controller.start_robot()
+        target = WidowXPose(robot_exp())
+        bot.arm.joints = [0.03, -1.83, 1.58, -0.01, 0.80, 0.006]
+        controller.can_reach(target)
+        self.assertEqual(bot.arm.pose_calls[-1]["custom_guess"], bot.arm.joints)
+        self.assertFalse(bot.arm.pose_calls[-1]["execute"])
+
+        bot.arm.joints = [0.04, -1.80, 1.55, -0.01, 0.79, 0.007]
+        controller.move(target)
+        self.assertEqual(bot.arm.pose_calls[-1]["custom_guess"], bot.arm.joints)
+
     def test_joint_and_cartesian_helpers_delegate(self):
         controller, _, bot = self.make_controller()
         controller.start_robot()

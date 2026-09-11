@@ -2,9 +2,12 @@
 
 from copy import copy
 from math import isfinite
+import logging
 
 from robot.widowx import WidowXCommand, WidowXPose
 from robot.widowx.move import move_pose_by_clamped
+
+logger = logging.getLogger(__name__)
 
 
 class WidowXGamepadController:
@@ -110,7 +113,11 @@ class WidowXGamepadController:
         if not self.synchronized:
             raise RuntimeError("WidowX gamepad controller is not synchronized")
         dt = self._positive_finite(dt, "timestep")
-        dt = min(dt, self.max_input_dt)
+        elapsed_dt = dt
+        moving_time = self._positive_finite(
+            self.robot_controller.exp["moving_time"], "moving_time"
+        )
+        dt = min(dt, self.max_input_dt, moving_time)
         presses = joystick.check_presses()
         pressed = set(presses.names)
 
@@ -123,27 +130,45 @@ class WidowXGamepadController:
 
         release = self.buttons["button_release"] in pressed
         grasp = self.buttons["button_grasp"] in pressed
-        if release and grasp:
+        release_held = joystick[self.buttons["button_release"]] is not None
+        grasp_held = joystick[self.buttons["button_grasp"]] is not None
+        logger.info(
+            "Gamepad poll: elapsed_dt=%.4f input_dt=%.4f moving_time=%.4f "
+            "presses=%s release_held=%s grasp_held=%s",
+            elapsed_dt, dt, moving_time, sorted(pressed), release_held, grasp_held,
+        )
+        if release_held and grasp_held:
             raise ValueError("WidowX gamepad cannot grasp and release simultaneously")
+        if release and grasp:
+            # Press history has no ordering. Prefer the button still held; if
+            # both have been released, retain the gripper state until a fresh press.
+            release, grasp = release_held, grasp_held
+            logger.warning(
+                "Both gripper presses accumulated between polls; "
+                "using held state: release=%s grasp=%s", release, grasp,
+            )
         gripper_action = "release" if release else "grasp" if grasp else "hold"
 
         if self.buttons["button_home"] in pressed:
             candidate = copy(self.pos_home)
         else:
+            axes = {name: self._axis(joystick, name)
+                    for name in ("lx", "ly", "rx", "ry", "lt", "rt")}
+            logger.info("Gamepad axes=%s orientation_mode=%s", axes, self.orientation_mode)
             trigger_axis = max(
                 -1.0,
                 min(
                     1.0,
-                    self._axis(joystick, "lt") - self._axis(joystick, "rt"),
+                    axes["lt"] - axes["rt"],
                 ),
             )
             deltas = {
-                "x": self._axis(joystick, "ly") * self.velocity["x"] * dt,
-                "y": self._axis(joystick, "lx") * self.velocity["y"] * dt,
-                "z": self._axis(joystick, "ry") * self.velocity["z"] * dt,
+                "x": axes["ly"] * self.velocity["x"] * dt,
+                "y": axes["lx"] * self.velocity["y"] * dt,
+                "z": axes["ry"] * self.velocity["z"] * dt,
                 "roll": 0.0,
                 "pitch": 0.0,
-                "yaw": self._axis(joystick, "rx") * self.velocity["yaw"] * dt,
+                "yaw": axes["rx"] * self.velocity["yaw"] * dt,
             }
             deltas[self.orientation_mode] = (
                 trigger_axis * self.velocity[self.orientation_mode] * dt
@@ -154,7 +179,14 @@ class WidowXGamepadController:
 
         self.last_target_rejected = False
         if candidate.as_dict() != self.pos_target.as_dict():
-            if self.robot_controller.can_reach(candidate):
+            logger.info(
+                "Intended WidowX movement before IK check (meters/radians): from=%s to=%s",
+                self.pos_target.as_dict(),
+                candidate.as_dict(),
+            )
+            reachable = self.robot_controller.can_reach(candidate)
+            logger.info("Gamepad IK accepted=%s gripper_action=%s", reachable, gripper_action)
+            if reachable:
                 self.pos_target = candidate
             else:
                 self.last_target_rejected = True
