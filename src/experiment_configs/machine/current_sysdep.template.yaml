@@ -58,12 +58,27 @@ bindings:
     run: position_controller_wx250s_00
     available: true
 
+  gazebo_widowx:
+    # The ROS-backed controller connects to the SDK simulator bridged into Gazebo.
+    factory: widowx_hardware
+    exp: robot_widowx
+    run: position_controller_gazebo_wx250s_00
+    available: false
+    resources: [widowx_robot]
+
   fixed_cameras:
     factory: fixed_cameras
     exp: controllers
     run: fixed_cameras
     available: false
     resources: [fixed_cameras]
+
+  gazebo_cameras:
+    factory: ros_image_cameras
+    exp: controllers
+    run: gazebo_cameras
+    available: false
+    resources: [gazebo_camera_topics]
 
   widowx_leader:
     factory: widowx_leader

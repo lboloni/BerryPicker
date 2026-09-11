@@ -1,0 +1,12 @@
+# Rendered camera views published by the BerryPicker WidowX Gazebo simulation.
+views:
+  gazebo_camera_0:
+    topic: /berrypicker/gazebo/camera_0/image_raw
+
+saved_image_size: [512, 512]
+encoding: bgr8
+startup_timeout: 5.0
+shutdown_timeout: 0.5
+max_frame_age: 0.25
+max_frame_skew: 0.05
+visualize: true

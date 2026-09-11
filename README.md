@@ -12,6 +12,7 @@ The type of skills we aim to develop include (but are not limited to) agricultur
 * tensorboardX
 * pyserial
 * opencv-python, opencv-contrib-python
+* ROS 2 Humble packages `sensor_msgs` and `gazebo_plugins` for Gazebo camera collection
 
 Notes:
 * The software for the gamepad input, approxeng.input needs to be at version 2.5, and it requires python not higher than 3.10 (as it needs something called evdev, which seem to have problems with higher python)
@@ -47,6 +48,31 @@ FIXME: experiment data directory
 FIXME: group config, run config, system dependent run config
 FIXME: how to use an experiment configuration from code
 
+## WidowX Gazebo camera collection
+
+Install the Gazebo camera plugin with:
+
+```
+sudo apt install ros-humble-gazebo-plugins
+```
+
+Source ROS 2 and the Interbotix workspace, then start the WidowX simulation and
+its fixed rendered camera:
+
+```
+source /opt/ros/humble/setup.bash
+source ~/interbotix_ws/install/setup.bash
+python src/robot/widowx/simulation/run_gazebo.py
+```
+
+The launcher also starts an Interbotix SDK simulator named `wx250s_sdk` and
+bridges its joint states into the Gazebo trajectory controllers. The camera
+publishes `/berrypicker/gazebo/camera_0/image_raw`. Demonstration
+collector recipes whose names contain `gazebo_cameras` subscribe to that topic.
+The `usb_gazebo_cameras` recipe records the rendered view together with the
+configured USB camera views. ROS frames are cached on a subscriber thread, so a
+collection tick copies the newest frame without waiting for the next camera frame.
+
 ### Obsolete from here
 
 The recommended way to organize this code is as follows:
@@ -64,4 +90,3 @@ top directory
             <<< this is where the Python 3.10 environment goes
 ```
 ### End obsolete
-

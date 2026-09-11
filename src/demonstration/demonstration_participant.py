@@ -169,6 +169,33 @@ class FixedCameraParticipant(DemonstrationParticipant):
         self.controller.stop()
 
 
+class RosImageCameraParticipant(DemonstrationParticipant):
+    """Capture named camera views from ROS image topics."""
+
+    def __init__(self, name, spec, exp):
+        super().__init__(name, spec, exp)
+        self.controller = None
+
+    def start(self, context):
+        from camera.ros_image_camera_controller import RosImageCameraController
+
+        self.controller = RosImageCameraController(self.exp)
+        self.controller.start()
+
+    def update(self, context, dt):
+        if self.controller.update():
+            context.request_stop()
+
+    def sample(self, context):
+        return DemonstrationSample(
+            images=self.controller.get_images(),
+            telemetry=self.controller.get_metadata(),
+        )
+
+    def stop(self, context):
+        self.controller.stop()
+
+
 class _AL5DLeaderParticipant(DemonstrationParticipant):
     """Base class for participants that produce targets for an AL5D participant."""
 
@@ -593,6 +620,7 @@ def create_participants(collection_exp, machine_exp):
         "al5d_hardware": lambda name, spec, exp: AL5DParticipant(name, spec, exp, False),
         "al5d_simulated": lambda name, spec, exp: AL5DParticipant(name, spec, exp, True),
         "fixed_cameras": FixedCameraParticipant,
+        "ros_image_cameras": RosImageCameraParticipant,
         "xbox_leader": XboxLeaderParticipant,
         "widowx_xbox_leader": WidowXXboxLeaderParticipant,
         "keyboard_leader": KeyboardLeaderParticipant,

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="berrypicker_fixed_camera">
+    <static>true</static>
+    <!-- Gazebo cameras look along their positive X axis. -->
+    <pose>0.9 -0.9 0.8 0 0.5 2.35619449</pose>
+    <link name="gazebo_camera_0_link">
+      <visual name="camera_body">
+        <geometry>
+          <box>
+            <size>0.06 0.04 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.1 0.1 0.1 1</ambient>
+          <diffuse>0.1 0.1 0.1 1</diffuse>
+        </material>
+      </visual>
+      <sensor name="camera_0" type="camera">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <visualize>true</visualize>
+        <camera name="camera_0">
+          <horizontal_fov>1.04719755</horizontal_fov>
+          <image>
+            <width>512</width>
+            <height>512</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>20</far>
+          </clip>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <ros>
+            <namespace>/berrypicker/gazebo</namespace>
+            <remapping>camera_0/image_raw:=/berrypicker/gazebo/camera_0/image_raw</remapping>
+            <remapping>camera_0/camera_info:=/berrypicker/gazebo/camera_0/camera_info</remapping>
+          </ros>
+          <camera_name>camera_0</camera_name>
+          <frame_name>gazebo_camera_0_link</frame_name>
+        </plugin>
+      </sensor>
+    </link>
+  </model>
+</sdf>
