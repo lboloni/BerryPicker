@@ -1,0 +1,10 @@
+# Defaults for staged robot-controller training recipes.
+class: StagedRobotControllerTrainingRecipe
+model_file: controller_bundle.pth
+batch_size: 2
+num_workers: 0
+pin_memory: false
+frame_stride: 1
+action_type: rc-position-target
+random_seed: 73017
+keep_checkpoints: 3

@@ -1,0 +1,5 @@
+# Frozen sensor-processing component backed by a separately trained VAE.
+rcco-type: SP_VAE
+sp_experiment: sensorprocessing_conv_vae_neo
+sp_run: sp_vae_neo_256_256px
+trainable: false

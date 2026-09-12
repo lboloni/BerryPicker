@@ -1,0 +1,66 @@
+name: "Staged Conv-VAE-Neo + residual LSTM + MDN training"
+
+controller:
+  exp: robot_controller
+  run: roco_vae_neo_lstm_mdn_sample
+
+robot:
+  exp: robot_al5d
+  run: position_controller_00
+
+# Keys are graph labels, not component types. The VAE begins with its
+# separately trained checkpoint; this sample intentionally trains new policy
+# and density components from scratch.
+initial_states:
+  vae_encoder:
+    mode: configured
+  lstm:
+    mode: random
+  mdn:
+    mode: random
+
+stages:
+  - name: policy_warmup
+    trainable_components: [lstm, mdn]
+    epochs: 20
+    optimizer: Adam
+    learning_rates:
+      lstm: 0.001
+      mdn: 0.001
+    grad_clip_norm: 1.0
+    monitor: validation_nll
+
+  - name: policy_finetune
+    trainable_components: [lstm, mdn]
+    epochs: 50
+    optimizer: Adam
+    learning_rates:
+      lstm: 0.0003
+      mdn: 0.0003
+    grad_clip_norm: 1.0
+    monitor: validation_nll
+    scheduler:
+      class: ReduceLROnPlateau
+      factor: 0.5
+      patience: 5
+
+  - name: end_to_end
+    trainable_components: [vae_encoder, lstm, mdn]
+    epochs: 20
+    optimizer: Adam
+    learning_rates:
+      vae_encoder: 0.00001
+      lstm: 0.0001
+      mdn: 0.0001
+    grad_clip_norm: 1.0
+    monitor: validation_nll
+
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev2"]
+
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]

@@ -7,6 +7,9 @@ Contains AbstractRCComponent, the root class for the robot controller components
 from abc import ABC
 
 
+_MISSING = object()
+
+
 class AbstractRCComponent(ABC):
     """The root class for robot controller components (rcco-*). A typical model is a neural network, but can be other things that visualize, log, memorize, visualize, perform safety checks etc.
 
@@ -26,13 +29,35 @@ class AbstractRCComponent(ABC):
     def __init__(self, exp_rcco):
         self.inputs = {}
         self.outputs = {}
+        self.input_sizes = {}
+        self.output_sizes = {}
         self.dirty = False
         self.exp = exp_rcco
-    
-    def set_input(self, input):
-        """Sets the input. The most typical input is a torch tensor or a numpy array."""
-        self.input = input
+
+    def set_input(self, name, value=_MISSING):
+        """Set a named input and mark this component for propagation.
+
+        The one-argument form remains available for components with exactly one
+        input port.
+        """
+        if value is _MISSING:
+            value = name
+            if len(self.inputs) != 1:
+                raise ValueError(
+                    "The input name is required when a component does not have "
+                    "exactly one input port"
+                )
+            name = next(iter(self.inputs))
+        if name not in self.inputs:
+            raise KeyError(f"Unknown input port {name!r}")
+        if value is None:
+            raise ValueError(f"Input {name!r} cannot be None")
+        self.inputs[name] = value
         self.dirty = True
+
+    def inputs_ready(self):
+        """Return whether every declared input currently contains a value."""
+        return all(value is not None for value in self.inputs.values())
 
     def propagate(self):
         """Propagate the input to the output, update the context, set the dirty flag"""
@@ -45,3 +70,11 @@ class AbstractRCComponent(ABC):
     def load(self):
         """Load the state, context, input and output from different files"""
         pass
+
+    def reset_context(self):
+        """Clear runtime values without changing trained model state."""
+        for name in self.inputs:
+            self.inputs[name] = None
+        for name in self.outputs:
+            self.outputs[name] = None
+        self.dirty = False

@@ -1,0 +1,9 @@
+# Residual temporal feature extractor. Its state is supplied independently.
+rcco-type: LSTM
+architecture: residual
+input_size: 256
+hidden_size: 32
+num_layers: 3
+sequence_length: 10
+context_mode: sliding_window
+model_file: lstm.pth

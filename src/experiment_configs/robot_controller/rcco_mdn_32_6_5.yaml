@@ -1,0 +1,8 @@
+# Mixture-density action head. Its state is supplied independently.
+rcco-type: MDN
+input_dim: 32
+hidden_size: 32
+output_dim: 6
+num_gaussians: 5
+action_selection: sample
+model_file: mdn.pth

@@ -1,0 +1,3 @@
+# External output carrying a six-dimensional normalized robot action.
+rcco-type: Output
+size: 6
