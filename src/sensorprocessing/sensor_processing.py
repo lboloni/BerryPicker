@@ -4,10 +4,10 @@ from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
 from abc import ABC, abstractmethod
-from pathlib import Path
 import numpy as np
 import torch
 from .sp_helper import SensorPreprocessor
+from training_harness.checkpoints import model_file
 
 
 class AbstractSensorProcessing(ABC):
@@ -129,9 +129,7 @@ class EncoderSensorProcessing:
 
     def load_encoder_checkpoint(self, *, required=False, label="encoder"):
         """Load the configured encoder state dictionary and enter eval mode."""
-        checkpoint_path = Path(
-            self.exp["data_dir"], self.exp["proprioception_mlp_model_file"]
-        )
+        checkpoint_path = model_file(self.exp)
         if not checkpoint_path.exists():
             if required:
                 raise FileNotFoundError(

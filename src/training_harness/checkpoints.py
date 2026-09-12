@@ -11,8 +11,24 @@ from pathlib import Path
 import torch
 
 
+def model_file(exp):
+    """Return the configured final-model path.
+
+    New model families use the neutral ``model_file`` key.  The fallback keeps
+    existing proprioception-trained encoders and their experiment files
+    compatible with the shared training harness.
+    """
+    filename = exp.get("model_file", exp.get("proprioception_mlp_model_file"))
+    if not filename:
+        raise ValueError(
+            "Experiment must configure model_file or proprioception_mlp_model_file"
+        )
+    return Path(exp["data_dir"]) / filename
+
+
 def _model_file(exp):
-    return Path(exp["data_dir"]) / exp["proprioception_mlp_model_file"]
+    """Backwards-compatible internal alias for :func:`model_file`."""
+    return model_file(exp)
 
 
 def model_available(exp):
@@ -233,4 +249,3 @@ class CheckpointStore:
         for _, checkpoint_path in checkpoints[:-self.keep_checkpoints]:
             checkpoint_path.unlink()
             print(f"Deleted old checkpoint: {checkpoint_path}")
-

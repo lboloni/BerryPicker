@@ -8,6 +8,7 @@ from .checkpoints import (
     CheckpointStore,
     TrainingState,
     find_latest_checkpoint,
+    model_file,
     model_available,
 )
 from .runner import (
@@ -28,6 +29,7 @@ __all__ = [
     "find_latest_checkpoint",
     "load_or_train",
     "make_epoch_steps",
+    "model_file",
     "model_available",
     "move_batch_to_device",
     "train_model",

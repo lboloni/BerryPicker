@@ -10,8 +10,10 @@ Verify_Foo notebooks contain code to verify the learned model Foo. This can be d
 
 ## Models (as of Feb 2025)
 
-* ConvVAE: a convolutional variational autoencoder. 
-* ProprioTunedVGG19: a VGG19 model tuned and dimensionality reduced on proprioception training data. 
+* ConvVAE: a convolutional variational autoencoder.
+* Conv-VAE-Neo: a BerryPicker-native convolutional variational autoencoder
+  with experiment-configured image size and no external model checkout.
+* ProprioTunedVGG19: a VGG19 model tuned and dimensionality reduced on proprioception training data.
 
 
 

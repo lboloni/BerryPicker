@@ -9,14 +9,13 @@ This version supports both single-view and multi-view sensor processors.
 from functools import partial
 
 from sensorprocessing import (
-    sp_conv_vae,
+    sp_conv_vae_neo,
     sp_propriotuned_cnn,
     sp_aruco,
     sp_vit,
     sp_vit_multiview,
     sp_vit_concat_images,
     sp_propriotuned_cnn_multiview,
-    sp_conv_vae_concat_multiview,
     sp_conv_vae_multiview,
 )
 
@@ -46,6 +45,27 @@ def _create_multiview_conv_encoder(spexp):
     return sp_conv_vae_multiview.MultiViewConvVAESensorProcessing(spexp)
 
 
+def _create_legacy_conv_vae(spexp):
+    """Load the external Conv-VAE only when a legacy run requests it."""
+    from sensorprocessing.sp_conv_vae import ConvVaeSensorProcessing
+
+    return ConvVaeSensorProcessing(spexp)
+
+
+def _create_legacy_concat_conv_vae(spexp):
+    """Load the external concatenated Conv-VAE only for its legacy runs."""
+    from sensorprocessing.sp_conv_vae_concat_multiview import (
+        ConcatConvVaeSensorProcessing,
+    )
+
+    return ConcatConvVaeSensorProcessing(spexp)
+
+
+def _create_conv_vae_neo(spexp):
+    """Instantiate the BerryPicker-native single-view convolutional VAE."""
+    return sp_conv_vae_neo.ConvVaeNeoSensorProcessing(spexp)
+
+
 def _create_singleview_cnn(spexp, model=None):
     """Instantiate the generic single-view CNN processor with an optional model."""
     return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(
@@ -54,10 +74,9 @@ def _create_singleview_cnn(spexp, model=None):
 
 
 _PROCESSOR_CLASSES = {
-    "ConvVaeSensorProcessing": sp_conv_vae.ConvVaeSensorProcessing,
-    "ConvVaeSensorProcessing_concat_multiview": (
-        sp_conv_vae_concat_multiview.ConcatConvVaeSensorProcessing
-    ),
+    "ConvVaeSensorProcessing": _create_legacy_conv_vae,
+    "ConvVaeNeoSensorProcessing": _create_conv_vae_neo,
+    "ConvVaeSensorProcessing_concat_multiview": _create_legacy_concat_conv_vae,
     "ConvVaeSensorProcessing_multiview": _create_multiview_conv_encoder,
     "MultiViewConvVAESensorProcessing": _create_multiview_conv_encoder,
     "VGG19ProprioTunedSensorProcessing": partial(

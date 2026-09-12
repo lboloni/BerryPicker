@@ -74,6 +74,7 @@ def external_setup(setupname, rootdir: pathlib.Path):
     Config().copy_experiment("sensorprocessing_propriotuned_cnn_multiview")
     Config().copy_experiment("sensorprocessing_conv_vae_concat_multiview")
     Config().copy_experiment("sensorprocessing_conv_vae_multiview")
+    Config().copy_experiment("sensorprocessing_conv_vae_neo")
     Config().copy_experiment("visual_proprioception")
     Config().copy_experiment("visual_proprioception_collections")
 

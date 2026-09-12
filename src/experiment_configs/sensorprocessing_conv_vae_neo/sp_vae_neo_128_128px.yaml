@@ -1,0 +1,4 @@
+# Internal VAE with a 128-dimensional latent and 128 x 128 RGB input.
+latent_size: 128
+image_size: [128, 128]
+batch_size: 32

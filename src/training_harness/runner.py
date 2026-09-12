@@ -41,8 +41,9 @@ def train_with_checkpoints(
     """
     device = Config().runtime["device"]
     model = model.to(device)
+    configured_model_file = _model_file(exp)
     store = checkpoint_store or CheckpointStore(
-        exp["data_dir"], exp["proprioception_mlp_model_file"]
+        configured_model_file.parent, configured_model_file.name
     )
 
     if (

@@ -1,0 +1,43 @@
+# BerryPicker-native convolutional variational autoencoder.
+class: "ConvVaeNeoSensorProcessing"
+architecture_version: 1
+model_file: "conv_vae_neo.pth"
+
+# Input is RGB in [0, 1]. The architecture derives its depth from this size.
+image_size: [256, 256]
+input_channels: 3
+latent_size: 128
+base_channels: 32
+max_channels: 512
+bottleneck_max_size: 8
+group_norm_groups: 8
+
+reconstruction_loss: "mse"
+kl_weight: 0.001
+
+optimizer: "adam"
+learning_rate: 0.001
+weight_decay: 0.0001
+batch_size: 16
+epochs: 300
+early_stopping_patience: 50
+early_stopping_min_delta: 0.0
+grad_clip_norm: 1.0
+keep_checkpoints: 2
+reload_existing_model: true
+random_seed: 73017
+num_workers: 0
+pin_memory: false
+frame_stride: 1
+
+# Entries are [demonstration run, demonstration name, camera]. Keep whole
+# demonstrations in only one partition to prevent neighboring-frame leakage.
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev2"]
+
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]
