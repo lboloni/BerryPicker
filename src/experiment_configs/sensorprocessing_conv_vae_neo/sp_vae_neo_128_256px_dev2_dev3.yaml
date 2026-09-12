@@ -1,0 +1,20 @@
+# Source VAE for shared two-camera Fusion initialization.
+latent_size: 128
+image_size: [256, 256]
+batch_size: 16
+
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev3"]
+
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev3"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev3"]

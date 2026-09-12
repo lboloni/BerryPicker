@@ -1,0 +1,4 @@
+name: "comp_vae_neo_multiview_128"
+tocompare:
+  - "vp_vae_neo_multiview_concat_128"
+  - "vp_vae_neo_multiview_fusion_128"

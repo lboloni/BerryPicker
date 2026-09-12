@@ -10,6 +10,8 @@ from functools import partial
 
 from sensorprocessing import (
     sp_conv_vae_neo,
+    sp_conv_vae_neo_multiview_concat,
+    sp_conv_vae_neo_multiview_fusion,
     sp_propriotuned_cnn,
     sp_aruco,
     sp_vit,
@@ -66,6 +68,20 @@ def _create_conv_vae_neo(spexp):
     return sp_conv_vae_neo.ConvVaeNeoSensorProcessing(spexp)
 
 
+def _create_conv_vae_neo_multiview_concat(spexp):
+    """Instantiate the joint Neo MultiView Concat VAE."""
+    return sp_conv_vae_neo_multiview_concat.ConvVaeNeoMultiViewConcatSensorProcessing(
+        spexp
+    )
+
+
+def _create_conv_vae_neo_multiview_fusion(spexp):
+    """Instantiate the supervised Neo MultiView Fusion encoder."""
+    return sp_conv_vae_neo_multiview_fusion.ConvVaeNeoMultiViewFusionSensorProcessing(
+        spexp
+    )
+
+
 def _create_singleview_cnn(spexp, model=None):
     """Instantiate the generic single-view CNN processor with an optional model."""
     return sp_propriotuned_cnn.ProprioTunedCNNSensorProcessing(
@@ -76,6 +92,12 @@ def _create_singleview_cnn(spexp, model=None):
 _PROCESSOR_CLASSES = {
     "ConvVaeSensorProcessing": _create_legacy_conv_vae,
     "ConvVaeNeoSensorProcessing": _create_conv_vae_neo,
+    "ConvVaeNeoMultiViewConcatSensorProcessing": (
+        _create_conv_vae_neo_multiview_concat
+    ),
+    "ConvVaeNeoMultiViewFusionSensorProcessing": (
+        _create_conv_vae_neo_multiview_fusion
+    ),
     "ConvVaeSensorProcessing_concat_multiview": _create_legacy_concat_conv_vae,
     "ConvVaeSensorProcessing_multiview": _create_multiview_conv_encoder,
     "MultiViewConvVAESensorProcessing": _create_multiview_conv_encoder,
@@ -103,6 +125,8 @@ _PROCESSOR_CLASSES = {
 }
 
 _MULTIVIEW_CLASSES = {
+    "ConvVaeNeoMultiViewConcatSensorProcessing",
+    "ConvVaeNeoMultiViewFusionSensorProcessing",
     "ConvVaeSensorProcessing_concat_multiview",
     "ConvVaeSensorProcessing_multiview",
     "MultiViewConvVAESensorProcessing",

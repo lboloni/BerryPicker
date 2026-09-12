@@ -1,0 +1,57 @@
+# Neo per-view mean encoders with supervised multiview fusion.
+class: "ConvVaeNeoMultiViewFusionSensorProcessing"
+model_file: "conv_vae_neo_multiview_fusion.pth"
+
+architecture_version: 1
+image_size: [256, 256]
+input_channels: 3
+latent_size: 128
+base_channels: 32
+max_channels: 512
+bottleneck_max_size: 8
+group_norm_groups: 8
+
+source_vae_experiment: "sensorprocessing_conv_vae_neo"
+source_vae_run: "sp_vae_neo_128_256px_dev2_dev3"
+freeze_vae_encoder: true
+
+num_views: 2
+cameras: ["dev2", "dev3"]
+shared_backbone: true
+batched_backbone: true
+fusion_type: "concat_proj"
+fusion_dropout: 0.1
+
+output_size: 6
+proprio_step_1: 64
+proprio_step_2: 32
+robot_exp: "robot_al5d"
+robot_run: "position_controller_00"
+
+loss: "MSELoss"
+optimizer: "adam"
+learning_rate: 0.001
+weight_decay: 0.0001
+batch_size: 16
+epochs: 300
+early_stopping_patience: 50
+early_stopping_min_delta: 0.0
+grad_clip_norm: 1.0
+keep_checkpoints: 2
+lr_factor: 0.5
+lr_patience: 10
+reload_existing_model: true
+random_seed: 73017
+num_workers: 0
+pin_memory: false
+frame_stride: 1
+
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", ["dev2", "dev3"]]
+
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]

@@ -1,0 +1,4 @@
+# Joint two-camera Neo VAE with a 256-dimensional latent.
+latent_size: 256
+image_size: [256, 256]
+batch_size: 8

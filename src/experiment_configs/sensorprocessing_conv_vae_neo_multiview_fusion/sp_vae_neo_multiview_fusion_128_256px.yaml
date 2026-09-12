@@ -1,0 +1,4 @@
+# Frozen shared Neo encoder with a 128-dimensional concat-projection fusion.
+latent_size: 128
+source_vae_run: "sp_vae_neo_128_256px_dev2_dev3"
+fusion_type: "concat_proj"
