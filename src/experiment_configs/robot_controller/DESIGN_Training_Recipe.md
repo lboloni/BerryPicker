@@ -21,6 +21,11 @@ MDN-only stage can be omitted or configured to train both the LSTM and MDN.
 After each stage, its best validation checkpoint is restored before the next
 stage begins.
 
+The CNN–MLP alternative uses the same state machine and persistence format
+through `StagedCNNMLPTrainingRecipe`. It first trains the MLP with the CNN
+frozen, then fine-tunes the CNN encoder and MLP end-to-end using normalized
+next-action MSE. Its concrete exp/run is `trec_cnn_mlp_sample`.
+
 ## Training exp/run
 
 Training runs should live in a separate `robot_controller_training` experiment

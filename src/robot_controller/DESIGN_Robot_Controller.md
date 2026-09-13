@@ -45,6 +45,23 @@ Torch tensors remain on the configured runtime device while moving through the
 graph. `reset_context()` clears inputs, outputs, and the LSTM window without
 changing trained weights.
 
+## CNN–MLP controller
+
+The deterministic alternative is configured by
+`robot_controller/roco_cnn_mlp_sample`:
+
+```text
+image_input -> cnn_encoder -> mlp -> robot_output
+                    z          a
+```
+
+`RCCO_SP_CNN` exposes the latent from a separately trained VGG-19 or ResNet-50
+proprioception-tuned CNN while keeping tensors batched. `RCCO_MLP` maps that
+latent directly to a normalized action. Its default sigmoid output guarantees
+values in `[0, 1]`, matching the robot position normalization contract. This
+controller produces an action from one image and therefore has no temporal
+context or probabilistic output distribution.
+
 ## Configuration and model state
 
 The example is specified by

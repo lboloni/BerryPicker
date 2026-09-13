@@ -68,7 +68,13 @@ def create_component(exp, *, load_state=True, sensor_exp=None):
     if rcco_type == "SP_CNN":
         from robot_controller.rcco_sp_cnn import RCCO_SP_CNN
 
-        return RCCO_SP_CNN(exp)
+        return RCCO_SP_CNN(
+            exp, load_state=load_state, sensor_exp=sensor_exp
+        )
+    if rcco_type == "MLP":
+        from robot_controller.rcco_mlp import RCCO_MLP
+
+        return RCCO_MLP(exp, load_state=load_state)
     if rcco_type == "LSTM":
         from robot_controller.rcco_lstm import RCCO_LSTM
 

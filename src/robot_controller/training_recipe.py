@@ -11,6 +11,7 @@ import traceback
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 import yaml
 
 from behavior_cloning.mdn import mdn_loss
@@ -117,7 +118,7 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         self.spec = load_controller_spec(
             self.controller_exp, experiment_loader=self.load_experiment
         )
-        self.model = RobotControllerTrainingModel(self.spec).to(
+        self.model = self._create_training_model(self.spec).to(
             Config().runtime["device"]
         )
         self.stages = self._validate_stages(exp_trec["stages"])
@@ -134,6 +135,28 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         self._scheduler = None
         self._active_stage_index = None
         self.status = self._read_or_create_status()
+
+    def _create_training_model(self, spec):
+        return RobotControllerTrainingModel(spec)
+
+    def _default_monitor(self):
+        return "validation_nll"
+
+    def _supported_monitors(self):
+        return {"validation_loss", "validation_nll"}
+
+    def _training_metric_name(self):
+        return "train_nll"
+
+    def _loss_and_prediction(self, output, targets):
+        mu, sigma, pi = output
+        loss = mdn_loss(targets, mu, sigma, pi)
+        prediction = torch.sum(pi * mu, dim=-1)
+        return loss, prediction
+
+    def _output_size(self):
+        mdn_label = self.model.labels["MDN"]
+        return self.spec["components"][mdn_label]["exp"]["output_dim"]
 
     def _validate_stages(self, stages):
         if not isinstance(stages, list) or not stages:
@@ -169,8 +192,12 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
                 )
             for label, rate in rates.items():
                 _finite_positive(rate, f"Stage {name!r} learning rate for {label}")
-            if stage.get("monitor", "validation_nll") != "validation_nll":
-                raise ValueError("Only monitor='validation_nll' is supported")
+            monitor = stage.get("monitor", self._default_monitor())
+            if monitor not in self._supported_monitors():
+                raise ValueError(
+                    f"Unsupported monitor {monitor!r}; expected one of "
+                    f"{sorted(self._supported_monitors())}"
+                )
             optimizer = stage.get("optimizer", "Adam").lower()
             if optimizer not in {"adam", "adamw"}:
                 raise ValueError(f"Unsupported optimizer {optimizer!r}")
@@ -217,6 +244,7 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
                 {
                     "name": stage["name"], "state": "pending",
                     "epoch": 0, "epochs": stage["epochs"],
+                    "monitor": stage.get("monitor", self._default_monitor()),
                     "best_metric": None,
                 }
                 for stage in self.stages
@@ -260,7 +288,7 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
 
     def _source_path(self, label):
         item = self.spec["components"][label]
-        if item["type"] == "SP_VAE":
+        if item["type"] in {"SP_VAE", "SP_CNN"}:
             return model_file(self.model.sensor_exp)
         component_exp = item["exp"]
         return Path(component_exp["data_dir"]) / component_exp["model_file"]
@@ -492,9 +520,9 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)
             self._optimizer.zero_grad(set_to_none=True)
-            loss = mdn_loss(targets, *self.model(images))
+            loss, _ = self._loss_and_prediction(self.model(images), targets)
             if not torch.isfinite(loss):
-                raise FloatingPointError("Training NLL is not finite")
+                raise FloatingPointError("Training loss is not finite")
             loss.backward()
             if grad_clip is not None:
                 torch.nn.utils.clip_grad_norm_(
@@ -514,7 +542,7 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
 
     def _validate_epoch(self, loader):
         self.model.eval()
-        totals = {"validation_nll": 0.0, "validation_mse": 0.0,
+        totals = {"validation_loss": 0.0, "validation_mse": 0.0,
                   "validation_mae": 0.0}
         samples = 0
         device = Config().runtime["device"]
@@ -522,21 +550,26 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
             for images, targets in loader:
                 images = images.to(device, non_blocking=True)
                 targets = targets.to(device, non_blocking=True)
-                mu, sigma, pi = self.model(images)
-                nll = mdn_loss(targets, mu, sigma, pi)
-                expected = torch.sum(pi * mu, dim=-1)
+                loss, prediction = self._loss_and_prediction(
+                    self.model(images), targets
+                )
+                if not torch.isfinite(loss):
+                    raise FloatingPointError("Validation loss is not finite")
                 count = targets.size(0)
-                totals["validation_nll"] += nll.item() * count
+                totals["validation_loss"] += loss.item() * count
                 totals["validation_mse"] += torch.mean(
-                    (expected - targets) ** 2
+                    (prediction - targets) ** 2
                 ).item() * count
                 totals["validation_mae"] += torch.mean(
-                    torch.abs(expected - targets)
+                    torch.abs(prediction - targets)
                 ).item() * count
                 samples += count
         if samples == 0:
             raise ValueError("Validation loader produced no samples")
-        return {key: value / samples for key, value in totals.items()}
+        metrics = {key: value / samples for key, value in totals.items()}
+        if "validation_nll" in self._supported_monitors():
+            metrics["validation_nll"] = metrics["validation_loss"]
+        return metrics
 
     def _append_metrics(self, record):
         records = []
@@ -557,11 +590,9 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         temporary.replace(self.metrics_path)
 
     def _make_dataloaders(self):
-        mdn_label = self.model.labels["MDN"]
-        output_size = self.spec["components"][mdn_label]["exp"]["output_dim"]
         return self._dataloader_factory(
             self.exp, self.model.sensor_exp, self.robot_exp,
-            self.model.sequence_length, output_size,
+            self.model.sequence_length, self._output_size(),
         )
 
     def _start_state_for_stage(self, index):
@@ -617,11 +648,12 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
                         training_loader, stage.get("grad_clip_norm")
                     )
                     validation = self._validate_epoch(validation_loader)
-                    validation_nll = validation["validation_nll"]
+                    monitor = stage.get("monitor", self._default_monitor())
+                    validation_metric = validation[monitor]
                     if self._scheduler is not None:
-                        self._scheduler.step(validation_nll)
-                    if validation_nll < best:
-                        best = validation_nll
+                        self._scheduler.step(validation_metric)
+                    if validation_metric < best:
+                        best = validation_metric
                         _atomic_torch(
                             self._stage_dir(index) / "best_model.pth",
                             self._checkpoint_payload(index, epoch + 1, best),
@@ -630,7 +662,9 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
                     record = {
                         "timestamp": _now(), "stage_index": index,
                         "stage": stage["name"], "epoch": epoch + 1,
-                        "train_nll": train_nll, **validation,
+                        "train_loss": train_nll,
+                        self._training_metric_name(): train_nll,
+                        **validation,
                         "learning_rates": {
                             group["component"]: group["lr"]
                             for group in self._optimizer.param_groups
@@ -794,8 +828,39 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         return path
 
 
+class StagedCNNMLPTrainingRecipe(StagedRobotControllerTrainingRecipe):
+    """Staged deterministic behavior cloning for an SP_CNN--MLP graph."""
+
+    def _create_training_model(self, spec):
+        from robot_controller.cnn_mlp_training_model import CNNMLPTrainingModel
+
+        return CNNMLPTrainingModel(spec)
+
+    def _default_monitor(self):
+        return "validation_mse"
+
+    def _supported_monitors(self):
+        return {"validation_loss", "validation_mse", "validation_mae"}
+
+    def _training_metric_name(self):
+        return "train_mse"
+
+    def _loss_and_prediction(self, output, targets):
+        if not isinstance(output, torch.Tensor) or output.shape != targets.shape:
+            raise ValueError(
+                "CNN--MLP output and normalized action target must have "
+                "identical shapes"
+            )
+        return F.mse_loss(output, targets), output
+
+    def _output_size(self):
+        return self.model.output_size
+
+
 def create_training_recipe(exp, **kwargs):
     """Construct the recipe selected by ``exp['class']``."""
     if exp["class"] == "StagedRobotControllerTrainingRecipe":
         return StagedRobotControllerTrainingRecipe(exp, **kwargs)
+    if exp["class"] == "StagedCNNMLPTrainingRecipe":
+        return StagedCNNMLPTrainingRecipe(exp, **kwargs)
     raise ValueError(f"Unknown robot-controller training recipe {exp['class']!r}")

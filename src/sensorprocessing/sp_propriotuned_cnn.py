@@ -21,6 +21,9 @@ class _ProprioTunedCNNRegression(nn.Module):
         super().__init__()
         self.latent_size = exp["latent_size"]
         self.output_size = exp["output_size"]
+        self.pretrained_backbone = exp.get("pretrained_backbone", True)
+        if type(self.pretrained_backbone) is not bool:
+            raise ValueError("pretrained_backbone must be boolean")
         self.feature_extractor = self.create_feature_extractor()
         self.flatten = nn.Flatten()
         self.create_heads(exp)
@@ -55,7 +58,8 @@ class VGG19ProprioTunedRegression(_ProprioTunedCNNRegression):
     """VGG19 backbone with the original VGG regression head."""
 
     def create_feature_extractor(self):
-        return models.vgg19(pretrained=True).features
+        weights = models.VGG19_Weights.DEFAULT if self.pretrained_backbone else None
+        return models.vgg19(weights=weights).features
 
     def create_heads(self, _exp):
         self.model = nn.Sequential(
@@ -77,7 +81,8 @@ class ResNetProprioTunedRegression(_ProprioTunedCNNRegression):
     """ResNet50 backbone with a reductor and proprioception head."""
 
     def create_feature_extractor(self):
-        resnet = models.resnet50(pretrained=True)
+        weights = models.ResNet50_Weights.DEFAULT if self.pretrained_backbone else None
+        resnet = models.resnet50(weights=weights)
         self.feature_size = resnet.fc.in_features
         return nn.Sequential(*list(resnet.children())[:-1])
 

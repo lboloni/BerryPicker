@@ -31,7 +31,9 @@ class TrainingRecipeVisualizer:
             "state": "not_started", "current_stage_index": None,
             "stages": [
                 {"name": stage["name"], "state": "pending", "epoch": 0,
-                 "epochs": stage["epochs"], "best_metric": None}
+                 "epochs": stage["epochs"],
+                 "monitor": stage.get("monitor", "validation_loss"),
+                 "best_metric": None}
                 for stage in self.exp["stages"]
             ],
         }
@@ -75,7 +77,11 @@ class TrainingRecipeVisualizer:
                     "pending": "white",
                 }.get(state, "lightcoral")
                 metric = stage.get("best_metric")
-                metric_text = "" if metric is None else f"\\nbest NLL={metric:.5g}"
+                monitor = stage.get("monitor", "validation metric")
+                metric_text = (
+                    "" if metric is None
+                    else f"\\nbest {monitor}={metric:.5g}"
+                )
                 label = (
                     f"{index + 1}. {stage['name']}\\n{state}\\n"
                     f"epoch {stage.get('epoch', 0)}/{stage['epochs']}"

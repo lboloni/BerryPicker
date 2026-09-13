@@ -12,8 +12,10 @@ class RCCOVisualizer:
         "Input": "lightgray",
         "Output": "lightgray",
         "SP_VAE": "lightskyblue",
+        "SP_CNN": "lightskyblue",
         "LSTM": "moccasin",
         "MDN": "moccasin",
+        "MLP": "moccasin",
     }
 
     def __init__(

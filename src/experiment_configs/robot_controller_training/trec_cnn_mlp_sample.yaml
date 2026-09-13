@@ -1,0 +1,51 @@
+name: "Staged ResNet-50 CNN + deterministic MLP training"
+class: StagedCNNMLPTrainingRecipe
+batch_size: 16
+
+controller:
+  exp: robot_controller
+  run: roco_cnn_mlp_sample
+
+robot:
+  exp: robot_al5d
+  run: position_controller_00
+
+initial_states:
+  cnn_encoder:
+    mode: configured
+  mlp:
+    mode: random
+
+stages:
+  - name: mlp_warmup
+    trainable_components: [mlp]
+    epochs: 20
+    optimizer: Adam
+    learning_rates:
+      mlp: 0.001
+    grad_clip_norm: 1.0
+    monitor: validation_mse
+
+  - name: end_to_end
+    trainable_components: [cnn_encoder, mlp]
+    epochs: 20
+    optimizer: Adam
+    learning_rates:
+      cnn_encoder: 0.00001
+      mlp: 0.0001
+    grad_clip_norm: 1.0
+    monitor: validation_mse
+    scheduler:
+      class: ReduceLROnPlateau
+      factor: 0.5
+      patience: 5
+
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev2"]
+
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]

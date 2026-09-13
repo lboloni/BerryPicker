@@ -49,6 +49,20 @@ def _component_interface(exp, load_experiment):
             "pi": distribution_size,
             "a": output_size,
         }
+    if rcco_type == "MLP":
+        input_size = _positive_int(exp["input_size"], "input_size")
+        output_size = _positive_int(exp["output_size"], "output_size")
+        hidden_sizes = exp["hidden_sizes"]
+        if not isinstance(hidden_sizes, list) or not hidden_sizes:
+            raise ValueError("MLP hidden_sizes must be a nonempty list")
+        for index, size in enumerate(hidden_sizes):
+            _positive_int(size, f"hidden_sizes[{index}]")
+        output_activation = exp.get("output_activation", "sigmoid")
+        if output_activation not in {"sigmoid", "identity"}:
+            raise ValueError(
+                "MLP output_activation must be 'sigmoid' or 'identity'"
+            )
+        return {"z": input_size}, {"a": output_size}
     if rcco_type == "Z-combinator":
         input_size = exp.get("input_size")
         output_size = exp.get("output_size")
@@ -220,7 +234,7 @@ class GraphRobotController(AbstractRobotController):
             raise ValueError("Controller bundle lacks component states or signatures")
         neural_labels = {
             label for label, item in self.spec["components"].items()
-            if item["type"] in {"SP_VAE", "LSTM", "MDN"}
+            if item["type"] in {"SP_VAE", "SP_CNN", "LSTM", "MDN", "MLP"}
         }
         if set(states) != neural_labels or set(architectures) != neural_labels:
             raise ValueError(

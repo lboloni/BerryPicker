@@ -1,0 +1,7 @@
+# Deterministic latent-to-normalized-action policy.
+rcco-type: MLP
+input_size: 256
+hidden_sizes: [128, 64]
+output_size: 6
+output_activation: sigmoid
+model_file: mlp.pth
