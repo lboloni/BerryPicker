@@ -9,6 +9,7 @@ This version supports both single-view and multi-view sensor processors.
 from functools import partial
 
 from sensorprocessing import (
+    sp_composite,
     sp_vae_gan,
     sp_conv_vae_neo,
     sp_conv_vae_neo_multiview_concat,
@@ -91,6 +92,8 @@ def _create_singleview_cnn(spexp, model=None):
 
 
 _PROCESSOR_CLASSES = {
+    "CompositeSensorProcessing": sp_composite.CompositeSensorProcessing,
+    "CompositeMultiViewSensorProcessing": sp_composite.CompositeMultiViewSensorProcessing,
     "VAEGANSensorProcessing": sp_vae_gan.VAEGANSensorProcessing,
     "ConvVaeSensorProcessing": _create_legacy_conv_vae,
     "ConvVaeNeoSensorProcessing": _create_conv_vae_neo,
@@ -127,6 +130,7 @@ _PROCESSOR_CLASSES = {
 }
 
 _MULTIVIEW_CLASSES = {
+    "CompositeMultiViewSensorProcessing",
     "ConvVaeNeoMultiViewConcatSensorProcessing",
     "ConvVaeNeoMultiViewFusionSensorProcessing",
     "ConvVaeSensorProcessing_concat_multiview",
@@ -160,13 +164,14 @@ def create_sp(spexp):
     sp_class = spexp.get("class", "")
 
     try:
-        return _PROCESSOR_CLASSES[sp_class](spexp)
+        processor_class = _PROCESSOR_CLASSES[sp_class]
     except KeyError as error:
         available = "\n".join(f"  - {name}" for name in _PROCESSOR_CLASSES)
         raise Exception(
             f'Unknown sensor processing class: "{sp_class}"\n'
             f"Available classes:\n{available}"
         ) from error
+    return processor_class(spexp)
 
 
 def get_sp_class_name(sp):

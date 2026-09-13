@@ -1,6 +1,64 @@
 # What is this
 
-The ```sensorprocessing''' package contains code to process the robots' sensor input and output an __encoding vector z__. The sensor processing code is usually some learned encoding model. As of Feb 2025, this is a single camera vision input. The use of other type of sensory information is planned for the future. 
+The ```sensorprocessing''' package contains code to process the robots' sensor input and output an __encoding vector z__. The sensor processing code is usually some learned encoding model. As of Feb 2025, this is a single camera vision input. The use of other type of sensory information is planned for the future.
+
+## Composite architecture
+
+`composite.py` implements ordered named steps, branching, structured result
+references (`step.field`), and frozen modules that retain input gradient flow.
+`sp_composite.py` exposes `CompositeSensorProcessing` and
+`CompositeMultiViewSensorProcessing` through `create_sp()`.
+
+No concrete processing operations are registered by default. Applications must
+register their operation implementations before constructing or restoring a
+composite:
+
+```python
+from sensorprocessing.composite import register_operation
+
+register_operation(
+    "my_operation",
+    build=build_module,
+    resolve=resolve_source_configuration,
+    initialize=initialize_source_weights,
+)
+```
+
+`build(step)` returns an `nn.Module` without reading source checkpoints.
+`resolve(step)` returns a complete JSON-serializable step configuration with any
+source architecture settings resolved; `initialize(module, step)` initializes
+source weights. The latter two hooks are optional and run only for new training.
+External-model/API adapters must manage external runtime handles without
+registering externally owned weights as PyTorch children. Such adapters and
+their caching are not implemented here.
+
+For new training, call `create_composite(exp)` and move the returned model to the
+training device. It writes `<model filename stem>.config.json` beside
+`model_file(exp)`, containing the resolved graph, latent size, image geometry,
+and (for multiview) camera order. It refuses to overwrite an existing snapshot.
+Call `restore_composite(exp)` to reconstruct an existing run, then let the
+training harness restore model and optimizer state. Restoration does not invoke
+source-resolution or source-initialization hooks.
+
+The model supports `forward()`, `encode()`, and `forward_steps()` for auxiliary
+losses. Use an ordinary task wrapper and the existing training harness; no loss,
+training head, filter, segmentation model, or fusion component is supplied by
+this architecture. `frozen: true` disables parameter gradients and preserves
+evaluation mode without detaching inputs. Omit `frozen` for trainable or
+parameter-free operations.
+
+Save a standalone composite's `state_dict()` to `model_file(exp)` for inference.
+If training a wrapper with a task head, save the wrapper's complete state through
+the harness for resumption and export **only** `wrapper.composite.state_dict()`
+to the SP's final `model_file(exp)`. Keep the wrapper checkpoints separate from
+that exported encoder state. Inference accepts either a bare composite state
+dictionary or one under `model_state_dict`, not a task wrapper's prefixed state.
+
+`create_sp(exp)` restores the saved configuration and final weights. It uses the
+saved image geometry and camera order even if those source settings subsequently
+change. Component implementation code must still be available and registered.
+See [DESIGN-CompositeSensorProcessing.md](DESIGN-CompositeSensorProcessing.md)
+for the broader design and future components.
 
 The size of the encoding vector is specified in the __experiments__ association with these models. The experiments are named sensorprocessing_Foo, and they are in the experiment_configs folder. The experiments also specify the data sets used to train the encoding. 
 
