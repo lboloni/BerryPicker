@@ -104,6 +104,7 @@ def load_demonstrations_as_proprioception_training(
     datasetname,
     proprioception_input_file,
     proprioception_target_file,
+    *, timestep_interval=None,
 ):
     """Loads all the images from the specified dataset and creates the input
     and target tensors for single-view proprioception training.
@@ -119,11 +120,15 @@ def load_demonstrations_as_proprioception_training(
         datasetname: "training_data" or "validation_data"
         proprioception_input_file: Path to save/load processed inputs
         proprioception_target_file: Path to save/load processed targets
+        timestep_interval: Optional (demo, index) -> dt callback for temporal SPs;
+            omitted timing uses their configured sample_interval. Temporal
+            outputs are recomputed rather than read/written as framewise caches.
 
     Returns:
         Dictionary with 'inputs' and 'targets' tensors
     """
-    if proprioception_input_file.exists():
+    temporal = getattr(sp, "temporal", False)
+    if proprioception_input_file.exists() and not temporal:
         retval = {}
         retval["inputs"] = torch.load(proprioception_input_file, weights_only=True)
         retval["targets"] = torch.load(proprioception_target_file, weights_only=True)
@@ -140,10 +145,14 @@ def load_demonstrations_as_proprioception_training(
         exp_demo = Config().get_experiment("demonstration", run)
         demo = Demonstration(exp_demo, demo_name)
 
+        if temporal:
+            sp.reset_context()
+
         for i in range(demo.metadata["maxsteps"]):
             sensor_readings, _ = demo.get_image(
                 i, camera=camera, transform=transform)
-            z = sp.process(sensor_readings)
+            timing = {"dt": timestep_interval(demo, i)} if temporal and timestep_interval else {}
+            z = sp.process(sensor_readings, **timing)
             rp = demo.get_action(i, "rc-position-target", exp_robot)
             anorm = rp.to_normalized_vector(exp_robot)
             inp = torch.from_numpy(z)
@@ -154,11 +163,11 @@ def load_demonstrations_as_proprioception_training(
     retval = {}
     retval["inputs"] = torch.stack(inputlist)
     retval["targets"] = torch.stack(targetlist)
-    torch.save(retval["inputs"], proprioception_input_file)
-    torch.save(retval["targets"], proprioception_target_file)
-    print(f"***load_demonstrations_as_proprioception_training*** \n\t"
-          f"Successfully recalculated the proprioception training and saved it to "
-          f"{proprioception_input_file} etc")
+    if not temporal:
+        torch.save(retval["inputs"], proprioception_input_file)
+        torch.save(retval["targets"], proprioception_target_file)
+    print("Recalculated proprioception training data"
+          + (" (temporal cache disabled)" if temporal else f" and saved to {proprioception_input_file}"))
     return retval
 
 
@@ -170,6 +179,7 @@ def load_multiview_demonstrations_as_proprioception_training(
     datasetname,
     proprioception_input_file,
     proprioception_target_file,
+    *, timestep_interval=None,
 ):
     """Loads all the images from the specified dataset from multiple cameras and creates
     the input and target tensors for visual proprioception training.
@@ -185,11 +195,15 @@ def load_multiview_demonstrations_as_proprioception_training(
         datasetname: "training_data" or "validation_data"
         proprioception_input_file: Path to save/load processed inputs
         proprioception_target_file: Path to save/load processed targets
+        timestep_interval: Optional (demo, index) -> dt callback for temporal SPs;
+            omitted timing uses their configured sample_interval. Temporal
+            outputs are recomputed rather than read/written as framewise caches.
 
     Returns:
         Dictionary with inputs and targets (encoded latents, not raw images)
     """
-    if proprioception_input_file.exists():
+    temporal = getattr(sp, "temporal", False)
+    if proprioception_input_file.exists() and not temporal:
         retval = {}
         retval["inputs"] = torch.load(proprioception_input_file, weights_only=True)
         retval["targets"] = torch.load(proprioception_target_file, weights_only=True)
@@ -215,14 +229,20 @@ def load_multiview_demonstrations_as_proprioception_training(
         exp_demo = Config().get_experiment("demonstration", run)
         demo = Demonstration(exp_demo, demo_name)
 
+        if temporal:
+            sp.reset_context()
+
         for i in range(demo.metadata["maxsteps"]):
+            timing = {"dt": timestep_interval(demo, i)} if temporal and timestep_interval else {}
             process_demonstration = getattr(sp, "process_demonstration", None)
             if callable(process_demonstration):
                 try:
                     z = process_demonstration(
-                        demo, i, cameras[:num_views], transform=transform
+                        demo, i, cameras[:num_views], transform=transform, **timing
                     )
                 except Exception as e:
+                    if temporal:
+                        raise
                     print(
                         f"Skipping demo {demo_name} frame {i} - "
                         f"could not load camera views: {e}"
@@ -240,6 +260,8 @@ def load_multiview_demonstrations_as_proprioception_training(
                         )
                         view_images.append(sensor_readings)
                     except Exception as e:
+                        if temporal:
+                            raise
                         print(
                             f"Skipping demo {demo_name} frame {i} - "
                             f"missing camera {camera}: {e}"
@@ -249,7 +271,7 @@ def load_multiview_demonstrations_as_proprioception_training(
                 if failed_to_load_view:
                     continue
                 else:
-                    z = sp.process(view_images)
+                    z = sp.process(view_images, **timing)
 
             # Get robot position
             rp = demo.get_action(i, "rc-position-target", exp_robot)
@@ -264,10 +286,11 @@ def load_multiview_demonstrations_as_proprioception_training(
     retval = {}
     retval["inputs"] = torch.stack(inputlist)
     retval["targets"] = torch.stack(targetlist)
-    torch.save(retval["inputs"], proprioception_input_file)
-    torch.save(retval["targets"], proprioception_target_file)
-    print(f"***load_multiview_demonstrations_as_proprioception_training*** \n\t"
-          f"Successfully recalculated and saved to {proprioception_input_file}")
+    if not temporal:
+        torch.save(retval["inputs"], proprioception_input_file)
+        torch.save(retval["targets"], proprioception_target_file)
+    print("Recalculated multiview proprioception training data"
+          + (" (temporal cache disabled)" if temporal else f" and saved to {proprioception_input_file}"))
     return retval
 
 

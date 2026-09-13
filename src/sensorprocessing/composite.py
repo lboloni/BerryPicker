@@ -19,19 +19,22 @@ class Operation:
     architecture resolved. Optional ``initialize(module, step)`` imports source
     weights for new training only. External adapters own their runtime handles
     and must not register externally owned weights as child modules.
+    ``temporal=True`` selects advance(*inputs, context=..., dt=...) instead of
+    forward; it returns (output, next_context) without mutating incoming context.
     """
 
     build: Callable
     resolve: Callable | None = None
     initialize: Callable | None = None
+    temporal: bool = False
 
 
 OPERATIONS = {}
 
 
-def register_operation(name, build, *, resolve=None, initialize=None):
+def register_operation(name, build, *, resolve=None, initialize=None, temporal=False):
     """Register construction and optional new-training hooks for a step."""
-    OPERATIONS[name] = Operation(build, resolve, initialize)
+    OPERATIONS[name] = Operation(build, resolve, initialize, temporal)
 
 
 def resolve(values, reference):
@@ -50,6 +53,11 @@ class CompositeModel(nn.Module):
         self.steps = deepcopy(exp["steps"])
         self.output = exp["output"]
         self.latent_size = exp["latent_size"]
+        self.temporal_steps = {
+            step["name"] for step in self.steps
+            if OPERATIONS[step["operation"]].temporal
+        }
+        self.temporal = bool(self.temporal_steps)
         self.operations = nn.ModuleDict({
             step["name"]: OPERATIONS[step["operation"]].build(step)
             for step in self.steps
@@ -68,11 +76,34 @@ class CompositeModel(nn.Module):
 
     def forward_steps(self, sensor_readings):
         """Return named results for auxiliary losses or inspection."""
+        if self.temporal:
+            raise RuntimeError("Temporal composites require advance() or advance_steps()")
+        return self.advance_steps(sensor_readings, None, dt=None)[0]
+
+    def advance_steps(self, sensor_readings, context, *, dt):
+        """Advance once, returning results and a new per-step context.
+
+        Temporal operations implement advance(*inputs, context=..., dt=...).
+        They must not mutate incoming context. None initializes a new sequence;
+        a continuing context must contain every temporal step's entry.
+        """
         values = {"input": sensor_readings}
+        next_context = {}
         for step in self.steps:
+            name = step["name"]
             inputs = [resolve(values, name) for name in step["inputs"]]
-            values[step["name"]] = self.operations[step["name"]](*inputs)
-        return values
+            if name in self.temporal_steps:
+                previous = None if context is None else context[name]
+                values[name], next_context[name] = self.operations[name].advance(
+                    *inputs, context=previous, dt=dt
+                )
+            else:
+                values[name] = self.operations[name](*inputs)
+        return values, next_context
+
+    def advance(self, sensor_readings, context, *, dt):
+        values, next_context = self.advance_steps(sensor_readings, context, dt=dt)
+        return resolve(values, self.output), next_context
 
     def encode(self, sensor_readings):
         return resolve(self.forward_steps(sensor_readings), self.output)
@@ -101,6 +132,8 @@ def create_composite(exp):
     }
     if exp["class"] == "CompositeMultiViewSensorProcessing":
         config.update(num_views=exp["num_views"], cameras=list(exp["cameras"]))
+    if "sample_interval" in exp:
+        config["sample_interval"] = exp["sample_interval"]
     for index, step in enumerate(config["steps"]):
         operation = OPERATIONS[step["operation"]]
         if operation.resolve is not None:

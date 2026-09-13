@@ -13,6 +13,8 @@ from training_harness.checkpoints import model_file
 class AbstractSensorProcessing(ABC):
     """The ancestor of all the classes that perform a sensor processing. We make the assumption that all these classes are configured by an experiment/run, and take in an image"""
 
+    temporal = False
+
     def __init__(self, exp):
         self.exp = exp
         self.preprocessor = SensorPreprocessor(exp)
@@ -24,10 +26,14 @@ class AbstractSensorProcessing(ABC):
         This is intended to be used during real-time deployment"""
         return np.zeros(self.latent_size)
 
-    def process_file(self, sensor_image_file):
+    def reset_context(self):
+        """Start an independent observation sequence; stateless SPs do nothing."""
+
+    def process_file(self, sensor_image_file, *, dt=None):
         """Processes the sensor image from a file. This probably does not need to be overwritten. 
         """
-        return self.process(self.preprocessor.from_file(sensor_image_file))
+        timing = {} if dt is None else {"dt": dt}
+        return self.process(self.preprocessor.from_file(sensor_image_file), **timing)
 
 
 class MultiViewDemonstrationProcessing:
@@ -74,7 +80,7 @@ class MultiViewDemonstrationProcessing:
                 f"this model was trained with {list(trained_order)}"
             )
 
-    def process_demonstration(self, demonstration, timestep, cameras, transform=None):
+    def process_demonstration(self, demonstration, timestep, cameras, transform=None, *, dt=None):
         """Encode ordered camera views from one ``Demonstration`` timestep.
 
         ``cameras`` must be in the same order used to train the model.  The
@@ -97,9 +103,10 @@ class MultiViewDemonstrationProcessing:
                     f"Could not load timestep {timestep} from camera {camera}"
                 )
             views.append(sensor_readings)
-        return self.process(views)
+        timing = {} if dt is None else {"dt": dt}
+        return self.process(views, **timing)
 
-    def process_captures(self, captures):
+    def process_captures(self, captures, *, dt=None):
         """Encode an ordered sequence of RGB camera frames.
 
         Each frame is preprocessed with this processor's shared inference
@@ -109,7 +116,8 @@ class MultiViewDemonstrationProcessing:
         views = [
             self.preprocessor.from_capture(capture) for capture in captures
         ]
-        return self.process(views)
+        timing = {} if dt is None else {"dt": dt}
+        return self.process(views, **timing)
 
 
 class MultiViewSensorProcessing(
@@ -151,6 +159,7 @@ class EncoderSensorProcessing:
             state_dict = state_dict["model_state_dict"]
         self.enc.load_state_dict(state_dict)
         self.enc.eval()
+        self.reset_context()
         return checkpoint_path
 
     def process(self, sensor_readings):

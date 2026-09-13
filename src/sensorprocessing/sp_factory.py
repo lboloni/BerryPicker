@@ -214,3 +214,16 @@ def is_multiview_sp(spexp):
     sp_class = spexp.get("class", "")
 
     return sp_class in _MULTIVIEW_CLASSES or spexp.get("num_views", 1) > 1
+
+
+def is_temporal_sp(spexp):
+    """Inspect a saved composite without loading weights (e.g. cache routing)."""
+    if spexp["class"] not in (
+        "CompositeSensorProcessing", "CompositeMultiViewSensorProcessing"
+    ):
+        return False
+    from .composite import OPERATIONS, read_configuration
+    return any(
+        OPERATIONS[step["operation"]].temporal
+        for step in read_configuration(spexp)["steps"]
+    )

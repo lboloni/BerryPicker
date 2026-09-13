@@ -36,6 +36,19 @@ class Views(nn.Module):
         return views[0] + 2 * views[1]
 
 
+class Accumulate(nn.Module):
+    """Test-only temporal operation with an explicit, immutable context."""
+
+    def __init__(self):
+        super().__init__()
+        self.scale = nn.Parameter(torch.tensor(1.))
+
+    def advance(self, x, *, context, dt):
+        previous = torch.zeros_like(x) if context is None else context
+        updated = previous + self.scale * x * dt
+        return {"value": updated}, updated
+
+
 def step(name, operation, inputs, **kwargs):
     return dict(name=name, operation=operation, inputs=inputs, **kwargs)
 
@@ -58,6 +71,102 @@ class TestComposite(unittest.TestCase):
         register_operation("fields", lambda s: Fields())
         register_operation("add", lambda s: Add())
         register_operation("views", lambda s: Views())
+        register_operation("accumulate", lambda s: Accumulate(), temporal=True)
+
+    def temporal_exp(self, directory=""):
+        exp = experiment(directory)
+        exp.update(steps=[step("memory", "accumulate", ["input"])],
+                   output="memory.value", sample_interval=0.5)
+        return exp
+
+    def test_temporal_branches_context_isolation_and_gradients(self):
+        exp = self.temporal_exp()
+        exp["steps"] += [step("second", "accumulate", ["memory.value"], frozen=True),
+                         step("sum", "add", ["memory.value", "second.value"])]
+        exp["output"] = "sum"
+        model = CompositeModel(exp)
+        x = torch.ones(1, 2, requires_grad=True)
+        first, context = model.advance(x, None, dt=1.)
+        saved = {key: value.clone() for key, value in context.items()}
+        second, next_context = model.advance(x, context, dt=2.)
+        torch.testing.assert_close(first, 2 * x)
+        torch.testing.assert_close(second, 10 * x)
+        fresh, _ = model.advance(x, None, dt=1.)
+        torch.testing.assert_close(fresh, first)
+        for key in context:
+            torch.testing.assert_close(context[key], saved[key])
+        second.sum().backward()
+        torch.testing.assert_close(x.grad, torch.full_like(x, 10.))
+        self.assertIsNotNone(model.operations["memory"].scale.grad)
+        self.assertIsNone(model.operations["second"].scale.grad)
+        self.assertFalse(model.operations["second"].training)
+        self.assertEqual(set(next_context), {"memory", "second"})
+        with self.assertRaises(KeyError):
+            model.advance(x, {}, dt=1.)
+        for method in (model, model.encode, model.forward_steps):
+            with self.assertRaisesRegex(RuntimeError, "advance"):
+                method(x)
+
+    def test_explicit_context_detachment(self):
+        model = CompositeModel(self.temporal_exp())
+        x = torch.ones(1, 2, requires_grad=True)
+        y = torch.ones(1, 2, requires_grad=True)
+        _, context = model.advance(x, None, dt=1.)
+        detached = {key: value.detach() for key, value in context.items()}
+        z, _ = model.advance(y, detached, dt=1.)
+        z.sum().backward()
+        self.assertIsNone(x.grad)
+        torch.testing.assert_close(y.grad, torch.ones_like(y))
+
+    def test_temporal_wrapper_reset_reload_timing_and_helpers(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(Config().runtime, {"device": "cpu"}):
+            exp = self.temporal_exp(directory)
+            model = create_composite(exp)
+            torch.save(model.state_dict(), model_file(exp))
+            self.assertTrue(sp_factory.is_temporal_sp(exp))
+            self.assertEqual(read_configuration(exp)["sample_interval"], 0.5)
+            exp["sample_interval"] = 99.
+            sp = sp_factory.create_sp(exp)
+            x = torch.ones(1, 2, requires_grad=True)
+            np.testing.assert_allclose(sp.process(x), [0.5, 0.5])
+            np.testing.assert_allclose(sp.process(x, dt=2.), [2.5, 2.5])
+            self.assertFalse(sp.context["memory"].requires_grad)
+            self.assertEqual(set(sp.enc.state_dict()), {"operations.memory.scale"})
+            sp.reset_context()
+            np.testing.assert_allclose(sp.process(x), [0.5, 0.5])
+            sp.load_encoder_checkpoint(required=True)
+            self.assertIsNone(sp.context)
+            with patch.object(sp.preprocessor, "from_file", return_value=x):
+                np.testing.assert_allclose(sp.process_file("unused", dt=3.), [3., 3.])
+
+    def test_multiview_temporal_helpers_advance_once_per_camera_set(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(Config().runtime, {"device": "cpu"}):
+            exp = self.temporal_exp(directory)
+            exp.update({"class": "CompositeMultiViewSensorProcessing", "num_views": 2,
+                        "cameras": ["left", "right"]})
+            exp["steps"].insert(0, step("views", "views", ["input"]))
+            exp["steps"][1]["inputs"] = ["views"]
+            torch.save(create_composite(exp).state_dict(), model_file(exp))
+            sp = sp_factory.create_sp(exp)
+            x = torch.ones(1, 2)
+            with patch.object(sp.preprocessor, "from_capture", return_value=x):
+                np.testing.assert_allclose(sp.process_captures([None, None], dt=2.), [6., 6.])
+            demonstration = Mock()
+            demonstration.get_image.return_value = (x, None)
+            np.testing.assert_allclose(
+                sp.process_demonstration(demonstration, 0, ["left", "right"], dt=1.), [9., 9.]
+            )
+
+    def test_variable_rate_without_default_requires_explicit_dt(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(Config().runtime, {"device": "cpu"}):
+            exp = self.temporal_exp(directory)
+            del exp["sample_interval"]
+            torch.save(create_composite(exp).state_dict(), model_file(exp))
+            sp = sp_factory.create_sp(exp)
+            with self.assertRaises(KeyError):
+                sp.process(torch.ones(1, 2))
+            self.assertIsNone(sp.context)
+            np.testing.assert_allclose(sp.process(torch.ones(1, 2), dt=2.), [2., 2.])
 
     def test_branches_structured_results_and_gradients(self):
         exp = experiment("")

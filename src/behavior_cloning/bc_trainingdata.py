@@ -23,7 +23,7 @@ import pathlib
 #from sensorprocessing.sp_helper import load_picturefile_to_tensor
 from robot.al5d import RobotPosition
 from sensorprocessing.sp_helper import get_transform_to_sp
-from sensorprocessing.sp_factory import create_sp
+from sensorprocessing.sp_factory import create_sp, is_temporal_sp
 from demonstration.demonstration import Demonstration
 
 
@@ -59,15 +59,20 @@ def create_trainingpair_prediction(x_seq: torch.Tensor, y_seq: torch.Tensor, seq
     return inputs_tensor, targets_tensor
 
 
-def create_trainingdata_bc(exp, exp_sp, exp_robot):
-    """Creates training data for training and validation with the demonstrations specified in the exp/run. Caches the results into the input and target files specified in the exp/run. Remove those files to recalculate."""
+def create_trainingdata_bc(exp, exp_sp, exp_robot, *, timestep_interval=None):
+    """Create latent training data; temporal SPs bypass framewise caches.
+
+    timestep_interval(demo, index) supplies observed dt for temporal SPs;
+    otherwise their configured sample_interval is used.
+    """
 
     exp.start_timer("data_preparation")
 
     input_path = pathlib.Path(exp.data_dir(), "training_input.pth")
     target_path = pathlib.Path(exp.data_dir(), "training_target.pth")
 
-    if not input_path.exists():
+    temporal = is_temporal_sp(exp_sp)
+    if not input_path.exists() or temporal:
         all_demos_inputs_list = []
         all_demos_targets_list = []
         # Create the sp object described in the experiment
@@ -77,13 +82,15 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot):
             run, demo_name, camera = val
             exp_demo = Config().get_experiment("demonstration", run)
             demo = Demonstration(exp_demo, demo_name)
+            sp.reset_context()
             # read the a and z 
             inputs_list = []
             targets_list = []
             for i in range(demo.metadata["maxsteps"]-1): # -1 because of lookahead
                 sensor_readings, _ = demo.get_image(i, transform=transform, camera=camera)                
                 # inputlist.append(sensor_readings[0])
-                z = sp.process(sensor_readings)
+                timing = {"dt": timestep_interval(demo, i)} if sp.temporal and timestep_interval else {}
+                z = sp.process(sensor_readings, **timing)
                 inputs_list.append(torch.from_numpy(z))
                 # the action we are choosing, is the next one
                 rp = demo.get_action(i+1, "rc-position-target", exp_robot)
@@ -103,8 +110,9 @@ def create_trainingdata_bc(exp, exp_sp, exp_robot):
         all_demos_inputs_tensor = all_demos_inputs_tensor[perm]
         all_demos_targets_tensor = all_demos_targets_tensor[perm]
         # save
-        torch.save(all_demos_inputs_tensor, input_path)
-        torch.save(all_demos_targets_tensor, target_path)
+        if not sp.temporal:
+            torch.save(all_demos_inputs_tensor, input_path)
+            torch.save(all_demos_targets_tensor, target_path)
     else: # just load the cached data
         all_demos_inputs_tensor = torch.load(input_path, weights_only=True)
         all_demos_targets_tensor = torch.load(target_path, weights_only=True)

@@ -1,6 +1,7 @@
 """Inference wrappers for saved single-view and multi-view composites."""
 
 from exp_run_config import Config
+import torch
 
 from .composite import CompositeModel, read_configuration
 from .sensor_processing import (
@@ -17,8 +18,24 @@ class CompositeInference:
         super().__init__(config)
         self.exp = exp
         self.enc = CompositeModel(config).to(Config().runtime["device"])
+        self.temporal = self.enc.temporal
         self.load_encoder_checkpoint(required=True, label="composite")
         self.configuration = config
+
+    def reset_context(self):
+        self.context = None
+
+    def process(self, sensor_readings, *, dt=None):
+        if not self.temporal:
+            return super().process(sensor_readings)
+        if dt is None:
+            dt = self.configuration["sample_interval"]
+        self.enc.eval()
+        with torch.no_grad():
+            encoding, context = self.enc.advance(sensor_readings, self.context, dt=dt)
+            result = torch.squeeze(encoding).cpu().numpy()
+        self.context = context
+        return result
 
 
 class CompositeSensorProcessing(CompositeInference, SingleViewEncoderSensorProcessing):

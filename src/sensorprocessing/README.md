@@ -60,6 +60,43 @@ change. Component implementation code must still be available and registered.
 See [DESIGN-CompositeSensorProcessing.md](DESIGN-CompositeSensorProcessing.md)
 for the broader design and future components.
 
+### Temporal composites
+
+Register a temporal module with `register_operation(..., temporal=True)`. It
+implements `advance(*inputs, context=..., dt=...)`, returning `(output,
+next_context)` without modifying the incoming context. `None` means the start
+of a sequence. No temporal components are supplied by the framework.
+
+Training calls `model.advance(inputs, context, dt=dt)` or
+`model.advance_steps(inputs, context, dt=dt)` explicitly. These return the final
+encoding or named intermediate outputs, respectively, together with a new
+context dictionary keyed by temporal step name. Autograd is preserved; the
+training recipe owns unrolling and context detachment. `encode()`, `forward()`,
+and `forward_steps()` reject temporal graphs to prevent accidental memory loss.
+Stateless graphs keep their original interfaces.
+
+For inference, `sp.process(inputs, dt=dt)` retains runtime context in the SP
+wrapper and returns NumPy as before. `sp.reset_context()` starts a new stream;
+loading an encoder checkpoint also resets context. Memory is excluded from
+model state dictionaries. For fixed-rate inference, configure `sample_interval`
+in seconds in the composite exp/run; it is saved in the resolved configuration.
+If omitted, every temporal inference call must supply `dt`. File, capture, and
+multiview demonstration helpers accept the same optional keyword.
+
+The VP and BC latent-data loaders reset temporal SPs at demonstration boundaries.
+They accept `timestep_interval(demonstration, index)` as an optional keyword
+callback returning elapsed observation time in seconds. Without it they use the
+SP's configured interval, which must match the data. There is no inferred
+timestamp convention for existing demonstrations. Temporal loading does not
+skip failed frames and bypasses both reads and writes of legacy framewise
+caches, leaving existing cache files untouched.
+
+CNN/VAE controller wrappers forward context resets to their SPs. Their existing
+model-specific propagation remains stateless; general temporal-composite
+controller execution is not introduced here. Sequence trainers, temporal cache
+formats, context serialization, and partial batch resets remain family-specific
+or future work. See [DESIGN-SensorProcessingMemory.md](DESIGN-SensorProcessingMemory.md).
+
 The size of the encoding vector is specified in the __experiments__ association with these models. The experiments are named sensorprocessing_Foo, and they are in the experiment_configs folder. The experiments also specify the data sets used to train the encoding. 
 
 Train_Foo notebooks contain code to train the model Foo.

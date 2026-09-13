@@ -122,6 +122,11 @@ class RCCO_SP_CNN(AbstractRCComponent):
             raise RuntimeError("Configured CNN sensor processor has no preprocessor")
         return self.preprocessor.from_capture(capture)
 
+    def reset_context(self):
+        super().reset_context()
+        if self.sp is not None:
+            self.sp.reset_context()
+
     def propagate(self):
         image = self.inputs["image"]
         if not isinstance(image, torch.Tensor):
