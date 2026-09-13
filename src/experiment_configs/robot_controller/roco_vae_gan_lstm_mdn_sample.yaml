@@ -1,0 +1,40 @@
+# Runtime-only example: separately trained VAE encoder, LSTM, and MDN.
+name: "VAE-GAN + Residual LSTM + MDN"
+class: GraphRobotController
+
+components:
+  image_input:
+    run: rcco_input_default
+
+  vae_encoder:
+    run: rcco_sp_vae_gan_256
+
+  lstm:
+    run: rcco_lstm_residual_256_32
+
+  mdn:
+    run: rcco_mdn_32_6_5
+
+  robot_output:
+    run: rcco_robot_action_output_6
+
+connections:
+  - from_component: image_input
+    from_output: input
+    to_component: vae_encoder
+    to_input: image
+
+  - from_component: vae_encoder
+    from_output: z
+    to_component: lstm
+    to_input: z
+
+  - from_component: lstm
+    from_output: h
+    to_component: mdn
+    to_input: h
+
+  - from_component: mdn
+    from_output: a
+    to_component: robot_output
+    to_input: output

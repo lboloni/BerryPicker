@@ -9,6 +9,7 @@ This version supports both single-view and multi-view sensor processors.
 from functools import partial
 
 from sensorprocessing import (
+    sp_vae_gan,
     sp_conv_vae_neo,
     sp_conv_vae_neo_multiview_concat,
     sp_conv_vae_neo_multiview_fusion,
@@ -90,6 +91,7 @@ def _create_singleview_cnn(spexp, model=None):
 
 
 _PROCESSOR_CLASSES = {
+    "VAEGANSensorProcessing": sp_vae_gan.VAEGANSensorProcessing,
     "ConvVaeSensorProcessing": _create_legacy_conv_vae,
     "ConvVaeNeoSensorProcessing": _create_conv_vae_neo,
     "ConvVaeNeoMultiViewConcatSensorProcessing": (

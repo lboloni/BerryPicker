@@ -1,0 +1,4 @@
+rcco-type: SP_VAE
+sp_experiment: sensorprocessing_vae_gan
+sp_run: sp_vae_gan_256_256px
+trainable: false

@@ -1,0 +1,44 @@
+# VAE-GAN: RGB [0,1], single view; larger/non-square images are supported.
+class: VAEGANSensorProcessing
+architecture_version: 1
+model_file: vae_gan_vae.pth
+image_size: [256, 256]
+input_channels: 3
+latent_size: 128
+base_channels: 32
+max_channels: 512
+bottleneck_max_size: 8
+group_norm_groups: 8
+discriminator_base_channels: 32
+discriminator_max_channels: 256
+discriminator_feature_layer: -2
+initialization: random
+# To initialize from a trained compatible Neo VAE, use:
+# initialization: conv_vae_neo
+# initialization_experiment: sensorprocessing_conv_vae_neo
+# initialization_run: sp_vae_neo_128_256px
+discriminator_warmup_epochs: 0
+encoder_learning_rate: 0.0002
+generator_learning_rate: 0.0002
+discriminator_learning_rate: 0.0002
+weight_decay: 0.0
+kl_weight: 0.001
+feature_weight: 1.0
+adversarial_weight: 0.1
+pixel_weight: 0.0
+grad_clip_norm: 1.0
+batch_size: 8
+epochs: 300
+keep_checkpoints: 2
+random_seed: 73017
+num_workers: 0
+pin_memory: false
+frame_stride: 1
+training_data:
+  - ["random-both-cameras-video", "2025_03_08__14_15_53", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_16_57", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_19_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_21_28", "dev2"]
+validation_data:
+  - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]
