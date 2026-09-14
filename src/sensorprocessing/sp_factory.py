@@ -15,6 +15,7 @@ from sensorprocessing import (
     sp_conv_vae_neo_multiview_concat,
     sp_conv_vae_neo_multiview_fusion,
     sp_propriotuned_cnn,
+    sp_random_projection_cnn,
     sp_aruco,
     sp_vit,
     sp_vit_multiview,
@@ -114,6 +115,9 @@ _PROCESSOR_CLASSES = {
     ),
     "ProprioTunedCNNSensorProcessing": _create_singleview_cnn,
     "ProprioTunedCNN": _create_singleview_cnn,
+    "RandomProjectionCNNSensorProcessing": (
+        sp_random_projection_cnn.RandomProjectionCNNSensorProcessing
+    ),
     "VGG19ProprioTunedSensorProcessing_multiview": partial(
         _create_multiview_cnn, model="MultiViewVGG19Model"
     ),

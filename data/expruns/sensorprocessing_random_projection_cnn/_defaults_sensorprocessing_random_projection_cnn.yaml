@@ -1,0 +1,9 @@
+# Training-free projection of frozen pretrained CNN features.
+class: RandomProjectionCNNSensorProcessing
+image_size: [256, 256]
+backbone_weights: DEFAULT
+feature_normalization: l2
+projection: rademacher
+
+input-to-notebook:
+  - sensorprocessing/Verify_RandomProjection_CNN.ipynb

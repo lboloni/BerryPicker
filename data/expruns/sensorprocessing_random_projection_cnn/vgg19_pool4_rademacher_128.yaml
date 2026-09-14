@@ -1,0 +1,4 @@
+model: VGG19RandomProjection
+latent_size: 128
+feature_pool_size: [4, 4]
+projection_seed: 41983
