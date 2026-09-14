@@ -97,7 +97,7 @@ controller execution is not introduced here. Sequence trainers, temporal cache
 formats, context serialization, and partial batch resets remain family-specific
 or future work. See [DESIGN-SensorProcessingMemory.md](DESIGN-SensorProcessingMemory.md).
 
-The size of the encoding vector is specified in the __experiments__ association with these models. The experiments are named sensorprocessing_Foo, and they are in the experiment_configs folder. The experiments also specify the data sets used to train the encoding. 
+The size of the encoding vector is specified in the __experiments__ association with these models. The experiments are named sensorprocessing_Foo, and they are in the data/expruns folder. The experiments also specify the data sets used to train the encoding.
 
 Train_Foo notebooks contain code to train the model Foo.
 

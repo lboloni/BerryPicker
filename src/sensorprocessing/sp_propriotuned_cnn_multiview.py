@@ -10,7 +10,7 @@ view features are combined by a
 fusion types are supported, the same heads as the ViT multi-view model). A
 proprioceptor MLP maps the fused latent to the robot position during training.
 
-Relevant exp/run keys (see ``experiment_configs/sensorprocessing_propriotuned_cnn_multiview``):
+Relevant exp/run keys (see ``data/expruns/sensorprocessing_propriotuned_cnn_multiview``):
 
 - ``model``: ``MultiViewVGG19Model`` or ``MultiViewResNetModel`` (legacy names
   ``VGG19ProprioTunedRegression_multiview`` / ``ResNetProprioTunedRegression_multiview``

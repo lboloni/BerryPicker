@@ -11,7 +11,7 @@ notebook determines the controller, robot, and cameras used during a run.
    `settings-<machine>.yaml` file.
 
 2. In the directory named by `experiment_system_dependent_dir`, create these
-   files from the templates in `src/experiment_configs`:
+   files from the templates in `data/expruns`:
 
    ```text
    machine/current_sysdep.yaml
@@ -308,7 +308,7 @@ collector_run = "xbox_widowx_cameras"
 This recipe records the configured USB cameras while the external bridge keeps
 the Gazebo twin synchronized. To include the rendered camera in the same
 demonstration, create
-`src/experiment_configs/demonstration_collector/xbox_widowx_gazebo_twin_cameras.yaml`
+`data/expruns/demonstration_collector/xbox_widowx_gazebo_twin_cameras.yaml`
 with these participants:
 
 ```yaml

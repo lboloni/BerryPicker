@@ -16,7 +16,7 @@ Architecture: shared conv encoder per view -> per-view latent of size
 ``latent_size`` -> :class:`sensorprocessing.multiview_fusion.MultiViewFusion`
 -> fused latent (``latent_size``) -> proprioceptor (training only).
 
-Relevant exp/run keys (see ``experiment_configs/sensorprocessing_conv_vae_multiview``):
+Relevant exp/run keys (see ``data/expruns/sensorprocessing_conv_vae_multiview``):
 
 - ``image_size`` (default [64, 64]); any size divisible by 16 works, the
   flattened width is derived from it

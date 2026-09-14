@@ -8,7 +8,7 @@ shared by all views), the per-view features are combined by a
 :class:`sensorprocessing.multiview_fusion.MultiViewFusion` head, and a small
 proprioceptor MLP maps the fused latent to the robot position during training.
 
-Relevant exp/run keys (see ``experiment_configs/sensorprocessing_propriotuned_Vit_multiview``):
+Relevant exp/run keys (see ``data/expruns/sensorprocessing_propriotuned_Vit_multiview``):
 
 - ``vit_model`` / ``vit_weights`` / ``vit_output_dim``: backbone (see vit_helper)
 - ``num_views``: number of camera views

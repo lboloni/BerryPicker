@@ -161,7 +161,7 @@ class Config:
             cls._instance.values["main_config"] = main_config
             # experiment path 
             current_directory = pathlib.Path(__file__).resolve().parent    
-            cls._instance.experiment_path_internal = pathlib.Path(current_directory, "experiment_configs")
+            cls._instance.experiment_path_internal = pathlib.Path(current_directory.parent, "data", "expruns")
             cls._instance.experiment_path = cls._instance.experiment_path_internal
             # initialize a runtime information, which is not saved
             cls._instance.runtime = {}

@@ -8,7 +8,7 @@ commanded separately.
 The implementation is in
 [widowx_xbox_end_effector_controller.py](widowx_xbox_end_effector_controller.py).
 Its default experiment is
-[widowx_xbox_end_effector_controller_00.yaml](../experiment_configs/controllers/widowx_xbox_end_effector_controller_00.yaml).
+[widowx_xbox_end_effector_controller_00.yaml](../../data/expruns/controllers/widowx_xbox_end_effector_controller_00.yaml).
 
 ## Requirements
 
