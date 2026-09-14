@@ -221,7 +221,8 @@ def import_demopack(demo_path, group_chooser):
     results_path = Config().get_results_path()
     demoname = demo_path.stem
     demonstration_yaml = pathlib.Path(demo_path, demoname + ".yaml")
-    demo_names = [d.name for d in demo_path.iterdir() if d.is_dir()]
+    # sorted, so that the group split is reproducible across machines
+    demo_names = sorted(d.name for d in demo_path.iterdir() if d.is_dir())
     target_yaml = pathlib.Path(exprun_path, "demonstration", demoname + ".yaml")
     target_dir = pathlib.Path(results_path, "demonstration", demoname)
 
