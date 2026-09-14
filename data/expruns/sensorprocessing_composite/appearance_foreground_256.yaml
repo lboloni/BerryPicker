@@ -1,0 +1,47 @@
+# Illustrative appearance-and-foreground composite from
+# src/sensorprocessing/DESIGN-CompositeSensorProcessing.md.
+name: appearance_foreground_256
+
+steps:
+  - name: filtered
+    operation: gaussian_blur
+    inputs: [input]
+    kernel_size: 5
+    sigma: 1.0
+
+  - name: probabilities
+    operation: segmentation
+    inputs: [filtered]
+    source_experiment: sensorprocessing_segmentation
+    source_run: foreground_model
+    frozen: true
+
+  - name: mask
+    operation: select_class
+    inputs: [probabilities]
+    class_index: 1
+
+  - name: foreground
+    operation: apply_mask
+    inputs: [filtered, mask]
+
+  - name: appearance
+    operation: encoder
+    inputs: [filtered]
+    source_experiment: sensorprocessing_conv_vae_neo
+    source_run: sp_vae_neo_128_256px_dev2_dev3
+    frozen: true
+
+  - name: foreground_features
+    operation: encoder
+    inputs: [foreground]
+    source_experiment: sensorprocessing_conv_vae_neo
+    source_run: sp_vae_neo_128_256px_dev2_dev3
+    frozen: true
+
+  - name: combined
+    operation: concat
+    inputs: [appearance, foreground_features]
+    dim: 1
+
+output: combined

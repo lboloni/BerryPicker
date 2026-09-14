@@ -1,0 +1,8 @@
+# Composite sensor-processing architecture defaults.
+class: CompositeSensorProcessing
+model_file: composite.pth
+image_size: [256, 256]
+latent_size: 256
+
+input-to-notebook:
+  - sensorprocessing/Visualize_Composite.ipynb
