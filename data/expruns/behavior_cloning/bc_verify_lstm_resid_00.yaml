@@ -1,3 +1,6 @@
+input-to-notebook:
+  - behavior_cloning/Verify_BehaviorCloning.ipynb
+
 # a list of demonstrations in the demo / subrun / camera form
 verification_data:
   - ["random-both-cameras", "2025_03_08__14_21_28" , "dev2"]

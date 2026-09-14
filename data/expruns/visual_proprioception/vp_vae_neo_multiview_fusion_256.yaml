@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception_multiview.ipynb
+
 name: "vae-neo-multiview-fusion-256"
 sensor_processing: "ConvVaeNeoMultiViewFusionSensorProcessing"
 sp_experiment: "sensorprocessing_conv_vae_neo_multiview_fusion"

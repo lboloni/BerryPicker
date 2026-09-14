@@ -1,3 +1,6 @@
+input-to-notebook:
+  - behavior_cloning/Train_BehaviorCloning.ipynb
+
 # behavior cloning approach using an MLP
 name: "bc_mlp_00"
 

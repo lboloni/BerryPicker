@@ -1,4 +1,7 @@
-# behavior cloning approach using a simple 
+input-to-notebook:
+  - behavior_cloning/Train_BehaviorCloning.ipynb
+
+# behavior cloning approach using a simple
 name: "bc_lstm_00"
 
 # information about the sp specified by the exp/run

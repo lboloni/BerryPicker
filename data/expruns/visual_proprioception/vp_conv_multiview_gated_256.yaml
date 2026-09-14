@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception_multiview.ipynb
+
 # Visual-proprioception regressor on top of a multi-view sensor processor.
 name: "conv-encoder-256-multiview-gated"
 sensor_processing: "ConvVaeSensorProcessing_multiview"

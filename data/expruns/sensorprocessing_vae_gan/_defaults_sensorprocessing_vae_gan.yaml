@@ -42,3 +42,6 @@ training_data:
 validation_data:
   - ["random-both-cameras-video", "2025_03_08__14_23_19", "dev2"]
   - ["random-both-cameras-video", "2025_03_08__14_24_52", "dev2"]
+input-to-notebook:
+  - sensorprocessing/Train_VAE_GAN.ipynb
+  - sensorprocessing/Verify_VAE_GAN.ipynb

@@ -42,4 +42,5 @@ validation_data:
 # the default robot controller info, if needed
 robot_exp: "robot_al5d"
 robot_run: "position_controller_00"
+input-to-notebook: []
 

@@ -1,3 +1,7 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+
 
 name: "vit_base_256_028"
 model_type: "ViTProprioTunedRegression"

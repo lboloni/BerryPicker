@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
 name: "comp_vae"
 
 tocompare:

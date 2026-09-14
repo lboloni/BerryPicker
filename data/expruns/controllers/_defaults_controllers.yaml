@@ -1,2 +1,3 @@
 # the default values for all the controllers
 # NOTE: because this applies to all kind of controllers, it might be a bit of a mess
+input-to-notebook: []

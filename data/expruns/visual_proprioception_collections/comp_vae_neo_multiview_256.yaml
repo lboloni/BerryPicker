@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception_multiview.ipynb
+
 name: "comp_vae_neo_multiview_256"
 tocompare:
   - "vp_vae_neo_multiview_concat_256"

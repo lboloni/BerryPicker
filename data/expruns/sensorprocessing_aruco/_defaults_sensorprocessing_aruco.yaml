@@ -1,1 +1,3 @@
 latent_size: 128
+input-to-notebook:
+  - sensorprocessing/Verify_Aruco.ipynb

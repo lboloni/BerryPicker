@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception_multiview.ipynb
+
 # Visual-proprioception regressor on top of a multi-view sensor processor.
 name: "vit-base-128-multiview-indiv_proj"
 sensor_processing: "Vit_multiview"

@@ -47,3 +47,5 @@ training_data:
 validation_data:
   - ["random-both-cameras-video", "2025_03_08__14_23_19", ["dev2", "dev3"]]
   - ["random-both-cameras-video", "2025_03_08__14_24_52", ["dev2", "dev3"]]
+input-to-notebook:
+  - sensorprocessing/Train_ProprioTuned_VIT_multiview.ipynb

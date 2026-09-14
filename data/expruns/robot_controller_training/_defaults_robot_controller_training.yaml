@@ -1,3 +1,7 @@
+input-to-notebook:
+  - robot_controller/Train_RCCO.ipynb
+  - robot_controller/Visualize_trec.ipynb
+
 # Defaults for staged robot-controller training recipes.
 class: StagedRobotControllerTrainingRecipe
 model_file: controller_bundle.pth

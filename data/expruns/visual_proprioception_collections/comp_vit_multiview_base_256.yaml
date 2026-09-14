@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception_multiview.ipynb
+
 # All fusion heads, ViT base, latent 256
 name: "comp_vit_multiview_base_256"
 

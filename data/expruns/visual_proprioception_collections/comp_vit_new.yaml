@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
 # an experiment for the generation of the comparisons
 
 name: "comp_vit_new"

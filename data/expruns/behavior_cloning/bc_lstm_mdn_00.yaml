@@ -1,3 +1,6 @@
+input-to-notebook:
+  - behavior_cloning/Train_BehaviorCloning.ipynb
+
 name: "bc_lstm_mdn_00"
 
 # information about the sp specified by the exp/run

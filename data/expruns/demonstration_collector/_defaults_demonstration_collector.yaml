@@ -1,3 +1,6 @@
+input-to-notebook:
+  - demonstration/Collect_Demonstration.ipynb
+
 # Contains the defaults for the demonstration collector
 
 demonstration_name: "freeform"

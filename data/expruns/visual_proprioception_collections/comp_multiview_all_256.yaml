@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception_multiview.ipynb
+
 # All multi-view backbones and fusion heads, latent 256
 name: "comp_multiview_all_256"
 

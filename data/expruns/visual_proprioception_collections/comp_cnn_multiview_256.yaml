@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception_multiview.ipynb
+
 # All fusion heads, VGG19 and ResNet50, latent 256
 name: "comp_cnn_multiview_256"
 

@@ -1,3 +1,6 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception_multiview.ipynb
+
 # Visual-proprioception regressor on top of a multi-view sensor processor.
 name: "resnet50-256-multiview-attention"
 sensor_processing: "ResNetProprioTunedSensorProcessing_multiview"

@@ -1,3 +1,6 @@
+input-to-notebook:
+  - demonstration/Verify_Demonstration.ipynb
+
 # file to set the defaults for all the demonstrations
 
 # if True, only record the movement (do not record pauses)

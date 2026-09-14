@@ -1,3 +1,6 @@
+input-to-notebook:
+  - behavior_cloning/Run_BehaviorCloning.ipynb
+
 name: "default-bc-controller"
 
 exp_robot_controller: "controllers"

@@ -9,33 +9,33 @@ defaults: &defaults
 exps_to_run:
   # ConvVAE sensorprocessing
   - name: 'ConvVAE_256'
-    notebook: 'sensorprocessing/Train-Conv-VAE.ipynb'
+    notebook: 'sensorprocessing/Train_Conv_VAE.ipynb'
     params:
       <<: *defaults
       run: 'sp_vae_256'
   - name: 'ConvVAE_128'
-    notebook: 'sensorprocessing/Train-Conv-VAE.ipynb'
+    notebook: 'sensorprocessing/Train_Conv_VAE.ipynb'
     params:
       <<: *defaults
       run: 'sp_vae_128'
   # Propriotuned CNN sensorprocessing
   - name: 'ResNet50_128'
-    notebook: 'sensorprocessing/Train-ProprioTuned-CNN.ipynb'
+    notebook: 'sensorprocessing/Train_ProprioTuned_CNN.ipynb'
     params:
       <<: *defaults
       run: 'resnet50_128'
   - name: 'ResNet50_256'
-    notebook: 'sensorprocessing/Train-ProprioTuned-CNN.ipynb'
+    notebook: 'sensorprocessing/Train_ProprioTuned_CNN.ipynb'
     params:
       <<: *defaults
       run: 'resnet50_256'
   - name: 'Vgg19_128'
-    notebook: 'sensorprocessing/Train-ProprioTuned-CNN.ipynb'
+    notebook: 'sensorprocessing/Train_ProprioTuned_CNN.ipynb'
     params:
       <<: *defaults
       run: 'vgg19_128'
   - name: 'Vgg19_256'
-    notebook: 'sensorprocessing/Train-ProprioTuned-CNN.ipynb'
+    notebook: 'sensorprocessing/Train_ProprioTuned_CNN.ipynb'
     params:
       <<: *defaults
       run: 'vgg19_256'
