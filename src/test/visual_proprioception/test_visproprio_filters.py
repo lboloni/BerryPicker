@@ -14,7 +14,10 @@ from visual_proprioception.visproprio_filters import (
     KalmanPositionFilter,
     NoFilter,
     create_position_filter,
+    estimate_noise,
     filter_sequence,
+    tune_ema,
+    tune_kalman,
 )
 
 
@@ -217,6 +220,99 @@ class TestCreatePositionFilter(unittest.TestCase):
             create_position_filter({"position_filter": "particle"})
 
         self.assertIn("kalman", str(caught.exception))
+
+
+class TestEstimateNoise(unittest.TestCase):
+    def test_measurement_noise_recovers_the_residual_variance(self):
+        rng = np.random.default_rng(8)
+        targets = np.zeros((6000, 2))
+        scale = np.array([0.2, 0.05])
+        predictions = targets + rng.normal(0.0, 1.0, targets.shape) * scale
+
+        process_noise, measurement_noise = estimate_noise(
+            predictions, targets, [6000], 0.1)
+
+        np.testing.assert_allclose(measurement_noise, scale ** 2, rtol=0.1)
+        self.assertEqual(process_noise.shape, (2,))
+
+    def test_a_constant_velocity_target_has_no_process_noise(self):
+        steps = 300
+        targets = np.stack([
+            0.004 * np.arange(steps),
+            0.001 * np.arange(steps),
+        ], axis=1)
+
+        process_noise, _ = estimate_noise(targets, targets, [steps], 0.1)
+
+        np.testing.assert_allclose(process_noise, np.zeros(2), atol=1e-12)
+
+    def test_boundaries_are_not_read_as_acceleration(self):
+        ramp = (0.004 * np.arange(150)).reshape(-1, 1)
+        # Two demonstrations, each a clean ramp, but with a jump between them.
+        targets = np.vstack([ramp, ramp + 5.0])
+
+        split, = estimate_noise(targets, targets, [150, 150], 0.1)[:1]
+        joined, = estimate_noise(targets, targets, [300], 0.1)[:1]
+
+        np.testing.assert_allclose(split, np.zeros(1), atol=1e-12)
+        self.assertGreater(joined[0], 0.0)
+
+
+class TestTuning(unittest.TestCase):
+    def make_data(self, seed=9, steps=400, noise=0.18):
+        rng = np.random.default_rng(seed)
+        truth = (0.3 + 0.004 * np.arange(steps)).reshape(-1, 1)
+        return truth + rng.normal(0.0, noise, (steps, 1)), truth
+
+    def test_tune_ema_returns_the_documented_shape(self):
+        predictions, targets = self.make_data()
+
+        tuned = tune_ema(predictions, targets, [400], 0.1)
+
+        self.assertEqual(set(tuned), {"parameters", "rmse", "candidates", "errors"})
+        self.assertEqual(tuned["parameters"].shape, (1,))
+        self.assertEqual(tuned["errors"].shape, (len(tuned["candidates"]), 1))
+
+    def test_tune_ema_beats_the_unfiltered_predictions(self):
+        predictions, targets = self.make_data()
+
+        tuned = tune_ema(predictions, targets, [400], 0.1)
+
+        unfiltered = np.sqrt(np.mean((predictions - targets) ** 2))
+        self.assertLess(tuned["rmse"][0], unfiltered)
+        # The reported RMSE must be what that parameter actually achieves.
+        filtered = filter_sequence(
+            EMAPositionFilter(tuned["parameters"]), predictions, [400], 0.1)
+        np.testing.assert_allclose(
+            np.sqrt(np.mean((filtered - targets) ** 2)), tuned["rmse"][0])
+
+    def test_tune_ema_reports_the_minimum_of_its_own_sweep(self):
+        predictions, targets = self.make_data()
+
+        tuned = tune_ema(predictions, targets, [400], 0.1)
+
+        self.assertAlmostEqual(tuned["rmse"][0], tuned["errors"][:, 0].min())
+
+    def test_tune_kalman_beats_the_unfiltered_predictions(self):
+        predictions, targets = self.make_data()
+        process_noise, measurement_noise = estimate_noise(
+            predictions, targets, [400], 0.1)
+
+        tuned = tune_kalman(predictions, targets, [400], 0.1,
+                            process_noise, measurement_noise)
+
+        unfiltered = np.sqrt(np.mean((predictions - targets) ** 2))
+        self.assertLess(tuned["rmse"][0], unfiltered)
+
+    def test_noisier_fields_prefer_longer_time_constants(self):
+        rng = np.random.default_rng(10)
+        steps = 3000
+        truth = np.tile((0.3 + 0.0005 * np.arange(steps)).reshape(-1, 1), (1, 2))
+        predictions = truth + rng.normal(0.0, 1.0, (steps, 2)) * np.array([0.05, 0.4])
+
+        tuned = tune_ema(predictions, truth, [steps], 0.1)
+
+        self.assertLess(tuned["parameters"][0], tuned["parameters"][1])
 
 
 if __name__ == "__main__":

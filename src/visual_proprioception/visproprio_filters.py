@@ -165,6 +165,83 @@ def create_position_filter(exp):
     return create(exp)
 
 
+def estimate_noise(predictions, targets, lengths, dt):
+    """Starting Kalman noise terms measured from a training set.
+
+    Measurement noise is the variance of the regressor's residual. Process
+    noise is the acceleration noise density of the target trajectory, taken
+    within each sequence so that the jump between two demonstrations does not
+    register as acceleration.
+
+    Returns:
+        (process_noise, measurement_noise), both per field
+    """
+    predictions = np.asarray(predictions, dtype=float)
+    targets = np.asarray(targets, dtype=float)
+    measurement_noise = np.var(predictions - targets, axis=0)
+    changes = []
+    index = 0
+    for length in lengths:
+        segment = targets[index:index + length]
+        velocity = np.diff(segment, axis=0) / dt
+        changes.append(np.diff(velocity, axis=0))
+        index += length
+    process_noise = np.vstack(changes).var(axis=0) / dt
+    return process_noise, measurement_noise
+
+
+def _sweep(build, candidates, predictions, targets, lengths, dt):
+    """Per-field RMSE for each candidate parameter value."""
+    errors = np.empty((len(candidates), predictions.shape[1]))
+    for row, candidate in enumerate(candidates):
+        filtered = filter_sequence(build(candidate), predictions, lengths, dt)
+        errors[row] = np.sqrt(np.mean((filtered - targets) ** 2, axis=0))
+    return errors
+
+
+def _best(candidates, errors):
+    fields = errors.shape[1]
+    best = errors.argmin(axis=0)
+    return {
+        "parameters": np.asarray(candidates)[best],
+        "rmse": errors[best, np.arange(fields)],
+        "candidates": np.asarray(candidates),
+        "errors": errors,
+    }
+
+
+def tune_ema(predictions, targets, lengths, dt, candidates=None):
+    """Per-field EMA time constant minimizing RMSE on the supplied data.
+
+    The fields are filtered independently, so sweeping one shared time constant
+    and taking the per-field minimum gives each field its own optimum.
+    """
+    fields = predictions.shape[1]
+    if candidates is None:
+        candidates = np.geomspace(0.02, 20.0, 60)
+    errors = _sweep(
+        lambda tau: EMAPositionFilter(np.full(fields, tau)),
+        candidates, predictions, targets, lengths, dt)
+    return _best(candidates, errors)
+
+
+def tune_kalman(predictions, targets, lengths, dt,
+                process_noise, measurement_noise, candidates=None):
+    """Per-field multiplier on the measurement noise minimizing RMSE.
+
+    The estimator is sensitive to the ratio of the two noise terms rather than
+    their absolute scale, so the sweep moves the measurement noise and leaves
+    the process noise at its measured value.
+    """
+    if candidates is None:
+        candidates = np.geomspace(0.01, 1000.0, 60)
+    errors = _sweep(
+        lambda scale: KalmanPositionFilter(
+            process_noise, np.asarray(measurement_noise, dtype=float) * scale),
+        candidates, predictions, targets, lengths, dt)
+    return _best(candidates, errors)
+
+
 def filter_sequence(position_filter, predictions, lengths, dt):
     """Filter stacked predictions, resetting at every sequence boundary.
 
