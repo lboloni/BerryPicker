@@ -1,0 +1,22 @@
+input-to-notebook:
+  - visual_proprioception/Tune_PositionFilter.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
+# Exponential averaging over the output of the vp_convvae_128 regressor.
+# A second encoder family, so that any measured gain is not specific to the
+# proprioception-tuned CNN. Trains nothing; reuses the base run's regressor
+# and cached latents.
+name: "conv-vae-128-ema"
+
+base_experiment: visual_proprioception
+base_run: vp_convvae_128
+
+position_filter: ema
+
+# Time constants in seconds, in RobotPosition.FIELDS order:
+# height, distance, heading, wrist_angle, wrist_rotation, gripper.
+# The optimal time constant grows with the encoder's error, so these values,
+# fitted for the stronger vgg19 model, are a lower bound for this run.
+# Refine with Tune_PositionFilter.ipynb.
+filter_tau: [0.6, 0.5, 0.4, 0.6, 0.9, 0.8]

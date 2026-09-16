@@ -1,0 +1,16 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
+# The filter comparison: identical encoder and identical regressor weights in
+# all three runs, differing only in how the predicted positions are filtered.
+# Any difference in error is attributable to the filter alone.
+
+name: "comp_filter_vgg19_128"
+
+tocompare:
+  - "vp_ptun_vgg19_128"
+  - "vp_ptun_vgg19_128_ema"
+  - "vp_ptun_vgg19_128_kalman"
+
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'

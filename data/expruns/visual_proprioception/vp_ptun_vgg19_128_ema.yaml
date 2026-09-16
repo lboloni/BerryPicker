@@ -1,0 +1,20 @@
+input-to-notebook:
+  - visual_proprioception/Tune_PositionFilter.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
+# Exponential averaging over the output of the vp_ptun_vgg19_128 regressor.
+# This run trains nothing: it reuses that run's trained regressor and its
+# cached latents, so any difference in error is due to the filter alone.
+name: "ptun-vgg19-128-ema"
+
+base_experiment: visual_proprioception
+base_run: vp_ptun_vgg19_128
+
+position_filter: ema
+
+# Time constants in seconds, in RobotPosition.FIELDS order:
+# height, distance, heading, wrist_angle, wrist_rotation, gripper.
+# Starting values from DESIGN-TemporalVisualProprioception.md (4-9 frames at
+# 10 Hz); refine with Tune_PositionFilter.ipynb.
+filter_tau: [0.6, 0.5, 0.4, 0.6, 0.9, 0.8]

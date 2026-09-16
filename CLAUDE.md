@@ -18,6 +18,7 @@ The codebase is driven by `src/exp_run_config.py` (a local `Config` singleton, n
 ## Where the design lives
 Design docs are the source of truth for what's actually implemented vs. proposed-but-not-built; don't infer status from code alone.
 - `src/sensorprocessing/DESIGN-*.md` — composite SP engine, VAE-GAN, multiview VAE, proprioception-tuned CNN, random-projection baseline, sensor-processing memory/temporal context. Several of these (e.g. composite ops, sensor-processing memory) are proposals, not yet implemented.
+- `src/visual_proprioception/DESIGN-TemporalVisualProprioception.md` — recursive estimators (EMA, Kalman, LSTM) over the observation stream, with the measured per-frame motion and error figures that motivate them. A proposal; no temporal component exists.
 - `src/robot_controller/DESIGN-RobotController.md` — the RCCO graph-controller framework.
 - `data/expruns/robot_controller/DESIGN_Training_Recipe.md` — the staged training recipe and controller-bundle export.
 - `data/expruns/DESIGN-ExpRun-Notebooks.md` — the `input-to-notebook` exp/run field.

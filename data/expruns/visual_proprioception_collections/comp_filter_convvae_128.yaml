@@ -1,0 +1,16 @@
+input-to-notebook:
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
+# The same filter comparison on a second encoder family, to check that any
+# measured gain is a property of the temporal redundancy rather than of one
+# encoder.
+
+name: "comp_filter_convvae_128"
+
+tocompare:
+  - "vp_convvae_128"
+  - "vp_convvae_128_ema"
+  - "vp_convvae_128_kalman"
+
+proprioception_training_task: 'proprio_regressor_training'
+proprioception_testing_task: 'proprio_regressor_validation'

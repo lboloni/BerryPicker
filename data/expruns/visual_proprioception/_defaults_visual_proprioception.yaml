@@ -16,6 +16,13 @@ epochs: 100
 # learning rate for the regressor's Adam optimizer
 learning_rate: 0.001
 
+# Causal filtering of the regressor output: none | ema | kalman.
+# 'none' is the unfiltered behaviour that every existing run expects.
+# See src/visual_proprioception/DESIGN-TemporalVisualProprioception.md
+position_filter: none
+# elapsed observation time between frames, in seconds (10 Hz demonstrations)
+sample_interval: 0.1
+
 # the training data in the demonstration / subrun / camera form
 #training_data:
 #  - ["freeform", "2024_12_26__16_40_20", "dev2"]

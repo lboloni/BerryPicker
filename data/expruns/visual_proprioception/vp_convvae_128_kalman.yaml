@@ -1,0 +1,29 @@
+input-to-notebook:
+  - visual_proprioception/Tune_PositionFilter.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+  - visual_proprioception/Compare_VisualProprioception.ipynb
+
+# Constant-velocity Kalman filtering over the output of the vp_convvae_128
+# regressor. A second encoder family, so that any measured gain is not
+# specific to the proprioception-tuned CNN. Trains nothing; reuses the base
+# run's regressor and cached latents.
+name: "conv-vae-128-kalman"
+
+base_experiment: visual_proprioception
+base_run: vp_convvae_128
+
+position_filter: kalman
+
+# Six independent [position, velocity] filters. Both vectors are in
+# RobotPosition.FIELDS order:
+# height, distance, heading, wrist_angle, wrist_rotation, gripper.
+
+# Acceleration noise density of the commanded trajectory, derived from the
+# TRAINING demonstration only. This describes the robot, not the encoder, so
+# it is shared with the vgg19 filtered runs.
+filter_process_noise: [0.02189, 0.00885, 0.00357, 0.01451, 0.00260, 0.11240]
+
+# PLACEHOLDER. Measurement noise is the variance of this encoder's error, and
+# no saved per-field RMSE exists for conv-vae-128; these are the vgg19 values.
+# Run Tune_PositionFilter.ipynb before reading anything into this run's result.
+filter_measurement_noise: [0.03386, 0.01232, 0.00449, 0.02657, 0.02220, 0.10240]
