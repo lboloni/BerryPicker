@@ -110,6 +110,69 @@ measured result is itself informative: it estimates how much of the error is
 systematic rather than observation noise, and a systematic component cannot be
 removed by any causal filter.
 
+## Measured result: the bound does not hold
+
+`Flow_FilteredVsUnfiltered.ipynb` has since been run end to end on the
+random-projection VGG19 encoder (`vgg19_rademacher_128`, 1807 training frames
+in four demonstrations, evaluated on two held-out ones). Parameters were tuned
+on the training demonstrations by `tune_ema` / `tune_kalman`. Normalized RMSE
+on the held-out set:
+
+| Field | unfiltered | EMA | Kalman | best gain |
+|---|---|---|---|---|
+| height | 0.2298 | 0.2186 | 0.2229 | 1.05x |
+| distance | 0.1380 | 0.1342 | 0.1362 | 1.03x |
+| heading | 0.1179 | 0.1131 | 0.1157 | 1.04x |
+| wrist_angle | 0.2104 | 0.1976 | 0.1939 | 1.08x |
+| wrist_rotation | 0.1615 | 0.1588 | 0.1605 | 1.02x |
+| gripper | 0.3260 | 0.3238 | 0.3276 | 1.01x |
+
+**One to eight percent, not two to three times.** The tuner also chose time
+constants of 0.13 to 0.47 seconds, that is 1.3 to 4.7 frames, well below the
+4 to 9 frames the white-noise model predicted: given the real error, heavier
+smoothing costs more in lag than it recovers in noise.
+
+The cause is the correlation the section above flagged, and it is much stronger
+than that caveat implied. Autocorrelation of the residual within a
+demonstration:
+
+| Lag (frames) | height | distance | heading | wrist_angle | wrist_rotation | gripper |
+|---|---|---|---|---|---|---|
+| 1 | 0.764 | 0.714 | 0.638 | 0.889 | 0.940 | 0.943 |
+| 5 | 0.530 | 0.492 | 0.390 | 0.788 | 0.872 | 0.788 |
+| 10 | 0.369 | 0.344 | 0.229 | 0.689 | 0.787 | 0.560 |
+| 20 | 0.205 | 0.158 | 0.079 | 0.511 | 0.594 | 0.197 |
+
+White error would show roughly zero at lag 1. Splitting the residual into a
+five-frame moving average and the remainder, the fast part carries only 4% of
+the variance for `gripper`, 9% for `wrist_angle` and at most 29% for `heading`.
+The other 71 to 96% is a slowly varying bias: the encoder is not making
+independent mistakes about a static arm, it is confidently wrong about what it
+is looking at for stretches of many frames. No causal filter removes that.
+
+The per-field ordering confirms the mechanism: `heading` has the largest fast
+share (29%) and the largest EMA gain, `gripper` the smallest (4%) and the
+smallest gain. The achievable gain is bounded by `1 / sqrt(1 - fast share)`,
+which is 1.18x for `heading` and 1.02x for `gripper`. The filters are already
+close to that ceiling, so there is nothing left for a better-tuned filter, a
+longer window, or a smarter estimator of the same kind to recover.
+
+By this document's own criterion, the answer is a better encoder rather than a
+filter. Two consequences:
+
+- Filtering is cheap and slightly positive, so it is reasonable to leave on.
+  It is not a route to a materially better proprioceptor.
+- The LSTM and switching-model proposals below inherit this result. Their
+  advantage over EMA would have to come from modelling the *systematic* error,
+  not from averaging observation noise, and nothing measured here suggests they
+  can. Establishing that the residual bias is predictable from the observation
+  stream should precede implementing them.
+
+This was measured on the training-free random-projection encoder, whose
+unfiltered error is larger than the proprioception-tuned CNN's. A stronger
+encoder has less error to remove and, unless its error is markedly less
+correlated, less to gain.
+
 ## Where the estimator belongs
 
 Two placements are possible, and they are not equivalent.

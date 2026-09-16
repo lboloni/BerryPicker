@@ -26,8 +26,11 @@ from sensorprocessing.helper_training_data import (  # noqa: F401
     collate_multiview,
     make_multiview_loaders,
 )
-from .visproprio_filters import NoFilter, create_position_filter, filter_sequence
-from .visproprio_models import VisProprio_SimpleMLPRegression
+# The flow notebooks import this module as a top-level `visproprio_helper`
+# rather than through its package, so these must be absolute imports.
+from visual_proprioception.visproprio_filters import (
+    NoFilter, create_position_filter, filter_sequence)
+from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegression
 
 
 # Which cached-latent fields hold each dataset, as the notebooks name them.
