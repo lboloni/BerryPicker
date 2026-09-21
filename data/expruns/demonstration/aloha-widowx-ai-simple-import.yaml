@@ -1,0 +1,10 @@
+# Partial 10 Hz RGB import produced by demonstration/import_aloha.py.
+# The source Aloha recording remains authoritative for discarded modalities.
+name: "aloha-widowx-ai-simple-import"
+external_data_dir: "~/Downloads"
+
+cameras:
+  all:
+    fps: 10
+    width: 424
+    height: 240
