@@ -1,6 +1,6 @@
 """Small helpers shared by the BerryPicker experiment-flow notebooks.
 
-See data/expruns/DESIGN-ExpRun-Notebooks.md for the flow contract.
+See data/expruns/DESIGN-Flows.md for the flow contract.
 """
 
 import pathlib

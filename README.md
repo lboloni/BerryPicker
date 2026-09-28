@@ -43,10 +43,11 @@ FIXME: describe the content of the main config file
 
 ## Experiment configuration
 
-FIXME: what is a group, what is a run
-FIXME: experiment data directory
-FIXME: group config, run config, system dependent run config
-FIXME: how to use an experiment configuration from code
+Experiments are configured as exp/runs: YAML templates grouped in families
+under `data/expruns/`, loaded with `Config().get_experiment(experiment, run)`.
+See [data/expruns/DESIGN-ExpRun.md](data/expruns/DESIGN-ExpRun.md) for the
+exp/run framework and [data/expruns/DESIGN-Flows.md](data/expruns/DESIGN-Flows.md)
+for flows, which run a series of exp/runs in an isolated workspace.
 
 ## WidowX Gazebo camera collection
 

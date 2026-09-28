@@ -21,7 +21,8 @@ Design docs are the source of truth for what's actually implemented vs. proposed
 - `src/visual_proprioception/DESIGN-TemporalVisualProprioception.md` — recursive estimators (EMA, Kalman, LSTM) over the observation stream, with the measured per-frame motion and error figures that motivate them. A proposal; no temporal component exists.
 - `src/robot_controller/DESIGN-RobotController.md` — the RCCO graph-controller framework.
 - `data/expruns/robot_controller/DESIGN_Training_Recipe.md` — the staged training recipe and controller-bundle export.
-- `data/expruns/DESIGN-ExpRun-Notebooks.md` — the `input-to-notebook` exp/run field.
+- `data/expruns/DESIGN-ExpRun.md` — the exp/run framework: templates, paths, creation styles, the `input-to-notebook` field, the stage notebook contract and `exp.done()`.
+- `data/expruns/DESIGN-Flows.md` — flows: the workspace, queue building with `flow_entry`, fail-fast execution and the final report (`src/flow.py`).
 
 ## Tests
 Tests are plain `unittest`/`pytest` under `src/test/`, mirroring the `src/` package layout. Each test file inserts `src/` onto `sys.path` itself, so tests run from the repo root:
@@ -30,4 +31,4 @@ pytest src/test
 ```
 
 ## Notebooks
-Training/verification entry points are Jupyter notebooks (run via Papermill), not scripts. Each exp/run declares which notebook(s) are canonical via the `input-to-notebook` field (see `DESIGN-ExpRun-Notebooks.md`).
+Training/verification entry points are Jupyter notebooks (run via Papermill), not scripts. Each exp/run declares which notebook(s) are canonical via the `input-to-notebook` field (see `DESIGN-ExpRun.md`). Flows run them in order (see `DESIGN-Flows.md`).
