@@ -275,7 +275,9 @@ class Config:
         subdirs = [p.name for p in data_dir.iterdir() if p.is_dir()]
         return subdirs
 
-    def get_experiment(self, experiment_name, run_name, subrun_name=None, creation_style="exist-ok"):
+    def get_experiment(
+            self, experiment_name, run_name, subrun_name=None,
+            creation_style="exist-ok", create_data_dir=True):
         """Returns an experiment configuration, which is the 
         mixture between the system-dependent configuration and the system independent configuration.
         
@@ -283,7 +285,9 @@ class Config:
             "exist-ok" - reuse the cached values
             "discard-old" - discard the old values, start from scratch
             "version" - create a new version
-        
+
+        If create_data_dir is false, resolve and return the exp/run without
+        creating or changing its data directory.
         """
         current_directory = pathlib.Path(__file__).resolve().parent
         #
@@ -348,6 +352,9 @@ class Config:
         exp_config[Config.DATA_DIR] = str(data_dir)
         exp_config[Config.SUBRUN_NAME] = subrun_name
 
+        if not create_data_dir:
+            return Experiment(exp_config)
+
         if creation_style == "exist-ok":
             # it is ok if the directory exists, but then we don't measure time 
             # or save the values
@@ -358,17 +365,16 @@ class Config:
                 exp.save()
         elif creation_style == "version":
             # if the directory exists, move it to a backup
-            if data_dir.exists():                
+            if data_dir.exists():
                 now = datetime.now()
                 formatted = now.strftime("%Y-%m-%d-%H-%M-%S")
-                print(formatted)  # Example output: 2025-05-25-17-11            
                 backup_dir = data_dir.parent / f"{data_dir.name}_{formatted}"
                 self.__log(f"Moving existing experiment directory to {backup_dir}")
                 data_dir.rename(backup_dir)
-                data_dir.mkdir(exist_ok=True, parents=True)
-                exp = Experiment(exp_config)
-                exp.set_time_started()
-                exp.save()
+            data_dir.mkdir(exist_ok=True, parents=True)
+            exp = Experiment(exp_config)
+            exp.set_time_started()
+            exp.save()
         elif creation_style == "discard-old":
             # if the directory exists, remove it
             if data_dir.exists():
@@ -379,5 +385,7 @@ class Config:
             data_dir.mkdir(exist_ok=True, parents=True)
             exp = Experiment(exp_config)
             exp.set_time_started()
-            exp.save()    
+            exp.save()
+        else:
+            raise Exception(f"Unknown creation_style {creation_style}")
         return exp

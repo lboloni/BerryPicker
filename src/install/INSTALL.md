@@ -26,7 +26,7 @@ berry_install.sh
 
 ## Activate BerryPicker
 
-This is needed before running vscode from the same terminal, or before running automate.py. 
+This is needed before running vscode from the same terminal, or before running the flow notebooks from the command line. 
 
 ```
 berry_activate.sh

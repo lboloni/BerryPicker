@@ -4,7 +4,6 @@ bc_factory.py
 Creating different models for behavior cloning based on the specification in the exp/run
 """
 
-import pathlib
 import socket
 import torch.nn as nn
 import torch.optim as optim
@@ -51,34 +50,3 @@ def create_optimizer(exp, model):
         raise Exception("Optimizer {exp['optimizer']} not implemented yet")
     return optimizer
 
-def external_setup(setupname, rootdir: pathlib.Path):
-    """Create an external directory 'setupname' where the generated exp/runs and results will go. This allows separating a set of experiments both for training and robot running. 
-
-    Under this directory, there will be two directories:
-    * 'expruns' - contains the copied necessary expruns from the source code + the programatically generated expruns.
-    * 'results' - contains the training data and the trained models.
-    
-    The training data should go into results/demonstration under some directory (eg. touch-apple).
-    """
-    setup_path = pathlib.Path(rootdir, setupname)
-    expruns_path = pathlib.Path(setup_path, "expruns")
-    results_path = pathlib.Path(setup_path, "results")
-
-    print(f"***Path for external experiments:\n{expruns_path}")
-    expruns_path.mkdir(exist_ok=True, parents=True)
-    print(f"***Path for external data:\n{results_path}")
-    results_path.mkdir(exist_ok=True, parents=True)
-
-    Config().set_exprun_path(expruns_path)
-    Config().set_results_path(results_path)
-
-    # Copy the necessary experiments into the external directory
-    Config().copy_experiment("demonstration")
-    Config().copy_experiment("sensorprocessing_conv_vae")
-    Config().copy_experiment("robot_al5d")
-    Config().copy_experiment("automate")
-    Config().copy_experiment("behavior_cloning")
-    Config().copy_experiment("behavior_cloning_machine")
-    Config().copy_experiment("controllers")
-
-    return expruns_path, results_path

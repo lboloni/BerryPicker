@@ -86,21 +86,29 @@ run overrides make mixed families unambiguous.
 
 ## Using the field in a flow
 
-A flow normally creates an external setup with two sibling directories:
+A flow is a notebook that generates exp/runs and executes their notebooks in
+an explicit order. The shared helpers are in `src/flow.py`.
+
+`setup_flow(flow_name, families)` creates an external workspace below the
+machine-specific `flows_path`:
 
 ```text
-<setup>/
-  expruns/    copied defaults and generated run configurations
-  results/    experimental data, models, and executed notebooks
+<flows_path>/<flow_name>/
+  expruns/              copied families and generated run configurations
+  results/              experimental data and models
+  executed-notebooks/   the notebooks executed by Papermill
 ```
 
-The flow points `Config` at these directories with `set_exprun_path()` and
-`set_results_path()`, then copies each required experiment family. Copying the
-family also copies its default and thus its `input-to-notebook` value.
+It copies the listed exp/run families from the currently active exp/run path
+and points `Config` at the workspace with `set_exprun_path()` and
+`set_results_path()`. Copying a family also copies its default and thus its
+`input-to-notebook` value.
 
-For a homogeneous family, a generated run can inherit the field from the copied
-default. For a mixed family, the generator writes the appropriate override into
-the generated run. The same value should then be used for the execution entry:
+For a homogeneous family, a generated run inherits the field from the copied
+default. For a mixed family, the generator writes the appropriate override
+into the generated run. The flow entry is then created from the exp/run with
+`flow_entry()`, which resolves the exp/run with `create_data_dir=False` and
+takes the notebook from `input-to-notebook`:
 
 ```python
 values = copy.copy(params)
@@ -108,42 +116,49 @@ values["input-to-notebook"] = [
     "visual_proprioception/Train_VisualProprioception.ipynb",
     "visual_proprioception/Verify_VisualProprioception.ipynb",
 ]
-
 _write_exprun(experiment, run, values)
 
-train_entry = {
-    "name": f"Train_{run}",
-    "notebook": values["input-to-notebook"][0],
-    "experiment": experiment,
-    "run": run,
-    "expruns_path": expruns_path.as_posix(),
-    "results_path": results_path.as_posix(),
-}
+train_entry = flow_entry(f"Train_{run}", experiment, run, 0, creation_style)
+verify_entry = flow_entry(f"Verify_{run}", experiment, run, 1, "exist-ok")
 ```
 
-The verification step for this exp/run uses
-`values["input-to-notebook"][1]`. A generated comparison run usually contains
-only its applicable comparison notebook and uses index zero.
+A producer entry receives the flow's `creation_style`. The second entry point
+of the same exp/run (a verification of a trained model) receives `exist-ok`,
+because it reopens the directory of the producer rather than replacing it. A
+generated comparison run usually contains only its comparison notebook and
+uses index zero.
 
-The execution portion of the flow passes at least the experiment and run to the
-selected notebook. External flows also pass the external exprun and results
-paths:
+`run_flow(entries, expruns_path, results_path, notebooks_path)` executes the
+entries in order with one overall progress bar. Every notebook receives the
+same Papermill parameters:
 
 ```python
 parameters = {
     "experiment": entry["experiment"],
     "run": entry["run"],
-    "expruns_path": entry["expruns_path"],
-    "results_path": entry["results_path"],
+    "creation_style": entry["creation_style"],
+    "expruns_path": expruns_path,
+    "results_path": results_path,
 }
 ```
 
+This is also the interface for running a stage notebook directly: its cell
+tagged `parameters` defines these five names with useful defaults.
+
 The notebook loads the resolved configuration with
-`Config().get_experiment(experiment, run, ...)`. `Config` derives and creates the
-result directory as `<experiment_data>/<experiment>/<run>` (and adds a subrun
-component when requested), exposing it as `exp["data_dir"]`. The notebook then
-writes its experimental artifacts there. Papermill's executed copy of the
-notebook can also be written under the flow's `results` directory.
+`Config().get_experiment(experiment, run, creation_style=creation_style)`.
+`Config` derives and creates the result directory as
+`<experiment_data>/<experiment>/<run>` (and adds a subrun component when
+requested), exposing it as `exp["data_dir"]`. The notebook writes its
+experimental artifacts there, and its last cell calls `exp.done()`, which
+records `time_done` in the `exprun.yaml` of the result directory.
+
+A failing notebook stops the flow. The flow catches the exception only to run
+its final report cell, `display_flow_report()`, which lists the completed and
+incomplete stages (a stage is complete when its `exprun.yaml` contains
+`time_done`) and links the workspace and the final results. The report cell
+then re-raises the exception, so Papermill also marks the flow as failed, and
+the executed notebook of the failed stage remains in `executed-notebooks`.
 
 Using the exp/run field as the source of the execution entry prevents the
 generated configuration and the flow's notebook choice from drifting apart.
@@ -155,11 +170,18 @@ generated configuration and the flow's notebook choice from drifting apart.
 - every default and every resolved run has a list-valued
   `input-to-notebook` field;
 - every listed path exactly matches an existing notebook below `src`;
-- notebook paths in automation configurations exist; and
-- notebook references used by flow generators are declared by an exp/run.
+- notebook references used by flow generators are declared by an exp/run;
+- every flow uses the helpers of `src/flow.py` and ends with the report;
+- every declared notebook has the five standard parameters and ends with
+  `exp.done()` (except `Verify_Demonstration`, which redirects `data_dir` to an
+  external import directory); and
+- stage and flow notebooks contain no saved outputs.
+
+`src/test/test_flows.py` tests the helpers of `src/flow.py` and the creation
+styles of `Config.get_experiment`.
 
 Run the checks from the repository root with:
 
 ```shell
-PYTHONPATH=src python -m unittest src.test.test_exprun_notebooks -v
+PYTHONPATH=src python -m unittest src.test.test_exprun_notebooks src.test.test_flows -v
 ```
