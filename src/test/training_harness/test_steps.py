@@ -34,11 +34,7 @@ class TwoViewSum(torch.nn.Module):
 
 class TestEpochSteps(unittest.TestCase):
     def setUp(self):
-        self.config_patch = patch.object(
-            runner.Config, "runtime", {"device": torch.device("cpu")}, create=True
-        )
-        self.config_patch.start()
-        patch.object(steps.Config, "runtime", {"device": torch.device("cpu")}, create=True).start()
+        patch.dict(steps.Config().runtime, {"device": torch.device("cpu")}).start()
 
     def tearDown(self):
         patch.stopall()

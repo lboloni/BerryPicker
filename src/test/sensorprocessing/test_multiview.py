@@ -22,6 +22,7 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
+from exp_run_config import Config
 from sensorprocessing import (
     multiview_backbones,
     multiview_fusion,
@@ -39,6 +40,10 @@ from sensorprocessing.helper_training_data import (
 
 
 FUSIONS = list(multiview_fusion.FUSION_TYPES)
+
+
+def setUpModule():
+    Config().runtime["device"] = "cpu"
 
 
 class TinyViT(nn.Module):

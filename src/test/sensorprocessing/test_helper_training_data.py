@@ -14,7 +14,7 @@ SOURCE_ROOT = Path(__file__).parents[2]
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from exp_run_config import Experiment
+from exp_run_config import Config, Experiment
 from sensorprocessing import (
     helper_training_data,
     sensor_processing,
@@ -307,6 +307,9 @@ class TestViTHelpers(unittest.TestCase):
 
 
 class TestProprioTunedCNNRegression(unittest.TestCase):
+    def setUp(self):
+        Config().runtime["device"] = "cpu"
+
     def test_common_pipeline_encodes_and_predicts(self):
         class TinyRegression(sp_propriotuned_cnn._ProprioTunedCNNRegression):
             def create_feature_extractor(self):

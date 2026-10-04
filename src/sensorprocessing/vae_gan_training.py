@@ -220,8 +220,6 @@ def train(exp, *, epochs=None, loaders=None, callback=None, device=None):
     if not len(train_loader) or not len(val_loader):
         raise ValueError("Training and validation loaders must be nonempty")
     device = torch.device(device or Config().runtime["device"])
-    if device.type not in {"cpu", "cuda"}:
-        raise ValueError("Resumable VAE-GAN training currently supports CPU and CUDA devices")
     model = VAEGAN(exp).to(device)
     trainer = VAEGANTrainer(model, exp)
     directory = Path(exp["data_dir"]) / "checkpoints"

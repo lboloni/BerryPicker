@@ -166,7 +166,13 @@ class Config:
             # initialize a runtime information, which is not saved
             cls._instance.runtime = {}
             # initialize the torch device, as this is almost always like this
-            cls._instance.runtime["device"] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif torch.backends.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
+            cls._instance.runtime["device"] = torch.device(device)
             Config.__log(f"Using torch device: {cls._instance.runtime['device']}")
         return cls._instance
 
