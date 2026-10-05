@@ -4,13 +4,16 @@ Run from the repository root with:
     PYTHONPATH=src python -m unittest src.test.test_flows -v
 """
 
+import json
 import pathlib
 import tempfile
 import unittest
 
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
-from flow import flow_entry, get_flow_report, run_flow, run_notebook, setup_flow
+from flow import (
+    executed_notebook_path, flow_entry, format_duration, get_flow_report,
+    run_flow, run_notebook, setup_flow)
 
 
 class FlowConfig:
@@ -139,7 +142,10 @@ class TestFlowHelpers(unittest.TestCase):
         })
 
     def test_run_flow_runs_entries_in_order(self):
-        entries = [{"name": "first"}, {"name": "second"}]
+        entries = [
+            {"name": name, "notebook": "sample/Train.ipynb",
+             "experiment": "sample", "run": name}
+            for name in ("first", "second")]
         calls = []
         progress = RecordingProgress()
 
@@ -169,13 +175,17 @@ class TestFlowHelpers(unittest.TestCase):
             calls.append(entry)
             raise RuntimeError("failed")
 
+        entries = [
+            {"name": name, "notebook": "sample/Train.ipynb",
+             "experiment": "sample", "run": name}
+            for name in ("failing", "never")]
         with self.assertRaisesRegex(RuntimeError, "failed"):
             run_flow(
-                [{"name": "failing"}, {"name": "never"}], self.source,
+                entries, self.source,
                 self.root / "results", self.root,
                 notebook_runner=fail,
                 progress_factory=lambda **kwargs: progress)
-        self.assertEqual(calls, [{"name": "failing"}])
+        self.assertEqual(calls, entries[:1])
         self.assertEqual(progress.n, 0)
         self.assertTrue(progress.closed)
 
@@ -190,11 +200,13 @@ class TestFlowHelpers(unittest.TestCase):
         (started / "exprun.yaml").write_text(
             "time_started: '2026-09-27 12:00:00.000000'\n")
         entries = [
-            {"name": "complete", "experiment": "sample", "run": "complete"},
-            {"name": "started", "experiment": "sample", "run": "started"},
+            {"name": "complete", "notebook": "sample/Train.ipynb",
+             "experiment": "sample", "run": "complete"},
+            {"name": "started", "notebook": "sample/Train.ipynb",
+             "experiment": "sample", "run": "started"},
         ]
 
-        report = get_flow_report(entries, results)
+        report = get_flow_report(entries, results, self.root)
         self.assertFalse(report["successful"])
         self.assertFalse(report["all-results-present"])
         self.assertEqual(
@@ -204,11 +216,51 @@ class TestFlowHelpers(unittest.TestCase):
 
         (started / "exprun.yaml").write_text(
             "time_done: '2026-09-27 12:01:00.000000'\n")
-        report = get_flow_report(entries, results)
+        report = get_flow_report(entries, results, self.root)
         self.assertTrue(report["successful"])
-        report = get_flow_report(entries, results, RuntimeError("failed"))
+        report = get_flow_report(
+            entries, results, self.root, RuntimeError("failed"))
         self.assertFalse(report["successful"])
         self.assertTrue(report["all-results-present"])
+
+    def test_flow_report_reads_executed_notebooks(self):
+        notebooks = self.root / "executed"
+        notebooks.mkdir()
+        entries = [
+            {"name": name, "notebook": "sample/Train.ipynb",
+             "experiment": "sample", "run": name}
+            for name in ("succeeded", "failed", "never")]
+
+        def write_notebook(entry, duration, failing_cell):
+            cells = [{"cell_type": "code", "metadata": {"papermill": {
+                "exception": failing_cell}}, "outputs": []}]
+            if failing_cell:
+                cells[0]["outputs"].append({
+                    "output_type": "error", "ename": "ValueError",
+                    "evalue": "bad value", "traceback": []})
+            executed_notebook_path(entry, notebooks).write_text(json.dumps({
+                "cells": cells,
+                "metadata": {"papermill": {"duration": duration}}}))
+
+        write_notebook(entries[0], 108.4, False)
+        write_notebook(entries[1], 6.0, True)
+
+        stages = get_flow_report(
+            entries, self.root / "results", notebooks)["stages"]
+        self.assertEqual(
+            [stage["notebook"] for stage in stages],
+            [notebooks / "Train_sample_succeeded.ipynb",
+             notebooks / "Train_sample_failed.ipynb", None])
+        self.assertEqual(
+            [stage["duration"] for stage in stages], [108.4, 6.0, None])
+        self.assertEqual(
+            [stage["error"] for stage in stages],
+            [None, "ValueError: bad value", None])
+
+    def test_format_duration(self):
+        self.assertEqual(format_duration(6.4), "6 s")
+        self.assertEqual(format_duration(108.4), "1 min 48 s")
+        self.assertEqual(format_duration(7500), "2 h 5 min")
 
 
 class TestCreationStyles(unittest.TestCase):
@@ -245,8 +297,9 @@ class TestCreationStyles(unittest.TestCase):
                    if path.name.startswith(self.run_name + "_")]
         self.assertEqual(len(backups), 1)
         report = get_flow_report(
-            [{"name": "x", "experiment": self.experiment, "run": self.run_name}],
-            self.results)
+            [{"name": "x", "notebook": "sample/Train.ipynb",
+              "experiment": self.experiment, "run": self.run_name}],
+            self.results, self.results)
         self.assertFalse(report["all-results-present"])
 
     def test_unknown_creation_style_raises(self):

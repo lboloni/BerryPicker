@@ -157,7 +157,9 @@ Every top-level flow notebook ends with a report cell:
 ```python
 final_results_path = pathlib.Path(results_path, <comparison experiment>, <comparison run>)
 report = display_flow_report(
-    entries, results_path, final_results_path, flow_error=flow_error)
+    entries, results_path, notebooks_path, final_results_path,
+    flow_error=flow_error,
+    preview_files=sorted(final_results_path.glob("*.png")))
 if flow_error is not None:
     raise flow_error
 if not report["all-results-present"]:
@@ -166,18 +168,29 @@ if not report["all-results-present"]:
 
 `get_flow_report()` checks every queued stage at
 `results/<experiment>/<run>/exprun.yaml`. A stage is complete when that file
-contains `time_done`. The report distinguishes complete, partial, and
-no-result executions and lists each incomplete stage with its expected
-result directory. If execution returns without an exception but a marker is
-missing, the final cell raises; incomplete results cannot be presented as
-success.
+contains `time_done`. For each stage it also reads the executed notebook in
+`executed-notebooks/` (named by `executed_notebook_path()`, the same rule
+`run_notebook()` uses): papermill records the run time in
+`metadata.papermill.duration` and marks the failing cell with
+`metadata.papermill.exception`, whose error output gives the stage error.
+The report distinguishes complete, partial, and no-result executions. If
+execution returns without an exception but a marker is missing, the final
+cell raises; incomplete results cannot be presented as success.
 
 `display_flow_report()` shows clickable absolute paths for the flow
 workspace, the complete results tree, and the final-results directory
-(normally the directory of the main comparison). It lists every PDF below
-the final-results directory as a link, and it can embed selected previews
-passed as `preview_files`. The paths remain visible and copyable even if a
-notebook frontend refuses to open a local `file:` link.
+(normally the directory of the main comparison). A stage table lists every
+queued stage with its status (complete, failed, incomplete, or not run), its
+duration, a link to its executed notebook, a link to its result directory,
+and, for a failed stage, the error; the total stage time follows the table.
+The report lists every PDF below the final-results directory as a link, and
+it embeds the previews passed as `preview_files`. The paths remain visible
+and copyable even if a notebook frontend refuses to open a local `file:`
+link.
+
+Comparison notebooks save every figure as a publication PDF and a
+same-basename PNG. The PDF is the linked product; the PNG is the preview,
+because notebook frontends render PNGs inline reliably and PDFs not.
 
 The checked-in flow notebook contains no saved outputs; the rendered report
 belongs to its executed copy.
