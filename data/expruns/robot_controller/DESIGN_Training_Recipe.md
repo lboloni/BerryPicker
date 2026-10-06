@@ -21,9 +21,12 @@ MDN-only stage can be omitted or configured to train both the LSTM and MDN.
 After each stage, its best validation checkpoint is restored before the next
 stage begins.
 
-The CNN–MLP alternative uses the same state machine and persistence format
-through `StagedCNNMLPTrainingRecipe`. It first trains the MLP with the CNN
-frozen, then fine-tunes the CNN encoder and MLP end-to-end using normalized
+The encoder–MLP alternative uses the same state machine and persistence
+format through `StagedEncoderMLPTrainingRecipe`. The encoder is an `SP_CNN`
+(proprioception-tuned VGG19 or ResNet-50) or an `SP_VAE` (Conv-VAE-Neo or
+VAE-GAN) component; a configured `SP_VAE` source takes only the encoder
+weights of the full VAE checkpoint. It first trains the MLP with the encoder
+frozen, then fine-tunes the encoder and MLP end-to-end using normalized
 next-action MSE. Its concrete exp/run is `trec_cnn_mlp_sample`.
 
 ## Training exp/run

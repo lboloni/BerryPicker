@@ -192,7 +192,9 @@ class Config:
         return subdirs
 
     def set_exprun_path(self, path: pathlib.Path):
-        """Sets the experiment config directories to be an external directory"""
+        """Sets the experiment config directories to be an external directory.
+        Accepts a string, as papermill passes paths to stage notebooks."""
+        path = pathlib.Path(path)
         assert path.exists()
         self.experiment_path = path
         self.__log(f"Experiment config path changed to {self.experiment_path}")
@@ -209,7 +211,9 @@ class Config:
         #return self.experiment_path
 
     def set_results_path(self, path: pathlib.Path):
-        """Sets the experiment data to be an external directory"""
+        """Sets the experiment data to be an external directory.
+        Accepts a string, as papermill passes paths to stage notebooks."""
+        path = pathlib.Path(path)
         assert path.exists()
         self.values["experiment_data"] = path
         self.__log(f"Experiment data path changed to {self.values['experiment_data']}")

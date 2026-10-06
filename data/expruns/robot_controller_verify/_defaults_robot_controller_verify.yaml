@@ -1,0 +1,9 @@
+# Teacher-forced verification of a trained robot controller (AL5D).
+# See src/robot_controller/DESIGN-BehaviorCloningFlow.md
+input-to-notebook:
+  - robot_controller/Verify_RCCO.ipynb
+
+# labels in the controller graph
+sp_component: cnn_encoder
+input_label: image_input
+output_label: robot_output

@@ -20,6 +20,8 @@ FLOW_NOTEBOOKS = (
     SOURCE_ROOT / "visual_proprioception" / "Flow_VisualProprioception_multi.ipynb",
     SOURCE_ROOT / "visual_proprioception" / "Flow_FilteredVsUnfiltered.ipynb",
     SOURCE_ROOT / "visual_proprioception" / "Flow_PtunVsRandProj_128.ipynb",
+    SOURCE_ROOT / "robot_controller" / "Flow_RCCO_BehaviorCloning.ipynb",
+    SOURCE_ROOT / "robot_controller" / "Flow_RCCO_Compare.ipynb",
 )
 # Runs Flow_VisualProprioception.ipynb once per camera, not exp/run stages
 MULTIFLOW_NOTEBOOK = (

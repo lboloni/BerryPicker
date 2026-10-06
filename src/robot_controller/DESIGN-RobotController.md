@@ -45,10 +45,12 @@ Torch tensors remain on the configured runtime device while moving through the
 graph. `reset_context()` clears inputs, outputs, and the LSTM window without
 changing trained weights.
 
-## CNN–MLP controller
+## Encoder–MLP controller
 
 The deterministic alternative is configured by
-`robot_controller/roco_cnn_mlp_sample`:
+`robot_controller/roco_cnn_mlp_sample`. The encoder may also be an
+`RCCO_SP_VAE` (Conv-VAE-Neo or VAE-GAN); `EncoderMLPTrainingModel` trains
+either kind with the MLP (see `DESIGN-BehaviorCloningFlow.md`).
 
 ```text
 image_input -> cnn_encoder -> mlp -> robot_output

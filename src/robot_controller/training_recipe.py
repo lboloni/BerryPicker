@@ -828,13 +828,16 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         return path
 
 
-class StagedCNNMLPTrainingRecipe(StagedRobotControllerTrainingRecipe):
-    """Staged deterministic behavior cloning for an SP_CNN--MLP graph."""
+class StagedEncoderMLPTrainingRecipe(StagedRobotControllerTrainingRecipe):
+    """Staged deterministic behavior cloning for an encoder--MLP graph,
+    with an SP_CNN or SP_VAE encoder."""
 
     def _create_training_model(self, spec):
-        from robot_controller.cnn_mlp_training_model import CNNMLPTrainingModel
+        from robot_controller.encoder_mlp_training_model import (
+            EncoderMLPTrainingModel,
+        )
 
-        return CNNMLPTrainingModel(spec)
+        return EncoderMLPTrainingModel(spec)
 
     def _default_monitor(self):
         return "validation_mse"
@@ -848,7 +851,7 @@ class StagedCNNMLPTrainingRecipe(StagedRobotControllerTrainingRecipe):
     def _loss_and_prediction(self, output, targets):
         if not isinstance(output, torch.Tensor) or output.shape != targets.shape:
             raise ValueError(
-                "CNN--MLP output and normalized action target must have "
+                "Encoder--MLP output and normalized action target must have "
                 "identical shapes"
             )
         return F.mse_loss(output, targets), output
@@ -861,6 +864,6 @@ def create_training_recipe(exp, **kwargs):
     """Construct the recipe selected by ``exp['class']``."""
     if exp["class"] == "StagedRobotControllerTrainingRecipe":
         return StagedRobotControllerTrainingRecipe(exp, **kwargs)
-    if exp["class"] == "StagedCNNMLPTrainingRecipe":
-        return StagedCNNMLPTrainingRecipe(exp, **kwargs)
+    if exp["class"] == "StagedEncoderMLPTrainingRecipe":
+        return StagedEncoderMLPTrainingRecipe(exp, **kwargs)
     raise ValueError(f"Unknown robot-controller training recipe {exp['class']!r}")

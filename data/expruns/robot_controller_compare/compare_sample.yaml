@@ -1,0 +1,3 @@
+name: "Comparison of the sample controllers"
+verify_runs:
+  - verify_cnn_mlp_sample

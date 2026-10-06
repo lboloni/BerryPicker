@@ -1,5 +1,5 @@
 name: "Staged ResNet-50 CNN + deterministic MLP training"
-class: StagedCNNMLPTrainingRecipe
+class: StagedEncoderMLPTrainingRecipe
 batch_size: 16
 
 controller:

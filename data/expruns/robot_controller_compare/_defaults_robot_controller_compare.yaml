@@ -1,0 +1,6 @@
+# Comparison of verified robot controllers, from the errors.csv of their
+# robot_controller_verify runs. See src/robot_controller/DESIGN-BehaviorCloningFlow.md
+input-to-notebook:
+  - robot_controller/Compare_RCCO.ipynb
+
+verify_experiment: robot_controller_verify

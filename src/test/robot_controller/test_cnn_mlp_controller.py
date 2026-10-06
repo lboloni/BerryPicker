@@ -1,4 +1,4 @@
-"""Tests for the deterministic CNN--MLP controller architecture."""
+"""Tests for the deterministic encoder--MLP controller architecture."""
 
 import json
 import pathlib
@@ -20,8 +20,9 @@ from exp_run_config import Config
 from robot_controller.graph_robot_controller import GraphRobotController
 from robot_controller.rcco_mlp import MLPController, RCCO_MLP
 from robot_controller.training_recipe import (
-    StagedCNNMLPTrainingRecipe, create_training_recipe,
+    StagedEncoderMLPTrainingRecipe, create_training_recipe,
 )
+from sensorprocessing.conv_vae_neo import ConvVAENeo
 
 
 class TinyCNN(nn.Module):
@@ -125,7 +126,7 @@ class TestCNNMLPTrainingRecipe(unittest.TestCase):
 
     def test_recipe_exports_bundle_usable_by_graph(self):
         exp = {
-            "class": "StagedCNNMLPTrainingRecipe",
+            "class": "StagedEncoderMLPTrainingRecipe",
             "data_dir": self.temporary.name, "model_file": "bundle.pth",
             "controller": {"exp": "robot_controller", "run": "controller"},
             "robot": {"exp": "robot", "run": "tiny"},
@@ -151,7 +152,7 @@ class TestCNNMLPTrainingRecipe(unittest.TestCase):
                 exp, experiment_loader=self.load_experiment,
                 dataloader_factory=self.dataloaders,
             )
-            self.assertIsInstance(recipe, StagedCNNMLPTrainingRecipe)
+            self.assertIsInstance(recipe, StagedEncoderMLPTrainingRecipe)
             recipe.train()
             bundle = pathlib.Path(self.temporary.name) / "bundle.pth"
             controller = GraphRobotController(
@@ -177,6 +178,114 @@ class TestCNNMLPTrainingRecipe(unittest.TestCase):
         ]
         self.assertIn("train_mse", records[0])
         self.assertIn("validation_mse", records[0])
+
+
+class TestVAEMLPTrainingRecipe(unittest.TestCase):
+    """An SP_VAE encoder (as used by Conv-VAE-Neo and VAE-GAN) with an MLP."""
+
+    def setUp(self):
+        Config().runtime["device"] = "cpu"
+        self.temporary = tempfile.TemporaryDirectory()
+        directory = self.temporary.name
+        self.experiments = {
+            ("robot_controller", "input"): {"rcco-type": "Input"},
+            ("robot_controller", "vae"): {
+                "rcco-type": "SP_VAE", "sp_experiment": "sp", "sp_run": "neo",
+            },
+            ("sp", "neo"): {
+                "architecture_version": 1, "image_size": [8, 8],
+                "input_channels": 3, "latent_size": 2, "base_channels": 2,
+                "max_channels": 4, "bottleneck_max_size": 4,
+                "group_norm_groups": 1, "model_file": "vae.pth",
+                "data_dir": directory,
+            },
+            ("robot_controller", "mlp"): {
+                "rcco-type": "MLP", "input_size": 2, "hidden_sizes": [4],
+                "output_size": 2, "output_activation": "sigmoid",
+                "model_file": "mlp.pth", "data_dir": directory,
+            },
+            ("robot_controller", "output"): {"rcco-type": "Output", "size": 2},
+            ("robot", "tiny"): {},
+        }
+        self.controller = {
+            "name": "VAE MLP test",
+            "components": {
+                "image": {"run": "input"}, "encoder": {"run": "vae"},
+                "mlp": {"run": "mlp"}, "output": {"run": "output"},
+            },
+            "connections": [
+                {"from_component": "image", "from_output": "input",
+                 "to_component": "encoder", "to_input": "image"},
+                {"from_component": "encoder", "from_output": "z",
+                 "to_component": "mlp", "to_input": "z"},
+                {"from_component": "mlp", "from_output": "a",
+                 "to_component": "output", "to_input": "output"},
+            ],
+        }
+        self.experiments[("robot_controller", "controller")] = self.controller
+        # a full VAE checkpoint, including the decoder
+        self.vae = ConvVAENeo(self.experiments[("sp", "neo")])
+        torch.save(self.vae.state_dict(), pathlib.Path(directory) / "vae.pth")
+        dataset = TensorDataset(torch.rand(4, 1, 3, 8, 8), torch.rand(4, 2))
+        self.loaders = (
+            DataLoader(dataset, batch_size=2), DataLoader(dataset, batch_size=2)
+        )
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def load_experiment(self, experiment, run):
+        return self.experiments[(experiment, run)]
+
+    def test_recipe_exports_vae_encoder_bundle_usable_by_graph(self):
+        exp = {
+            "class": "StagedEncoderMLPTrainingRecipe",
+            "data_dir": self.temporary.name, "model_file": "bundle.pth",
+            "controller": {"exp": "robot_controller", "run": "controller"},
+            "robot": {"exp": "robot", "run": "tiny"},
+            "initial_states": {
+                "encoder": {"mode": "configured"},
+                "mlp": {"mode": "random"},
+            },
+            "stages": [{
+                "name": "mlp_warmup", "trainable_components": ["mlp"],
+                "epochs": 1, "optimizer": "Adam",
+                "learning_rates": {"mlp": 0.001},
+                "monitor": "validation_mse",
+            }],
+            "training_data": [["demo", "train", "camera"]],
+            "validation_data": [["demo", "validation", "camera"]],
+            "batch_size": 2, "random_seed": 7, "keep_checkpoints": 2,
+        }
+        recipe = create_training_recipe(
+            exp, experiment_loader=self.load_experiment,
+            dataloader_factory=lambda *_args: self.loaders,
+        )
+        self.assertIsInstance(recipe, StagedEncoderMLPTrainingRecipe)
+        recipe.train()
+
+        # the bundle holds exactly the encoder part of the VAE checkpoint
+        exported = torch.load(
+            pathlib.Path(self.temporary.name) / "bundle.pth", weights_only=True
+        )["component_state_dicts"]["encoder"]
+        source = self.vae.state_dict()
+        self.assertTrue(exported)
+        for name, value in exported.items():
+            self.assertTrue(name.startswith(("encoder.", "fc_mu.")), name)
+            self.assertTrue(torch.equal(source[name], value), name)
+
+        # the deployed graph computes what the training model computes
+        controller = GraphRobotController(
+            self.controller, experiment_loader=self.load_experiment,
+            bundle_path=pathlib.Path(self.temporary.name) / "bundle.pth",
+        )
+        image = torch.rand(3, 8, 8)
+        controller.receive_input("image", image)
+        action = controller.propagate()["output"]
+        recipe.model.eval()
+        with torch.no_grad():
+            expected = recipe.model(image.reshape(1, 1, 3, 8, 8))
+        self.assertTrue(torch.allclose(action, expected, atol=1e-6))
 
 
 if __name__ == "__main__":

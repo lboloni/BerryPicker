@@ -1,0 +1,8 @@
+name: "Verify the sample CNN-MLP controller"
+trec_experiment: robot_controller_training
+trec_run: trec_cnn_mlp_sample
+
+# held out from the training and validation data of trec_cnn_mlp_sample
+testing_data:
+  - ["random-both-cameras-video", "2025_03_08__14_26_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_27_55", "dev2"]
