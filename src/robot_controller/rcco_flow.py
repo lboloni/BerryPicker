@@ -115,6 +115,7 @@ def generate_compare(sp_types, name, creation_style):
     save_run("robot_controller_compare", run_compare, {
         "name": name,
         "verify_experiment": "robot_controller_verify",
-        "verify_runs": [f"_flow_verify_{sp_type}" for sp_type in sp_types]})
+        "verify_runs": [f"_flow_verify_{sp_type}" for sp_type in sp_types],
+        "labels": list(sp_types)})
     return flow_entry(f"CompareRCCO {run_compare}", "robot_controller_compare",
                       run_compare, 0, creation_style)

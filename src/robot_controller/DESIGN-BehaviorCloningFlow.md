@@ -1,7 +1,8 @@
 # Design: a flow for training and verifying an RCCO behavior cloning controller
 
 Status: Phase 1 (ResNet-50 CNN + MLP) and Phase 2 (other sensor processors,
-separate controller and comparison flows) implemented.
+separate controller and comparison flows) implemented; Phase 3 (LSTM-based
+controllers) proposed.
 
 The sections from "Goal" to "Phase 1 known limitations" describe Phase 1;
 "Phase 1 implementation record" lists what was built and how it differs
@@ -544,7 +545,12 @@ creation_style = "exist-ok"
   verify_experiment: robot_controller_verify
   verify_runs: [_flow_verify_resnet50, _flow_verify_vgg19,
                 _flow_verify_vae, _flow_verify_vae_gan]
+  labels: [resnet50, vgg19, vae, vae_gan]
   ```
+
+  `labels` names the compared controllers in the chart legend and in
+  `comparison.csv`, one per verify run. (The run names cannot serve as
+  legend labels: matplotlib omits labels starting with `_`.)
 
 - `Compare_RCCO.ipynb` (standard parameters, ends with `exp.done()`) reads
   each verify run's `errors.csv` (its `all` row) and writes:
@@ -656,3 +662,226 @@ design would have to settle:
   should be detectable, for example through an architecture or recipe
   version recorded in its `exprun.yaml`.
 
+
+# Phase 3: LSTM-based controllers
+
+Status: proposal, not implemented.
+
+## Goal
+
+Train, verify, and compare LSTM-based controllers in the controller and
+comparison flows, covering the variations of the old `behavior_cloning`
+package, but built from RCCO components so that new variations are a
+configuration (and at most a small registered class), not a new model
+class:
+
+| Old model | What it is | RCCO composition |
+|---|---|---|
+| `bc_LSTM` | stacked `nn.LSTM` (`num_layers`), linear head, MSE | encoder → `LSTM(plain)` → `MLP(identity)` |
+| `bc_LSTM_Residual` | 3 single-layer LSTMs with residual connections, linear head, MSE | encoder → `LSTM(residual, 3)` → `MLP(identity)` |
+| `bc_LSTM_MDN` | the same residual stack with an MDN head (Rahmatizadeh et al., ICRA 2018) | encoder → `LSTM(residual, 3)` → `MDN` |
+| `bc_MLP` | MLP on a single latent | encoder → `MLP` (Phase 2) |
+
+`bc_LSTM.forward_keep_state` (stateful inference) becomes the `stateful`
+context mode below.
+
+Still AL5D only, single camera, and no proprioception input (it needs the
+`Z-combinator`; see "Out of scope").
+
+## What exists today
+
+- `RCCO_LSTM` (`rcco_lstm.py`) wraps `ResidualLSTM` and accepts only
+  `architecture: residual` and `context_mode: sliding_window`. At runtime it
+  keeps the last `sequence_length` latents in a deque. On every step it
+  re-runs the whole window from a zero state, and it produces no output
+  until the window is full.
+- `RobotControllerTrainingModel` (`training_model.py`) trains exactly
+  `SP_VAE → LSTM → MDN`, on windows `[B, T, C, H, W]`, with a loss on the
+  last step only. `EncoderMLPTrainingModel` trains exactly encoder → MLP.
+  The two recipes differ only in the training model and the loss (MDN NLL
+  vs. MSE).
+- `RobotControllerSequenceDataset` already produces windows of
+  `sequence_length` frames with the action at `t+1`.
+- `AbstractRobotController.reset_context()` resets every component and is
+  the episode boundary. `teacher_forcing` calls it once per demonstration.
+- `RCCO_MLP` reads its input on a port named `z`. An `LSTM.h → MLP.z`
+  connection is therefore already valid in a graph; only training rejects
+  it.
+
+## Design
+
+### 1. Recurrent cores: a registry of architectures
+
+`rcco_lstm.py` gets a registry of recurrent cores with one interface:
+
+```python
+class RecurrentCore(nn.Module):
+    def forward(self, sequence, state=None):
+        """sequence [B, T, input] -> (outputs [B, T, hidden], state)"""
+
+RECURRENT_CORES = {"plain": PlainLSTM, "residual": ResidualLSTM}
+```
+
+- `PlainLSTM` is `nn.LSTM(input, hidden, num_layers, batch_first=True,
+  dropout=...)`, i.e. `bc_LSTM`.
+- `ResidualLSTM` is today's class, extended to return all time steps and
+  to take and return the per-layer `(h, c)` state.
+- `RCCO_LSTM` reads `architecture`, `num_layers`, `hidden_size`, and an
+  optional `dropout`. A new variation (GRU, layer norm, a different
+  residual pattern) is one class added to `RECURRENT_CORES`, and is then
+  available to every flow and recipe.
+- The architecture signature includes the architecture name, so a bundle
+  cannot be loaded into a different core.
+
+Returning all time steps (rather than only the last) is what lets training
+put a loss on every step, and lets the stateful mode below share the same
+core.
+
+### 2. LSTM state in the RCCO framework
+
+The state is owned by the `RCCO_LSTM` component, cleared by
+`reset_context()`, and never seen by the graph. Two context modes, selected
+per component in its exp/run:
+
+| `context_mode` | Runtime | Cost per step | Training |
+|---|---|---|---|
+| `sliding_window` (today) | deque of the last `T` latents; re-run from a zero state; no output until the window is full | O(T × layers) | independent windows of `T` frames, loss on the last step |
+| `stateful` (new) | carry the per-layer `(h, c)`; feed one latent per step | O(layers) | truncated backpropagation through time over whole demonstrations (below) |
+
+**Stateful runtime:** `propagate()` calls
+`core(latent.view(1, 1, -1), self.state)`, stores the returned state
+(detached, on the device), and outputs `h` immediately; there is no
+warm-up. `reset_context()` sets `self.state = None`.
+
+**Stateful training (truncated BPTT):** a new
+`RobotControllerChunkDataset` splits each demonstration into consecutive
+chunks of `chunk_length` frames, and a sampler builds batches where row
+`i` of consecutive batches continues the same demonstration. The training
+model keeps the per-row state between batches, detaches it after each
+backward pass, and zeroes the rows whose demonstration starts in the
+current batch (a reset mask from the dataset). The loss is on every step of
+the chunk. With `chunk_length` at least the demonstration length this is
+exact full-sequence training. A shorter `chunk_length` bounds memory when
+the encoder is trained end to end.
+
+Why stateful is the efficient default for deployment: the sliding window
+recomputes `T` steps for every new frame and must be trained on windows
+that start from a zero state, which the robot never sees in the middle of
+an episode. Stateful inference matches stateful training exactly, starts
+producing actions at the first frame, and costs one LSTM step per frame.
+The sliding window stays for comparison with the published residual
+LSTM-MDN setup and for models trained on short windows.
+
+**Graph semantics:**
+
+- A component that has no output yet (a sliding window during warm-up)
+  returns `False` from `propagate()`, as today. Downstream components keep
+  their previous output `None`, and `read_output` returns `None`.
+- The controller is single-episode: one robot, batch size 1, one state.
+  Running several episodes in parallel (several robots) would need the state
+  keyed by episode. That is not needed now and is noted under "Out of
+  scope".
+- The recipe's checkpoints and the bundle store weights only; runtime state
+  is never persisted.
+
+### 3. One training model for encoder → [LSTM] → head chains
+
+`RobotControllerTrainingModel` and `EncoderMLPTrainingModel` are replaced
+by one `ChainTrainingModel` (`chain_training_model.py`) that accepts a
+linear graph path:
+
+```text
+encoder (SP_CNN | SP_VAE)  ->  [LSTM]  ->  head (MLP | MDN)
+```
+
+- It finds the path by following the connections from the single encoder.
+  It builds each module through its component with `load_state=False`, as
+  the Phase 2 model does.
+- `forward(images)` takes `[B, T, C, H, W]` (`T = 1` without an LSTM),
+  encodes `B·T` frames, runs the core (with the carried state in stateful
+  training), and applies the head to every time step. It returns per-step
+  outputs `[B, T, ...]`. In sliding-window training only the last step
+  enters the loss.
+- The head type decides the loss and the monitors: MSE for `MLP`, MDN
+  negative log-likelihood (`mdn_loss`) for `MDN`.
+
+The two recipes collapse into one `StagedControllerTrainingRecipe` that
+takes its loss and default monitor from the head. The sample `trec` runs
+are updated, and `create_training_recipe` keeps one class name. This
+removes the fixed-shape checks that currently tie the encoder type to the
+rest of the graph.
+
+### 4. Latent cache for frozen encoders
+
+An LSTM sample with `T` frames runs the encoder on `T` images, and
+overlapping windows encode each frame about `T` times per epoch. For stages
+whose `trainable_components` exclude the encoder (the warm-up stages of
+every recipe), the recipe precomputes the latent of every frame once at
+the start of the stage, with the encoder state of that stage. It then
+trains the core and head on cached latents. Stages that train the encoder
+use images, as today. This also removes the "encoder cost" limitation of
+Phase 1.
+
+### 5. Flow integration
+
+- `rcco_flow.py` gets a `CONTROLLER_TYPES` table next to `SP_TYPES`, e.g.
+
+  | `controller_type` | Graph after the encoder | Context mode | Stages |
+  |---|---|---|---|
+  | `mlp` | MLP (Phase 2) | n/a | head warm-up, end to end |
+  | `lstm_mlp` | LSTM(plain, 2) → MLP(identity) | stateful | core+head warm-up, end to end |
+  | `lstm_residual_mlp` | LSTM(residual, 3) → MLP(identity) | stateful | same |
+  | `lstm_residual_mdn` | LSTM(residual, 3) → MDN | sliding window, T = 10 | same, monitor NLL |
+
+  Each row names the component runs (generated from `rcco_lstm_*`,
+  `rcco_mlp_*`, `rcco_mdn_*` samples with the input size set from the
+  encoder's latent size) and the stage list.
+- The controller graph is built by a function rather than copied from
+  `roco_cnn_mlp_sample`:
+  `build_controller_graph(encoder_run, core_run, head_run)` returns the
+  components and connections for `image_input → encoder → [lstm] → head →
+  robot_output`. The labels are `encoder`, `lstm`, `head`, which also
+  replaces the Phase 2 label `cnn_encoder`.
+- Run names become `_flow_<kind>_<sp_type>_<controller_type>`. The
+  controller flow gets a `controller_type` parameter. The comparison flow
+  takes a list of `(sp_type, controller_type)` pairs, and its legend labels
+  become `"<sp_type> + <controller_type>"`.
+
+### 6. Verification of LSTM controllers
+
+- `teacher_forcing` feeds a demonstration frame by frame after one
+  `reset_context()`, which is already the correct protocol for both context
+  modes. It records `NaN` rows for steps without an output (sliding-window
+  warm-up), and Verify_RCCO computes errors over the steps with a
+  prediction.
+- MDN heads are verified with `action_selection: expected_value`, so the
+  errors are deterministic. Verify_RCCO additionally reports the mean NLL of
+  the recorded actions when the head is an MDN.
+
+## Implementation order
+
+1. Recurrent cores with the state interface; `RCCO_LSTM` with both context
+   modes. Unit tests: plain and residual cores give equal outputs for
+   stepwise (stateful) and whole-sequence runs, and the sliding window
+   matches the window run of the core.
+2. `ChainTrainingModel` and `StagedControllerTrainingRecipe`, replacing the
+   two models and recipes. Round-trip tests (train → bundle →
+   `GraphRobotController`) for encoder → MLP, encoder → LSTM → MLP, and
+   encoder → LSTM → MDN.
+3. `RobotControllerChunkDataset`, the sampler, and stateful training. Test:
+   the state carried across chunks equals a full-sequence run.
+4. Latent cache for frozen-encoder stages. Test: the losses equal those of
+   the image path.
+5. `rcco_flow.py` (`CONTROLLER_TYPES`, `build_controller_graph`), the flows,
+   and the `teacher_forcing` / Verify_RCCO changes. Debug run of the
+   comparison flow on `automove-pack-01` over the four controller types
+   with one encoder.
+
+## Out of scope for Phase 3
+
+- **Proprioception input** (latent ⊕ robot state into the LSTM): needs a
+  working `Z-combinator` and a dataset that returns proprioception; the chain
+  model would become a small DAG.
+- **Several episodes in one controller** (state keyed by episode).
+- **Closed-loop evaluation and Run_RCCO on the robot.**
+- **Multi-view encoders.**

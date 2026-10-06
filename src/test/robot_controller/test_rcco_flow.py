@@ -92,6 +92,7 @@ class TestRCCOFlowGenerators(unittest.TestCase):
             "robot_controller_compare", "_flow_compare", create_data_dir=False)
         self.assertEqual(
             exp["verify_runs"], ["_flow_verify_vgg19", "_flow_verify_vae"])
+        self.assertEqual(exp["labels"], ["vgg19", "vae"])
 
     def test_run_names_differ_between_sp_types(self):
         names = [
