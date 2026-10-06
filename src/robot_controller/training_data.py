@@ -192,18 +192,22 @@ class RobotControllerChunkLoader:
                 yield self._chunk(group, start, start == 0)
 
     def _chunk(self, group, start, reset):
+        rows = [
+            [self.dataset[index]
+             for index in self.steps[source][start:start + self.chunk_length]]
+            for source in group]
+        # a demonstration that already ended contributes a fully masked row
+        frames, target = next(row[0] for row in rows if row)
         rows_inputs, rows_targets, rows_mask = [], [], []
-        for source in group:
-            indices = self.steps[source][start:start + self.chunk_length]
-            items = [self.dataset[index] for index in indices]
-            inputs = torch.stack([frames[0] for frames, _ in items])
-            targets = torch.stack([target for _, target in items])
-            missing = self.chunk_length - len(items)
-            rows_mask.append(torch.arange(self.chunk_length) < len(items))
-            rows_inputs.append(torch.cat(
-                [inputs, inputs.new_zeros(missing, *inputs.shape[1:])]))
-            rows_targets.append(torch.cat(
-                [targets, targets.new_zeros(missing, *targets.shape[1:])]))
+        for row in rows:
+            inputs = torch.zeros(self.chunk_length, *frames.shape[1:])
+            targets = torch.zeros(self.chunk_length, *target.shape)
+            for step, (item_frames, item_target) in enumerate(row):
+                inputs[step] = item_frames[0]
+                targets[step] = item_target
+            rows_inputs.append(inputs)
+            rows_targets.append(targets)
+            rows_mask.append(torch.arange(self.chunk_length) < len(row))
         return (torch.stack(rows_inputs), torch.stack(rows_targets),
                 torch.stack(rows_mask), reset)
 

@@ -1,8 +1,9 @@
 # Design: a flow for training and verifying an RCCO behavior cloning controller
 
 Status: Phase 1 (ResNet-50 CNN + MLP) and Phase 2 (other sensor processors,
-separate controller and comparison flows) implemented; Phase 3 (LSTM-based
-controllers) proposed.
+separate controller and comparison flows), and Phase 3 (LSTM-based
+controllers) implemented. The resulting controller architecture is
+summarized in `DESIGN-RobotController.md`.
 
 The sections from "Goal" to "Phase 1 known limitations" describe Phase 1;
 "Phase 1 implementation record" lists what was built and how it differs
@@ -665,7 +666,10 @@ design would have to settle:
 
 # Phase 3: LSTM-based controllers
 
-Status: proposal, not implemented.
+Status: implemented; see "Phase 3 implementation record". Phase 3 replaces
+the Phase 2 generator API (`generate_controller_stages(sp_type, ...)`) and
+run names (`_flow_trec_<sp_type>`), and renames the `cnn_encoder` label of
+`roco_cnn_mlp_sample` / `trec_cnn_mlp_sample` to `encoder`.
 
 ## Goal
 
@@ -876,6 +880,68 @@ Phase 1.
    and the `teacher_forcing` / Verify_RCCO changes. Debug run of the
    comparison flow on `automove-pack-01` over the four controller types
    with one encoder.
+
+## Phase 3 implementation record
+
+Implemented as designed, in:
+
+- `rcco_lstm.py`: `PlainLSTM`, `ResidualLSTM` (now returning all steps and
+  the state), `RECURRENT_CORES`, `create_core`, `map_state`; `RCCO_LSTM`
+  with `context_mode` `sliding_window` or `stateful`;
+- `chain_training_model.py`: `ChainTrainingModel`, replacing
+  `training_model.py` and `encoder_mlp_training_model.py` (both deleted);
+- `training_recipe.py`: `StagedControllerTrainingRecipe`, replacing
+  `StagedRobotControllerTrainingRecipe` and
+  `StagedEncoderMLPTrainingRecipe`; per-step loss with window or chunk
+  batches; the latent cache (`_set_latent_cache`);
+- `training_data.py`: `frame_keys`, `load_frame`, `set_latents` on
+  `RobotControllerSequenceDataset`; `RobotControllerChunkLoader`;
+  `make_controller_dataloaders(..., stateful=True)`;
+- `rcco_flow.py`: `CONTROLLER_TYPES`, `build_controller_graph`,
+  `generate_sp_stage`, `generate_controller_stages(sp_type,
+  controller_type, ...)`, `generate_compare(controllers, ...)`;
+- the flows: `Flow_RCCO_BehaviorCloning` (`sp_type`, `controller_type`) and
+  `Flow_RCCO_Compare` (`controllers`, a list of pairs); `teacher_forcing`
+  and Verify_RCCO for the sliding-window warm-up;
+- the sample configs (`_defaults_robot_controller_training`,
+  `trec_cnn_mlp_sample`, `trec_vae_neo_lstm_mdn_sample`,
+  `roco_cnn_mlp_sample`, `_defaults_robot_controller_verify`);
+- tests: new `test_lstm_controllers.py` (cores, context modes, stateful
+  LSTM-MLP and sliding-window LSTM-MDN round trips through the bundle,
+  chunked vs. whole-demonstration state, latent cache), and updates to
+  `test_rcco_flow.py`, `test_controller_verification.py`,
+  `test_cnn_mlp_controller.py`, `test_training_recipe.py`;
+- docs: `DESIGN-RobotController.md` (rewritten),
+  `DESIGN_Training_Recipe.md`, `DESIGN-Flows.md`.
+
+Differences from the design above:
+
+- **MLP heads keep the sigmoid output** and one hidden layer, instead of
+  the linear (`identity`) head of `bc_LSTM`: `MLPController` requires a
+  hidden layer, and the sigmoid keeps actions in the `[0, 1]` range that
+  `RobotPosition.from_normalized_vector` accepts.
+- **Chunk resets are per group, not per row.** `RobotControllerChunkLoader`
+  takes `batch_size` demonstrations at a time and walks them together to the
+  end of the longest. All rows start together, so a single `reset` flag
+  replaces the per-row reset mask. A demonstration that ended early fills
+  the rest of its row with masked padding.
+- **Each sensor processing is trained once per flow.** The comparison flow
+  shares an SP run (`_flow_sp_<sp_type>`) and its encoder component between
+  all controllers on that encoder. This is the within-flow part of the
+  sharing listed as future work.
+- **Verify_RCCO does not report the MDN NLL.** Errors are computed over the
+  steps with a prediction (`np.nanmean`). The NLL needs the MDN's `mu`,
+  `sigma`, `pi` per step, which the graph does not route to an output; it is
+  left for later.
+
+Results on `automove-pack-01` with ResNet-50, debug epochs (SP 2, warm-up 1,
+end to end 1): the comparison flow completed all 10 stages in 9 min 21 s.
+Training took 3 s (MLP), 60 s (stateful LSTM-MLP), 55 s (stateful residual
+LSTM-MLP), and 5 min 55 s (sliding-window LSTM-MDN, whose end-to-end stage
+encodes 10 frames per sample). Teacher-forced test MSE: MLP 0.064, LSTM-MLP
+0.070, residual LSTM-MLP 0.070, residual LSTM-MDN 0.065. These numbers only
+show that the pipeline works. A run with the default epochs has not been
+done.
 
 ## Out of scope for Phase 3
 

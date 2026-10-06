@@ -35,7 +35,7 @@ class FakeDemonstration:
 
     def __init__(self, exp, demo):
         self.demo = demo
-        self.length = 5 + len(demo) % 3
+        self.length = 5 + 2 * (len(demo) % 3)
         self.metadata = {"cameras": ["dev0"], "maxsteps": self.length}
         self.actions = [None] * self.length
         generator = torch.Generator().manual_seed(len(demo))
