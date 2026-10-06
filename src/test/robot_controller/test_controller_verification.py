@@ -73,5 +73,26 @@ class TestTeacherForcing(unittest.TestCase):
             ("image_input", 2)])
 
 
+class WarmingUpController(RecordingController):
+    """Has no output for the first two frames, like a sliding window."""
+
+    def propagate(self):
+        super().propagate()
+        if len(self.calls) <= 3:
+            self.output = None
+
+
+class TestTeacherForcingWarmUp(unittest.TestCase):
+    def test_steps_without_output_are_nan(self):
+        predicted, target = teacher_forcing(
+            WarmingUpController(), ["pack", "demo", "dev0"],
+            {"image_size": [8, 8]}, {}, 2,
+            demonstration_factory=FakeDemonstration,
+            experiment_loader=lambda experiment, run: {})
+        self.assertTrue(np.isnan(predicted[:2]).all())
+        np.testing.assert_allclose(predicted[2], [2, 2])
+        self.assertEqual(len(target), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

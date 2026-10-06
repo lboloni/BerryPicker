@@ -16,11 +16,11 @@ if str(SOURCE_ROOT) not in sys.path:
 
 from exp_run_config import Config
 from robot_controller.graph_robot_controller import GraphRobotController
-from robot_controller.training_recipe import StagedRobotControllerTrainingRecipe
+from robot_controller.training_recipe import StagedControllerTrainingRecipe
 from robot_controller.visualize_trec import TrainingRecipeVisualizer
 
 
-class TestStagedRobotControllerTrainingRecipe(unittest.TestCase):
+class TestStagedControllerTrainingRecipe(unittest.TestCase):
     def setUp(self):
         Config().runtime["device"] = "cpu"
         self.temporary = tempfile.TemporaryDirectory()
@@ -91,7 +91,7 @@ class TestStagedRobotControllerTrainingRecipe(unittest.TestCase):
 
     def recipe_exp(self, epochs=1):
         return {
-            "class": "StagedRobotControllerTrainingRecipe",
+            "class": "StagedControllerTrainingRecipe",
             "data_dir": self.temporary.name, "model_file": "bundle.pth",
             "controller": {"exp": "robot_controller", "run": "roco"},
             "robot": {"exp": "robot", "run": "tiny"},
@@ -111,7 +111,7 @@ class TestStagedRobotControllerTrainingRecipe(unittest.TestCase):
         }
 
     def make_recipe(self, exp):
-        return StagedRobotControllerTrainingRecipe(
+        return StagedControllerTrainingRecipe(
             exp, experiment_loader=self.load_experiment,
             dataloader_factory=self.dataloaders,
         )

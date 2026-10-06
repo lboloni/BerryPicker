@@ -3,7 +3,7 @@ input-to-notebook:
   - robot_controller/Visualize_trec.ipynb
 
 # Defaults for staged robot-controller training recipes.
-class: StagedRobotControllerTrainingRecipe
+class: StagedControllerTrainingRecipe
 model_file: controller_bundle.pth
 batch_size: 2
 num_workers: 0

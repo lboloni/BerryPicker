@@ -1,4 +1,8 @@
-"""Staged, resumable training for VAE--LSTM--MDN robot controllers."""
+"""Staged, resumable training for encoder -> [LSTM] -> head robot controllers.
+
+See data/expruns/robot_controller/DESIGN_Training_Recipe.md and
+robot_controller/DESIGN-BehaviorCloningFlow.md (Phase 3).
+"""
 
 from datetime import datetime, timezone
 import hashlib
@@ -18,8 +22,9 @@ from behavior_cloning.mdn import mdn_loss
 from exp_run_config import Config
 from robot_controller.abstract_trec import AbstractTrainingRecipe
 from robot_controller.graph_robot_controller import load_controller_spec
+from robot_controller.chain_training_model import ChainTrainingModel
+from robot_controller.rcco_lstm import map_state
 from robot_controller.training_data import make_controller_dataloaders
-from robot_controller.training_model import RobotControllerTrainingModel
 from training_harness.checkpoints import model_file
 
 
@@ -93,8 +98,10 @@ def _finite_positive(value, name):
     return float(value)
 
 
-class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
-    """Train configured controller components in explicit consecutive stages."""
+class StagedControllerTrainingRecipe(AbstractTrainingRecipe):
+    """Train the components of an encoder -> [LSTM] -> head controller in
+    explicit consecutive stages. The head decides the loss: MSE for an MLP,
+    the MDN negative log-likelihood for an MDN."""
 
     def __init__(
         self, exp_trec, *, experiment_loader=None, dataloader_factory=None
@@ -137,26 +144,95 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         self.status = self._read_or_create_status()
 
     def _create_training_model(self, spec):
-        return RobotControllerTrainingModel(spec)
+        return ChainTrainingModel(spec)
 
     def _default_monitor(self):
-        return "validation_nll"
+        return "validation_nll" if self.model.stochastic else "validation_mse"
 
     def _supported_monitors(self):
-        return {"validation_loss", "validation_nll"}
+        monitors = {"validation_loss", "validation_mse", "validation_mae"}
+        if self.model.stochastic:
+            monitors.add("validation_nll")
+        return monitors
 
     def _training_metric_name(self):
-        return "train_nll"
+        return "train_nll" if self.model.stochastic else "train_mse"
 
-    def _loss_and_prediction(self, output, targets):
-        mu, sigma, pi = output
-        loss = mdn_loss(targets, mu, sigma, pi)
-        prediction = torch.sum(pi * mu, dim=-1)
-        return loss, prediction
+    def _loss_and_prediction(self, output, targets, mask=None):
+        """Loss and predicted action from the per-step model output. Window
+        targets [B, O] are compared with the last step; chunk targets
+        [B, T, O] with the steps the mask [B, T] marks."""
+        if targets.ndim == 2:
+            select = lambda value: value[:, -1]
+        else:
+            select = lambda value: value[mask]
+            targets = targets[mask]
+        if self.model.stochastic:
+            mu, sigma, pi = (select(value) for value in output)
+            loss = mdn_loss(targets, mu, sigma, pi)
+            prediction = torch.sum(pi * mu, dim=-1)
+        else:
+            prediction = select(output)
+            if prediction.shape != targets.shape:
+                raise ValueError(
+                    "Controller output and normalized action target must have "
+                    "identical shapes")
+            loss = F.mse_loss(prediction, targets)
+        return loss, prediction, targets
 
     def _output_size(self):
-        mdn_label = self.model.labels["MDN"]
-        return self.spec["components"][mdn_label]["exp"]["output_dim"]
+        return self.model.output_size
+
+    @staticmethod
+    def _batches(loader):
+        """(inputs, targets, mask, reset) for window batches (inputs,
+        targets) and chunk batches alike; window batches start from a zero
+        recurrent state."""
+        for batch in loader:
+            if len(batch) == 2:
+                yield batch[0], batch[1], None, True
+            else:
+                yield batch
+
+    def _forward_batches(self, loader):
+        """Run the model over the loader, carrying the recurrent state between
+        consecutive chunks; yield (loss, prediction, targets)."""
+        device = Config().runtime["device"]
+        state = None
+        for inputs, targets, mask, reset in self._batches(loader):
+            inputs = inputs.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)
+            if mask is not None:
+                mask = mask.to(device)
+            if reset:
+                state = None
+            output, state = self.model(inputs, state)
+            if state is not None:
+                state = map_state(torch.Tensor.detach, state)
+            yield self._loss_and_prediction(output, targets, mask)
+
+    def _set_latent_cache(self, loaders):
+        """With a frozen encoder, encode every frame of the loaders' datasets
+        once and serve the latents; otherwise serve the frames."""
+        datasets = [loader.dataset for loader in loaders
+                    if hasattr(getattr(loader, "dataset", None), "set_latents")]
+        for dataset in datasets:
+            dataset.set_latents(None)
+        if self.model.encoder_trainable():
+            return
+        device = Config().runtime["device"]
+        self.model.eval()
+        for dataset in datasets:
+            keys = dataset.frame_keys()
+            latents = {}
+            with torch.no_grad():
+                for start in range(0, len(keys), 32):
+                    batch = keys[start:start + 32]
+                    images = torch.stack(
+                        [dataset.load_frame(*key) for key in batch]).to(device)
+                    encoded = self.model.encode(images.unsqueeze(1))[:, 0]
+                    latents.update(zip(batch, encoded.cpu()))
+            dataset.set_latents(latents)
 
     def _validate_stages(self, stages):
         if not isinstance(stages, list) or not stages:
@@ -515,12 +591,8 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         self.model.train(True)
         total = 0.0
         samples = 0
-        device = Config().runtime["device"]
-        for images, targets in loader:
-            images = images.to(device, non_blocking=True)
-            targets = targets.to(device, non_blocking=True)
+        for loss, _, targets in self._forward_batches(loader):
             self._optimizer.zero_grad(set_to_none=True)
-            loss, _ = self._loss_and_prediction(self.model(images), targets)
             if not torch.isfinite(loss):
                 raise FloatingPointError("Training loss is not finite")
             loss.backward()
@@ -545,14 +617,8 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         totals = {"validation_loss": 0.0, "validation_mse": 0.0,
                   "validation_mae": 0.0}
         samples = 0
-        device = Config().runtime["device"]
         with torch.no_grad():
-            for images, targets in loader:
-                images = images.to(device, non_blocking=True)
-                targets = targets.to(device, non_blocking=True)
-                loss, prediction = self._loss_and_prediction(
-                    self.model(images), targets
-                )
+            for loss, prediction, targets in self._forward_batches(loader):
                 if not torch.isfinite(loss):
                     raise FloatingPointError("Validation loss is not finite")
                 count = targets.size(0)
@@ -590,9 +656,11 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         temporary.replace(self.metrics_path)
 
     def _make_dataloaders(self):
+        stateful = {"stateful": True} \
+            if self.model.context_mode == "stateful" else {}
         return self._dataloader_factory(
             self.exp, self.model.sensor_exp, self.robot_exp,
-            self.model.sequence_length, self._output_size(),
+            self.model.sequence_length, self._output_size(), **stateful,
         )
 
     def _start_state_for_stage(self, index):
@@ -634,6 +702,7 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
             for index in range(start_stage, len(self.stages)):
                 stage = self.stages[index]
                 next_epoch, best = self._start_state_for_stage(index)
+                self._set_latent_cache((training_loader, validation_loader))
                 self.status["stages"][index]["state"] = "running"
                 self._write_status(
                     state="running", current_stage_index=index,
@@ -828,42 +897,8 @@ class StagedRobotControllerTrainingRecipe(AbstractTrainingRecipe):
         return path
 
 
-class StagedEncoderMLPTrainingRecipe(StagedRobotControllerTrainingRecipe):
-    """Staged deterministic behavior cloning for an encoder--MLP graph,
-    with an SP_CNN or SP_VAE encoder."""
-
-    def _create_training_model(self, spec):
-        from robot_controller.encoder_mlp_training_model import (
-            EncoderMLPTrainingModel,
-        )
-
-        return EncoderMLPTrainingModel(spec)
-
-    def _default_monitor(self):
-        return "validation_mse"
-
-    def _supported_monitors(self):
-        return {"validation_loss", "validation_mse", "validation_mae"}
-
-    def _training_metric_name(self):
-        return "train_mse"
-
-    def _loss_and_prediction(self, output, targets):
-        if not isinstance(output, torch.Tensor) or output.shape != targets.shape:
-            raise ValueError(
-                "Encoder--MLP output and normalized action target must have "
-                "identical shapes"
-            )
-        return F.mse_loss(output, targets), output
-
-    def _output_size(self):
-        return self.model.output_size
-
-
 def create_training_recipe(exp, **kwargs):
     """Construct the recipe selected by ``exp['class']``."""
-    if exp["class"] == "StagedRobotControllerTrainingRecipe":
-        return StagedRobotControllerTrainingRecipe(exp, **kwargs)
-    if exp["class"] == "StagedEncoderMLPTrainingRecipe":
-        return StagedEncoderMLPTrainingRecipe(exp, **kwargs)
+    if exp["class"] == "StagedControllerTrainingRecipe":
+        return StagedControllerTrainingRecipe(exp, **kwargs)
     raise ValueError(f"Unknown robot-controller training recipe {exp['class']!r}")

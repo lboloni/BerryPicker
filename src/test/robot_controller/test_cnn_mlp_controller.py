@@ -20,7 +20,7 @@ from exp_run_config import Config
 from robot_controller.graph_robot_controller import GraphRobotController
 from robot_controller.rcco_mlp import MLPController, RCCO_MLP
 from robot_controller.training_recipe import (
-    StagedEncoderMLPTrainingRecipe, create_training_recipe,
+    StagedControllerTrainingRecipe, create_training_recipe,
 )
 from sensorprocessing.conv_vae_neo import ConvVAENeo
 
@@ -126,7 +126,7 @@ class TestCNNMLPTrainingRecipe(unittest.TestCase):
 
     def test_recipe_exports_bundle_usable_by_graph(self):
         exp = {
-            "class": "StagedEncoderMLPTrainingRecipe",
+            "class": "StagedControllerTrainingRecipe",
             "data_dir": self.temporary.name, "model_file": "bundle.pth",
             "controller": {"exp": "robot_controller", "run": "controller"},
             "robot": {"exp": "robot", "run": "tiny"},
@@ -152,7 +152,7 @@ class TestCNNMLPTrainingRecipe(unittest.TestCase):
                 exp, experiment_loader=self.load_experiment,
                 dataloader_factory=self.dataloaders,
             )
-            self.assertIsInstance(recipe, StagedEncoderMLPTrainingRecipe)
+            self.assertIsInstance(recipe, StagedControllerTrainingRecipe)
             recipe.train()
             bundle = pathlib.Path(self.temporary.name) / "bundle.pth"
             controller = GraphRobotController(
@@ -239,7 +239,7 @@ class TestVAEMLPTrainingRecipe(unittest.TestCase):
 
     def test_recipe_exports_vae_encoder_bundle_usable_by_graph(self):
         exp = {
-            "class": "StagedEncoderMLPTrainingRecipe",
+            "class": "StagedControllerTrainingRecipe",
             "data_dir": self.temporary.name, "model_file": "bundle.pth",
             "controller": {"exp": "robot_controller", "run": "controller"},
             "robot": {"exp": "robot", "run": "tiny"},
@@ -261,7 +261,7 @@ class TestVAEMLPTrainingRecipe(unittest.TestCase):
             exp, experiment_loader=self.load_experiment,
             dataloader_factory=lambda *_args: self.loaders,
         )
-        self.assertIsInstance(recipe, StagedEncoderMLPTrainingRecipe)
+        self.assertIsInstance(recipe, StagedControllerTrainingRecipe)
         recipe.train()
 
         # the bundle holds exactly the encoder part of the VAE checkpoint
@@ -284,8 +284,8 @@ class TestVAEMLPTrainingRecipe(unittest.TestCase):
         action = controller.propagate()["output"]
         recipe.model.eval()
         with torch.no_grad():
-            expected = recipe.model(image.reshape(1, 1, 3, 8, 8))
-        self.assertTrue(torch.allclose(action, expected, atol=1e-6))
+            expected, _ = recipe.model(image.reshape(1, 1, 3, 8, 8))
+        self.assertTrue(torch.allclose(action, expected[:, -1], atol=1e-6))
 
 
 if __name__ == "__main__":

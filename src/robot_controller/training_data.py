@@ -1,4 +1,14 @@
-"""Lazy demonstration sequences for robot-controller behavior cloning."""
+"""Lazy demonstration sequences for robot-controller behavior cloning.
+
+RobotControllerSequenceDataset yields windows of frames with the action at
+the next timestep (sliding-window and single-frame controllers);
+RobotControllerChunkLoader yields consecutive chunks of whole demonstrations
+for stateful training. Both can serve cached encoder latents instead of
+frames (set_latents), for training stages with a frozen encoder.
+"""
+
+import random
+
 
 import numpy as np
 import torch
@@ -76,31 +86,57 @@ class RobotControllerSequenceDataset(Dataset):
                 )
             )
 
+        # (source, frame) -> cached encoder latent, or None to load frames
+        self.latents = None
+
     def __len__(self):
         return len(self.samples)
 
+    def frame_keys(self):
+        """All the (source, frame) pairs the samples read."""
+        return sorted({
+            (source, frame)
+            for source, timestep in self.samples
+            for frame in range(timestep - self.sequence_length + 1, timestep + 1)
+        })
+
+    def load_frame(self, source, frame):
+        """The preprocessed image [3, H, W] of a frame of a source."""
+        demo, camera = self.sources[source]
+        tensor, _ = demo.get_image(
+            frame, camera=camera, transform=self.transform
+        )
+        if tensor is None:
+            raise ValueError(
+                f"Could not read {demo.demo!r} camera {camera!r} frame {frame}"
+            )
+        if tensor.ndim == 4 and tensor.size(0) == 1:
+            tensor = tensor.squeeze(0)
+        expected = (3, *self.image_size)
+        if not isinstance(tensor, torch.Tensor) or tuple(tensor.shape) != expected:
+            raise ValueError(
+                f"Preprocessed frame has shape "
+                f"{getattr(tensor, 'shape', None)}; expected {expected}"
+            )
+        return tensor
+
+    def set_latents(self, latents):
+        """Serve the cached latents {(source, frame): latent} instead of the
+        frames, or the frames again with None."""
+        self.latents = latents
+
     def __getitem__(self, index):
+        """([sequence_length, 3, H, W] frames, or [sequence_length, latent]
+        cached latents; the normalized action at the next timestep)"""
         source, timestep = self.samples[index]
         demo, camera = self.sources[source]
         frames = []
         first = timestep - self.sequence_length + 1
         for frame in range(first, timestep + 1):
-            tensor, _ = demo.get_image(
-                frame, camera=camera, transform=self.transform
-            )
-            if tensor is None:
-                raise ValueError(
-                    f"Could not read {demo.demo!r} camera {camera!r} frame {frame}"
-                )
-            if tensor.ndim == 4 and tensor.size(0) == 1:
-                tensor = tensor.squeeze(0)
-            expected = (3, *self.image_size)
-            if not isinstance(tensor, torch.Tensor) or tuple(tensor.shape) != expected:
-                raise ValueError(
-                    f"Preprocessed frame has shape "
-                    f"{getattr(tensor, 'shape', None)}; expected {expected}"
-                )
-            frames.append(tensor)
+            if self.latents is not None:
+                frames.append(self.latents[(source, frame)])
+            else:
+                frames.append(self.load_frame(source, frame))
         position = demo.get_action(
             timestep + 1, type=self.action_type, exp=self.robot_exp
         )
@@ -119,9 +155,66 @@ class RobotControllerSequenceDataset(Dataset):
         return images, target
 
 
+class RobotControllerChunkLoader:
+    """Iterate whole demonstrations in consecutive chunks, for stateful
+    (truncated backpropagation through time) training.
+
+    Each batch row follows one demonstration: batch k + 1 continues the
+    demonstrations of batch k where it ended, until the longest of them ends.
+    A batch is (inputs [B, chunk, ...], targets [B, chunk, output],
+    mask [B, chunk], reset), where mask marks the steps of the shorter
+    demonstrations that exist, and reset is true for the first chunk of a
+    group of demonstrations (where the recurrent state starts from zero)."""
+
+    def __init__(self, dataset, batch_size, chunk_length, shuffle):
+        if dataset.sequence_length != 1:
+            raise ValueError("Chunks are built from single-frame samples")
+        self.dataset = dataset
+        self.batch_size = _positive_int(batch_size, "batch_size")
+        self.chunk_length = _positive_int(chunk_length, "chunk_length")
+        self.shuffle = shuffle
+        # the sample indices of every demonstration, in time order
+        self.steps = [[] for _ in dataset.sources]
+        for index, (source, _timestep) in enumerate(dataset.samples):
+            self.steps[source].append(index)
+
+    def _groups(self, sources):
+        return [sources[i:i + self.batch_size]
+                for i in range(0, len(sources), self.batch_size)]
+
+    def __iter__(self):
+        sources = list(range(len(self.steps)))
+        if self.shuffle:
+            random.shuffle(sources)
+        for group in self._groups(sources):
+            length = max(len(self.steps[source]) for source in group)
+            for start in range(0, length, self.chunk_length):
+                yield self._chunk(group, start, start == 0)
+
+    def _chunk(self, group, start, reset):
+        rows_inputs, rows_targets, rows_mask = [], [], []
+        for source in group:
+            indices = self.steps[source][start:start + self.chunk_length]
+            items = [self.dataset[index] for index in indices]
+            inputs = torch.stack([frames[0] for frames, _ in items])
+            targets = torch.stack([target for _, target in items])
+            missing = self.chunk_length - len(items)
+            rows_mask.append(torch.arange(self.chunk_length) < len(items))
+            rows_inputs.append(torch.cat(
+                [inputs, inputs.new_zeros(missing, *inputs.shape[1:])]))
+            rows_targets.append(torch.cat(
+                [targets, targets.new_zeros(missing, *targets.shape[1:])]))
+        return (torch.stack(rows_inputs), torch.stack(rows_targets),
+                torch.stack(rows_mask), reset)
+
+
 def make_controller_dataloaders(
-    exp, sensor_exp, robot_exp, sequence_length, output_size, **dataset_kwargs
+    exp, sensor_exp, robot_exp, sequence_length, output_size, *,
+    stateful=False, **dataset_kwargs
 ):
+    """The training and validation loaders: windows of sequence_length
+    frames, or, if stateful, chunks of exp["chunk_length"] steps of whole
+    demonstrations."""
     training_entries = exp["training_data"]
     validation_entries = exp["validation_data"]
     overlap = {_entry_key(item) for item in training_entries} & {
@@ -135,7 +228,7 @@ def make_controller_dataloaders(
     common_dataset = {
         "sensor_exp": sensor_exp,
         "robot_exp": robot_exp,
-        "sequence_length": sequence_length,
+        "sequence_length": 1 if stateful else sequence_length,
         "output_size": output_size,
         "action_type": exp.get("action_type", "rc-position-target"),
         "frame_stride": exp.get("frame_stride", 1),
@@ -148,6 +241,13 @@ def make_controller_dataloaders(
         validation_entries, **common_dataset
     )
     batch_size = _positive_int(exp["batch_size"], "batch_size")
+    if stateful:
+        return (
+            RobotControllerChunkLoader(
+                training, batch_size, exp["chunk_length"], shuffle=True),
+            RobotControllerChunkLoader(
+                validation, batch_size, exp["chunk_length"], shuffle=False),
+        )
     workers = exp.get("num_workers", 0)
     if type(workers) is not int or workers < 0:
         raise ValueError("num_workers must be a nonnegative integer")

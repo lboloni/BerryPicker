@@ -12,9 +12,11 @@ if str(SOURCE_ROOT) not in sys.path:
 
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
+from robot_controller.chain_training_model import ChainTrainingModel
 from robot_controller.graph_robot_controller import load_controller_spec
 from robot_controller.rcco_flow import (
-    SP_TYPES, flow_families, generate_compare, generate_controller_stages)
+    CONTROLLER_TYPES, SP_TYPES, flow_families, generate_compare,
+    generate_controller_stages, generate_sp_stage)
 
 
 SP_NOTEBOOKS = {
@@ -49,58 +51,67 @@ class TestRCCOFlowGenerators(unittest.TestCase):
         Config().values["experiment_data"] = self.old_results_path
         self.temporary.cleanup()
 
-    def test_controller_stages_for_every_sp_type(self):
+    def test_sp_stage_for_every_sp_type(self):
         for sp_type in SP_TYPES:
-            entries = generate_controller_stages(
-                sp_type, self.data, 3, 2, 1, "exist-ok")
-            self.assertEqual(
-                [entry["notebook"] for entry in entries],
-                [SP_NOTEBOOKS[sp_type], "robot_controller/Train_RCCO.ipynb",
-                 "robot_controller/Verify_RCCO.ipynb"], sp_type)
-
+            entry = generate_sp_stage(sp_type, self.data, 3, "exist-ok")
+            self.assertEqual(entry["notebook"], SP_NOTEBOOKS[sp_type], sp_type)
             sp = SP_TYPES[sp_type]
             exp_sp = Config().get_experiment(
                 sp["experiment"], f"_flow_sp_{sp_type}", create_data_dir=False)
             self.assertEqual(exp_sp["epochs"], 3)
             self.assertEqual(exp_sp["training_data"], self.data["sp_training"])
 
-            exp_trec = Config().get_experiment(
-                "robot_controller_training", f"_flow_trec_{sp_type}",
-                create_data_dir=False)
-            self.assertEqual(
-                [stage["epochs"] for stage in exp_trec["stages"]], [2, 1])
-            self.assertEqual(exp_trec["validation_data"], self.data["bc_validation"])
+    def test_controller_stages_for_every_controller_type(self):
+        for sp_type in ["vgg19", "vae"]:
+            generate_sp_stage(sp_type, self.data, 3, "exist-ok")
+            for controller_type, controller in CONTROLLER_TYPES.items():
+                key = f"{sp_type}_{controller_type}"
+                entries = generate_controller_stages(
+                    sp_type, controller_type, self.data, 2, 1, "exist-ok")
+                self.assertEqual(
+                    [entry["notebook"] for entry in entries],
+                    ["robot_controller/Train_RCCO.ipynb",
+                     "robot_controller/Verify_RCCO.ipynb"], key)
 
-            exp_roco = Config().get_experiment(
-                exp_trec["controller"]["exp"], exp_trec["controller"]["run"],
-                create_data_dir=False)
-            spec = load_controller_spec(exp_roco, None)
-            encoder = spec["components"]["cnn_encoder"]
-            self.assertEqual(encoder["type"], sp["rcco_type"])
-            self.assertEqual(encoder["sensor_exp"]["latent_size"], 256)
+                exp_trec = Config().get_experiment(
+                    "robot_controller_training", f"_flow_trec_{key}",
+                    create_data_dir=False)
+                self.assertEqual(
+                    [stage["epochs"] for stage in exp_trec["stages"]], [2, 1])
+                self.assertEqual(
+                    exp_trec["validation_data"], self.data["bc_validation"])
 
-            exp_verify = Config().get_experiment(
-                "robot_controller_verify", f"_flow_verify_{sp_type}",
-                create_data_dir=False)
-            self.assertEqual(exp_verify["trec_run"], f"_flow_trec_{sp_type}")
-            self.assertEqual(exp_verify["testing_data"], self.data["bc_testing"])
+                # the generated graph validates, and trains as a chain
+                exp_roco = Config().get_experiment(
+                    "robot_controller", f"_flow_roco_{key}",
+                    create_data_dir=False)
+                spec = load_controller_spec(exp_roco, None)
+                self.assertEqual(spec["components"]["encoder"]["type"],
+                                 SP_TYPES[sp_type]["rcco_type"])
+                model = ChainTrainingModel(spec)
+                self.assertEqual(model.head_type, controller["head"]["rcco-type"])
+                self.assertEqual(
+                    model.context_mode,
+                    None if controller["lstm"] is None
+                    else controller["lstm"]["context_mode"])
+                self.assertEqual(
+                    set(exp_trec["initial_states"]), set(model.component_labels))
+
+                exp_verify = Config().get_experiment(
+                    "robot_controller_verify", f"_flow_verify_{key}",
+                    create_data_dir=False)
+                self.assertEqual(exp_verify["trec_run"], f"_flow_trec_{key}")
+                self.assertEqual(exp_verify["testing_data"], self.data["bc_testing"])
 
     def test_compare_lists_the_verify_runs(self):
-        entry = generate_compare(["vgg19", "vae"], "comparison", "exist-ok")
+        entry = generate_compare(
+            [("vgg19", "mlp"), ("vae", "lstm_mlp")], "comparison", "exist-ok")
         self.assertEqual(entry["notebook"], "robot_controller/Compare_RCCO.ipynb")
         exp = Config().get_experiment(
             "robot_controller_compare", "_flow_compare", create_data_dir=False)
         self.assertEqual(
-            exp["verify_runs"], ["_flow_verify_vgg19", "_flow_verify_vae"])
-        self.assertEqual(exp["labels"], ["vgg19", "vae"])
-
-    def test_run_names_differ_between_sp_types(self):
-        names = [
-            entry["run"]
-            for sp_type in SP_TYPES
-            for entry in generate_controller_stages(
-                sp_type, self.data, 1, 1, 1, "exist-ok")]
-        self.assertEqual(len(names), len(set(names)))
+            exp["verify_runs"], ["_flow_verify_vgg19_mlp", "_flow_verify_vae_lstm_mlp"])
+        self.assertEqual(exp["labels"], ["vgg19 + mlp", "vae + lstm_mlp"])
 
 
 if __name__ == "__main__":

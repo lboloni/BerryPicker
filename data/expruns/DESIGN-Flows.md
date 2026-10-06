@@ -231,17 +231,18 @@ per controller for `Run_BehaviorCloning.ipynb`, which drives the robot and is
 not part of the queue. Final results: `behavior_cloning/_flow_bc_compare`.
 
 `robot_controller/Flow_RCCO_BehaviorCloning.ipynb` trains one RCCO
-encoder-MLP controller (AL5D): it trains the sensor processing chosen by
-`sp_type` (ResNet-50, VGG19, Conv-VAE-Neo, or VAE-GAN), trains the
-controller starting from its encoder, and verifies the exported controller
-bundle with teacher forcing on the held-out `bc_testing` group. Final
-results: `robot_controller_verify/_flow_verify_<sp_type>`.
+controller (AL5D): it trains the sensor processing chosen by `sp_type`
+(ResNet-50, VGG19, Conv-VAE-Neo, or VAE-GAN), trains the controller chosen by
+`controller_type` (an MLP, or a plain or residual LSTM with an MLP or MDN
+head) starting from its encoder, and verifies the exported controller bundle
+with teacher forcing on the held-out `bc_testing` group. Final results:
+`robot_controller_verify/_flow_verify_<sp_type>_<controller_type>`.
 
-`robot_controller/Flow_RCCO_Compare.ipynb` runs the same stages for every
-encoder in `sp_types`, on the same demonstration split, and compares the
-verified controllers. Final results:
-`robot_controller_compare/_flow_compare`. Both flows use the generators in
-`src/robot_controller/rcco_flow.py`; see
+`robot_controller/Flow_RCCO_Compare.ipynb` does the same for every
+`(sp_type, controller_type)` pair in `controllers`, on the same demonstration
+split, training each sensor processing once, and compares the verified
+controllers. Final results: `robot_controller_compare/_flow_compare`. Both
+flows use the generators in `src/robot_controller/rcco_flow.py`; see
 `src/robot_controller/DESIGN-BehaviorCloningFlow.md`.
 
 `visual_proprioception/MultiFlow_VisualProprioception.ipynb` is not a flow

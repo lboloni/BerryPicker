@@ -21,8 +21,11 @@ MDN-only stage can be omitted or configured to train both the LSTM and MDN.
 After each stage, its best validation checkpoint is restored before the next
 stage begins.
 
-The encoder–MLP alternative uses the same state machine and persistence
-format through `StagedEncoderMLPTrainingRecipe`. The encoder is an `SP_CNN`
+All controllers use the same state machine and persistence format through
+`StagedControllerTrainingRecipe`, which trains any chain encoder → [LSTM] →
+head (MLP or MDN); see `src/robot_controller/DESIGN-RobotController.md`.
+
+The encoder–MLP controller is one such chain. The encoder is an `SP_CNN`
 (proprioception-tuned VGG19 or ResNet-50) or an `SP_VAE` (Conv-VAE-Neo or
 VAE-GAN) component; a configured `SP_VAE` source takes only the encoder
 weights of the full VAE checkpoint. It first trains the MLP with the encoder
@@ -36,7 +39,7 @@ family. A representative configuration is:
 
 ```yaml
 name: "Staged VAE-LSTM-MDN behavior cloning"
-class: StagedRobotControllerTrainingRecipe
+class: StagedControllerTrainingRecipe
 
 controller:
   exp: robot_controller
@@ -102,19 +105,21 @@ mode can name another training bundle or an explicit exp/run.
 ## Training model and component state
 
 Training must not use the stateful, inference-oriented
-`GraphRobotController.propagate()` path. A batched
-`RobotControllerTrainingModel` should reference the same underlying neural
-modules and implement:
+`GraphRobotController.propagate()` path. The batched `ChainTrainingModel`
+references the same underlying neural modules and implements, for the
+VAE–LSTM–MDN example:
 
 ```text
-images [B,T,C,H,W]
+images [B,T,C,H,W] (or cached latents [B,T,Z])
     -> deterministic VAE encoder [B,T,Z]
-    -> residual LSTM [B,H]
-    -> MDN parameters [B,A,K]
+    -> residual LSTM [B,T,H] (and the recurrent state)
+    -> MDN parameters [B,T,A,K]
 ```
 
-The controller objective is MDN negative log-likelihood against the normalized
-next action. Validation should also record expected-action MSE and MAE.
+The outputs are per step: windows use the last step, stateful chunks every
+existing step. The objective is the MDN negative log-likelihood against the
+normalized next action (MSE for an MLP head). Validation also records
+expected-action MSE and MAE.
 
 Model construction and state loading must be separate operations. Each
 trainable RCCO should expose a consistent interface such as:
@@ -146,13 +151,15 @@ configured VAE preprocessing, and enforce:
 ```
 
 Complete demonstrations must belong exclusively to training or validation.
-The initial implementation should use image sequences for every stage so the
-same path works when the VAE encoder is unfrozen. Frozen-encoder latent caching
-can be added later as an optimization.
+Stages that train the encoder use image sequences. In stages with a frozen
+encoder, the recipe encodes every frame once at the start of the stage and
+trains on the cached latents. Stateful LSTMs train on consecutive chunks of
+whole demonstrations (`RobotControllerChunkLoader`, with `chunk_length`)
+instead of windows.
 
 ## Recipe implementation
 
-`StagedRobotControllerTrainingRecipe`, derived from
+`StagedControllerTrainingRecipe`, derived from
 `AbstractTrainingRecipe`, should:
 
 1. Resolve and validate the controller graph.

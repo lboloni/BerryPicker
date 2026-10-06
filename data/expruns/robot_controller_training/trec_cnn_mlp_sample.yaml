@@ -1,5 +1,5 @@
 name: "Staged ResNet-50 CNN + deterministic MLP training"
-class: StagedEncoderMLPTrainingRecipe
+class: StagedControllerTrainingRecipe
 batch_size: 16
 
 controller:
@@ -11,13 +11,13 @@ robot:
   run: position_controller_00
 
 initial_states:
-  cnn_encoder:
+  encoder:
     mode: configured
   mlp:
     mode: random
 
 stages:
-  - name: mlp_warmup
+  - name: warmup
     trainable_components: [mlp]
     epochs: 20
     optimizer: Adam
@@ -27,11 +27,11 @@ stages:
     monitor: validation_mse
 
   - name: end_to_end
-    trainable_components: [cnn_encoder, mlp]
+    trainable_components: [encoder, mlp]
     epochs: 20
     optimizer: Adam
     learning_rates:
-      cnn_encoder: 0.00001
+      encoder: 0.00001
       mlp: 0.0001
     grad_clip_norm: 1.0
     monitor: validation_mse

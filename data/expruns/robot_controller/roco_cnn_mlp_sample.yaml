@@ -4,7 +4,7 @@ class: GraphRobotController
 components:
   image_input:
     run: rcco_input_default
-  cnn_encoder:
+  encoder:
     run: rcco_sp_cnn_resnet50_256
   mlp:
     run: rcco_mlp_256_6
@@ -14,9 +14,9 @@ components:
 connections:
   - from_component: image_input
     from_output: input
-    to_component: cnn_encoder
+    to_component: encoder
     to_input: image
-  - from_component: cnn_encoder
+  - from_component: encoder
     from_output: z
     to_component: mlp
     to_input: z

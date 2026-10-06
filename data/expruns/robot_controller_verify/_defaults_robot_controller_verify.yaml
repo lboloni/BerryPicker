@@ -4,6 +4,6 @@ input-to-notebook:
   - robot_controller/Verify_RCCO.ipynb
 
 # labels in the controller graph
-sp_component: cnn_encoder
+sp_component: encoder
 input_label: image_input
 output_label: robot_output
