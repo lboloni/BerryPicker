@@ -1,0 +1,2 @@
+# The WidowX AI controller on the kinematic fake driver, for machines without the arm.
+driver: fake

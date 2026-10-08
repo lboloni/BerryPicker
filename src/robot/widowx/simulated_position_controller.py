@@ -9,10 +9,13 @@ from .position import WidowXCommand, WidowXPose
 
 
 class SimulatedPositionController:
+    POSE = WidowXPose
+    COMMAND = WidowXCommand
+
     def __init__(self, exp):
         self.exp = exp
         self.started = False
-        self.pos = WidowXPose(exp)
+        self.pos = self.POSE(exp)
         self.target = copy(self.pos)
         self.gripper_action = "hold"
 
@@ -47,7 +50,7 @@ class SimulatedPositionController:
         }
 
     def can_reach(self, pose):
-        if not isinstance(pose, WidowXPose):
+        if not isinstance(pose, self.POSE):
             raise TypeError("WidowX reachability requires a WidowXPose")
         pose.validate(self.exp)
         return True
@@ -55,9 +58,9 @@ class SimulatedPositionController:
     def move(self, command, moving_time=None, blocking=True):
         del moving_time, blocking
         self._require_started()
-        if isinstance(command, WidowXPose):
-            command = WidowXCommand(command)
-        if not isinstance(command, WidowXCommand):
+        if isinstance(command, self.POSE):
+            command = self.COMMAND(command)
+        if not isinstance(command, self.COMMAND):
             raise TypeError("WidowX move requires a WidowXCommand or WidowXPose")
         command.pose.validate(self.exp)
         self.pos = copy(command.pose)
@@ -108,7 +111,7 @@ class SimulatedPositionController:
     def go_home(self, moving_time=None):
         del moving_time
         self._require_started()
-        self.pos = WidowXPose(self.exp)
+        self.pos = self.POSE(self.exp)
         self.target = copy(self.pos)
 
     def go_sleep(self, moving_time=None):

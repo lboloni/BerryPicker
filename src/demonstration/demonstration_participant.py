@@ -105,6 +105,8 @@ class AL5DParticipant(DemonstrationParticipant):
 class WidowXParticipant(DemonstrationParticipant):
     """Apply native WidowX commands and record target and observed robot state."""
 
+    ACTION = "widowx-command"
+
     def __init__(self, name, spec, exp, simulated):
         super().__init__(name, spec, exp)
         self.controller = (
@@ -117,15 +119,15 @@ class WidowXParticipant(DemonstrationParticipant):
 
     def start(self, context):
         self.controller.start_robot()
-        self.target = WidowXCommand(self.controller.get_target())
+        self.target = type(self.controller).COMMAND(self.controller.get_target())
 
     def update(self, context, dt):
         if self.command_name not in context.commands:
             return
         command = context.commands[self.command_name]
-        if isinstance(command, WidowXPose):
-            command = WidowXCommand(command)
-        if not isinstance(command, WidowXCommand):
+        if isinstance(command, type(self.controller).POSE):
+            command = type(self.controller).COMMAND(command)
+        if not isinstance(command, type(self.controller).COMMAND):
             raise TypeError(
                 f"WidowX participant {self.name} received an invalid command"
             )
@@ -138,12 +140,126 @@ class WidowXParticipant(DemonstrationParticipant):
 
     def sample(self, context):
         return DemonstrationSample(
-            action={"widowx-command": self.target.as_dict()},
+            action={self.ACTION: self.target.as_dict()},
             telemetry=self.controller.get_state(),
         )
 
     def stop(self, context):
         self.controller.stop_robot()
+
+
+class WXAIParticipant(WidowXParticipant):
+    """Apply native WidowX AI commands and record target and observed robot state.
+
+    The driver of the robot exprun selects the real arm, the kinematic fake
+    or the MuJoCo simulation; simulated selects the strict headless simulator.
+    """
+
+    ACTION = "wxai-command"
+
+    def __init__(self, name, spec, exp, simulated):
+        DemonstrationParticipant.__init__(self, name, spec, exp)
+        from robot.wxai import PositionController as WXAIPositionController
+        from robot.wxai import SimulatedPositionController as SimulatedWXAIPositionController
+        from robot.wxai import WXAICommand, WXAIPose
+
+        self.controller = (
+            SimulatedWXAIPositionController(exp)
+            if simulated
+            else WXAIPositionController(exp)
+        )
+        self.command_name = spec["command"]
+        self.target = WXAICommand(WXAIPose(exp))
+
+    def update(self, context, dt):
+        super().update(context, dt)
+        self.controller.update(dt)
+
+
+class WXAILeaderParticipant(DemonstrationParticipant):
+    """A WidowX AI leader arm whose joints are the joint commands of a WidowX AI follower.
+
+    The session ends with the exit key of a camera preview window, or after
+    max_timesteps ticks.
+    """
+
+    def __init__(self, name, spec, exp):
+        super().__init__(name, spec, exp)
+        from robot.wxai.leader_controller import LeaderController
+
+        self.controller = LeaderController(exp)
+        self.command_name = spec["emits"]
+        self.target_robot_name = spec["target_robot"]
+        self.target_robot = None
+        self.remaining_timesteps = exp["max_timesteps"]
+        self.joints = None
+
+    def bind(self, participants):
+        try:
+            self.target_robot = participants[self.target_robot_name]
+        except KeyError as error:
+            raise ValueError(
+                f"Participant {self.name} refers to unknown target robot "
+                f"{self.target_robot_name}"
+            ) from error
+        if not isinstance(self.target_robot, WXAIParticipant):
+            raise TypeError(
+                f"Participant {self.name} target {self.target_robot_name} "
+                "is not a WidowX AI participant"
+            )
+
+    def start(self, context):
+        self.controller.start()
+
+    def update(self, context, dt):
+        keycode = context.values.get("key", -1) & 0xFF
+        if self.remaining_timesteps <= 0 or keycode == ord(self.exp["exit_control_ord"]):
+            context.request_stop()
+            return
+        self.remaining_timesteps -= 1
+        from robot.wxai import WXAICommand
+
+        self.joints = self.controller.get_joints()
+        context.commands[self.command_name] = WXAICommand(
+            self.target_robot.controller.get_target(), joints=self.joints)
+        if self.exp["force_feedback_gain"] > 0:
+            self.controller.feedback(self.target_robot.controller.get_state()["joint_efforts"])
+
+    def sample(self, context):
+        return DemonstrationSample(telemetry={"leader_joint_positions": self.joints})
+
+    def stop(self, context):
+        self.controller.stop()
+
+
+class MujocoCameraParticipant(DemonstrationParticipant):
+    """Render the configured cameras of the MuJoCo simulation once per tick.
+
+    The simulation is created by the MuJoCo WidowX AI participant of the
+    same collection, which must come before the cameras in the recipe.
+    """
+
+    def __init__(self, name, spec, exp):
+        super().__init__(name, spec, exp)
+        self.runtime = None
+
+    def start(self, context):
+        from robot.wxai.simulation.mujoco_runtime import get_runtime
+
+        self.runtime = get_runtime(self.exp["scene"])
+
+    def update(self, context, dt):
+        pass
+
+    def sample(self, context):
+        width, height = self.exp["saved_image_size"]
+        return DemonstrationSample(images={
+            view: self.runtime.render(camera, width, height)
+            for view, camera in self.exp["views"].items()
+        })
+
+    def stop(self, context):
+        self.runtime = None
 
 
 class FixedCameraParticipant(DemonstrationParticipant):
@@ -639,6 +755,14 @@ def create_participants(collection_exp, machine_exp):
             name, spec, exp, True
         ),
         "widowx_automove_leader": WidowXAutoMoveLeaderParticipant,
+        "wxai_hardware": lambda name, spec, exp: WXAIParticipant(
+            name, spec, exp, False
+        ),
+        "wxai_simulated": lambda name, spec, exp: WXAIParticipant(
+            name, spec, exp, True
+        ),
+        "mujoco_cameras": MujocoCameraParticipant,
+        "wxai_leader": WXAILeaderParticipant,
         "widowx_leader": WidowXLeaderParticipant,
         "widowx_observer": WidowXObserverParticipant,
         "mobile_camera": MobileCameraParticipant,

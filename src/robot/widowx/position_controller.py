@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 class PositionController:
     """Control and observe a WidowX through ``InterbotixManipulatorXS``."""
 
+    POSE = WidowXPose
+    COMMAND = WidowXCommand
+
     def __init__(self, exp, runtime=None, bot=None):
         self.exp = exp
         self.runtime = runtime or get_default_runtime()

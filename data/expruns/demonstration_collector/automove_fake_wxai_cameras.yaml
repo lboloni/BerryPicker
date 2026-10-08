@@ -1,0 +1,17 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: automove
+    binding: widowx_automove
+    exp: automove
+    run: automove_wxai_random_pose_00
+    emits: wxai_target
+    target_robot: wxai
+  - name: wxai
+    binding: fake_wxai
+    command: wxai_target
+    blocking: false
+  - name: cameras
+    binding: fixed_cameras

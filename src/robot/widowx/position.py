@@ -10,9 +10,11 @@ class WidowXPose:
     """An end-effector pose in meters and radians."""
 
     FIELDS = ("x", "y", "z", "roll", "pitch", "yaw")
+    # the robot_name of the experiments this pose class accepts
+    ROBOT_NAME = "widowx"
 
     def __init__(self, exp, values=None):
-        if exp["robot_name"] != "widowx" or exp["controller_type"] != "position_controller":
+        if exp["robot_name"] != self.ROBOT_NAME or exp["controller_type"] != "position_controller":
             raise ValueError("WidowXPose requires a WidowX position-controller experiment")
         self.values = copy(exp["POSE_DEFAULT"] if values is None else values)
         self.validate(exp)
@@ -26,7 +28,7 @@ class WidowXPose:
         self.values[key] = value
 
     def __copy__(self):
-        pose = object.__new__(WidowXPose)
+        pose = object.__new__(type(self))
         pose.values = copy(self.values)
         return pose
 
@@ -132,7 +134,7 @@ class WidowXCommand:
         self.gripper_pressure = gripper_pressure
 
     def __copy__(self):
-        return WidowXCommand(self.pose, self.gripper_action, self.gripper_pressure)
+        return type(self)(self.pose, self.gripper_action, self.gripper_pressure)
 
     def as_dict(self):
         return {

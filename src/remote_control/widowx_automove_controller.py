@@ -19,6 +19,9 @@ class WidowXAutoMoveController:
             raise ValueError(f"Unsupported WidowX automove_type: {exp['automove_type']}")
         self.exp = exp
         self.robot_controller = robot_controller
+        # the pose and command classes of the robot, WidowX or WidowX AI
+        self.Pose = type(robot_controller).POSE
+        self.Command = type(robot_controller).COMMAND
         self.automove_type = exp["automove_type"]
         runtime = getattr(Config._instance, "runtime", {})
         self.random_seed = runtime.get("automove_random_seed", exp["random_seed"])
@@ -40,7 +43,7 @@ class WidowXAutoMoveController:
         )
         self.gripper_pressure = exp.get("gripper_pressure")
         if self.gripper_pressure is not None:
-            WidowXCommand(WidowXPose(robot_controller.exp), gripper_pressure=self.gripper_pressure)
+            self.Command(self.Pose(robot_controller.exp), gripper_pressure=self.gripper_pressure)
         self.waypoints = []
         self.pos_target = copy(robot_controller.get_target())
         self._gripper_sent = False
@@ -109,8 +112,8 @@ class WidowXAutoMoveController:
                 choices = self._choices(definition["choices"], f"pose.{field}.choices")
                 result[field] = ("choices", choices)
                 minimum[field], maximum[field] = min(choices), max(choices)
-        WidowXPose(self.robot_controller.exp, minimum)
-        WidowXPose(self.robot_controller.exp, maximum)
+        self.Pose(self.robot_controller.exp, minimum)
+        self.Pose(self.robot_controller.exp, maximum)
         return result
 
     @staticmethod
@@ -144,7 +147,7 @@ class WidowXAutoMoveController:
                 values[field] = self.rng.uniform(*definition)
             else:
                 values[field] = self.rng.choice(definition)
-        return WidowXPose(self.robot_controller.exp, values)
+        return self.Pose(self.robot_controller.exp, values)
 
     def generate_waypoints(self):
         """Populate the route with IK-checked waypoint commands."""
@@ -159,7 +162,7 @@ class WidowXAutoMoveController:
             attempts += 1
             pose = self._sample_pose()
             if self.robot_controller.can_reach(pose):
-                self.waypoints.append(WidowXCommand(
+                self.waypoints.append(self.Command(
                     pose,
                     gripper_action=self.rng.choice(self.gripper_actions),
                     gripper_pressure=self.gripper_pressure,
@@ -178,7 +181,7 @@ class WidowXAutoMoveController:
                 if waypoint.gripper_action != "hold" and not self._gripper_sent:
                     self._gripper_sent = True
                     self.pos_target = copy(current)
-                    return WidowXCommand(
+                    return self.Command(
                         current, waypoint.gripper_action, waypoint.gripper_pressure
                     )
                 self.waypoints.pop(0)
@@ -193,5 +196,5 @@ class WidowXAutoMoveController:
             if not self.robot_controller.can_reach(target):
                 raise RuntimeError(f"WidowX AutoMove intermediate pose is unreachable:\n{target}")
             self.pos_target = copy(target)
-            return WidowXCommand(target)
+            return self.Command(target)
         return None

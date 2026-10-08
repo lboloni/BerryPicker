@@ -1,0 +1,63 @@
+# Native task-space controller for a Trossen WidowX AI (wxai). Distances are
+# meters, angles radians, gripper positions meters and efforts N.
+# See src/robot/wxai/PLAN-WXAI.md.
+robot_name: wxai
+controller_type: position_controller
+input-to-notebook:
+  - demonstration/Verify_Robot_WXAI.ipynb
+
+# trossen_arm (the real arm), fake (kinematic stand-in) or mujoco (physics simulation)
+driver: trossen_arm
+model: wxai_v0
+end_effector: wxai_v0_follower
+# the factory default of the arm controller; a machine overrides it in the _sysdep overlay
+ip_address: 192.168.1.2
+clear_error: false
+interpolation_space: cartesian
+
+# the MuJoCo model of the trossen_arm_mujoco assets, used for the IK and the simulation
+mujoco_model: wxai/wxai_follower.xml
+ik_damping: 0.05
+ik_step: 1.0
+ik_max_iterations: 100
+ik_position_tolerance: 0.001
+ik_rotation_tolerance: 0.01
+
+moving_time: 0.1
+home_time: 2.0
+# grasp closes and release opens with gripper_pressure * gripper_max_effort
+gripper_pressure: 0.5
+gripper_max_effort: 40.0
+gripper_time: 0.1
+
+# "hold" leaves the arm where it is when collection starts. "sleep" parks it on stop.
+startup_pose: hold
+shutdown_pose: sleep
+HOME_JOINTS: [0.0, 1.5708, 1.5708, 0.0, 0.0, 0.0]
+SLEEP_JOINTS: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# a reachable pose in front of the robot (the home joints put the end effector at x 0.52, z 0.43)
+POSE_DEFAULT:
+  x: 0.40
+  y: 0.00
+  z: 0.30
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+# Representable pose envelope (reach 0.769 m). AutoMove has a smaller sampling workspace.
+POSE_MIN:
+  x: -0.80
+  y: -0.80
+  z: -0.20
+  roll: -3.141592654
+  pitch: -3.141592654
+  yaw: -3.141592654
+
+POSE_MAX:
+  x: 0.80
+  y: 0.80
+  z: 0.90
+  roll: 3.141592654
+  pitch: 3.141592654
+  yaw: 3.141592654

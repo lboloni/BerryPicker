@@ -72,4 +72,4 @@ def move_pose_towards(exp, current, target, max_steps):
         )
         for field in WidowXPose.FIELDS
     }
-    return WidowXPose(exp, values)
+    return type(current)(exp, values)

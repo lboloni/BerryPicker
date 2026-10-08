@@ -31,21 +31,24 @@ class WidowXXboxEndEffectorController:
             )
         self.exp = exp
         self.robot_controller = robot_controller
+        # the pose and command classes of the robot, WidowX or WidowX AI
+        self.Pose = type(robot_controller).POSE
+        self.Command = type(robot_controller).COMMAND
         self.velocity = self._read_velocity(exp["velocity"])
         self.max_input_dt = self._positive_finite(
             exp.get("max_input_dt", 0.25), "max_input_dt"
         )
         self.gripper_pressure = exp.get("gripper_pressure")
         if self.gripper_pressure is not None:
-            WidowXCommand(
-                WidowXPose(robot_controller.exp),
+            self.Command(
+                self.Pose(robot_controller.exp),
                 gripper_pressure=self.gripper_pressure,
             )
         self.buttons = self._read_buttons(exp)
 
         self.pos_target = copy(robot_controller.get_target())
         self.pos_home = None
-        self.last_command = WidowXCommand(self.pos_target)
+        self.last_command = self.Command(self.pos_target)
         self.exit_control = False
         self.synchronized = False
         self.last_target_rejected = False
@@ -112,7 +115,7 @@ class WidowXXboxEndEffectorController:
         actual_pose.validate(self.robot_controller.exp)
         self.pos_target = copy(actual_pose)
         self.pos_home = copy(actual_pose)
-        self.last_command = WidowXCommand(actual_pose)
+        self.last_command = self.Command(actual_pose)
         self.synchronized = True
 
     def poll_controller(self, joystick, dt):
@@ -205,7 +208,7 @@ class WidowXXboxEndEffectorController:
                 self.rejected_target_count += 1
 
         pressure = self.gripper_pressure if gripper_action != "hold" else None
-        self.last_command = WidowXCommand(
+        self.last_command = self.Command(
             self.pos_target, gripper_action, pressure
         )
         return copy(self.last_command)

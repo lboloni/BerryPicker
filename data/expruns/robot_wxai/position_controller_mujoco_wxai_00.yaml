@@ -1,0 +1,5 @@
+# The WidowX AI simulated in MuJoCo, in the BerryPicker scene with its cameras.
+driver: mujoco
+# in src/robot/wxai/simulation; it attaches the mujoco_model to a table and fixed cameras
+scene: scene_wxai_berrypicker.xml
+physics_timestep: 0.002

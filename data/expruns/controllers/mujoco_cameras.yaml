@@ -1,0 +1,10 @@
+# Camera views rendered from the MuJoCo simulation of the WidowX AI. The
+# scene must be the scene of the MuJoCo robot run of the same collection.
+scene: scene_wxai_berrypicker.xml
+# view name: camera of the scene; "cam" is the wrist camera of wxai_follower
+views:
+  mujoco_front: front
+  mujoco_side: side
+  mujoco_wrist: cam
+saved_image_size: [512, 512]
+visualize: false

@@ -20,6 +20,7 @@ Design docs are the source of truth for what's actually implemented vs. proposed
 - `src/sensorprocessing/DESIGN-*.md` — composite SP engine, VAE-GAN, multiview VAE, proprioception-tuned CNN, random-projection baseline, sensor-processing memory/temporal context. Several of these (e.g. composite ops, sensor-processing memory) are proposals, not yet implemented.
 - `src/visual_proprioception/DESIGN-TemporalVisualProprioception.md` — recursive estimators (EMA, Kalman, LSTM) over the observation stream, with the measured per-frame motion and error figures that motivate them. A proposal; no temporal component exists.
 - `src/robot_controller/DESIGN-RobotController.md` — the RCCO graph-controller framework.
+- `src/robot/wxai/PLAN-WXAI.md` — the Trossen WidowX AI support (real arm on `trossen_arm`, kinematic fake driver, MuJoCo simulation with cameras, leader arm): the design, what is implemented, and the open problems that need Linux or the arm. `INSTALL-WXAI.md` next to it.
 - `data/expruns/robot_controller/DESIGN_Training_Recipe.md` — the staged training recipe and controller-bundle export.
 - `ExpRunFlow/docs/DESIGN-ExpRun.md` and `ExpRunFlow/docs/DESIGN-Flows.md` — the generic exp/run and flow contracts, shared with WaterberryFarms.
 - `data/expruns/DESIGN-ExpRun.md` — the exp/run framework as used in BerryPicker: templates, paths, creation styles, the `input-to-notebook` field, the stage notebook contract and `exp.done()`.

@@ -1,0 +1,15 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: xbox
+    binding: widowx_xbox_end_effector
+    emits: wxai_target
+    target_robot: wxai
+  - name: wxai
+    binding: mujoco_wxai
+    command: wxai_target
+    blocking: false
+  - name: cameras
+    binding: mujoco_cameras

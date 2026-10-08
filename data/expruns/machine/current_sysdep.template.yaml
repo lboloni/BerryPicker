@@ -100,3 +100,52 @@ bindings:
     run: mobile_camera_controller_00
     available: false
     resources: [mobile_camera]
+
+  # WidowX AI (src/robot/wxai). wxai_robot is the real arm; fake_wxai the
+  # controller on the kinematic fake driver; mujoco_wxai the MuJoCo
+  # simulation, which must come before mujoco_cameras in a recipe.
+  wxai_robot:
+    factory: wxai_hardware
+    exp: robot_wxai
+    run: position_controller_wxai_00
+    available: false
+    resources: [wxai_robot]
+
+  fake_wxai:
+    factory: wxai_hardware
+    exp: robot_wxai
+    run: position_controller_fake_wxai_00
+    available: false
+
+  simulated_wxai:
+    factory: wxai_simulated
+    exp: robot_wxai
+    run: position_controller_wxai_00
+    available: false
+
+  mujoco_wxai:
+    factory: wxai_hardware
+    exp: robot_wxai
+    run: position_controller_mujoco_wxai_00
+    available: false
+    resources: [mujoco_wxai]
+
+  mujoco_cameras:
+    factory: mujoco_cameras
+    exp: controllers
+    run: mujoco_cameras
+    available: false
+    resources: [mujoco_cameras]
+
+  wxai_leader:
+    factory: wxai_leader
+    exp: controllers
+    run: wxai_leader_00
+    available: false
+    resources: [wxai_leader_robot]
+
+  fake_wxai_leader:
+    factory: wxai_leader
+    exp: controllers
+    run: wxai_leader_fake_00
+    available: false

@@ -1,0 +1,15 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: leader
+    binding: wxai_leader
+    emits: wxai_target
+    target_robot: wxai
+  - name: wxai
+    binding: wxai_robot
+    command: wxai_target
+    blocking: false
+  - name: cameras
+    binding: fixed_cameras
