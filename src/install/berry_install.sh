@@ -11,6 +11,8 @@ echo configpath: \"~/WORK/BerryPicker/cfg/settings.yaml\" > ~/.config/BerryPicke
 # check out Conv-VAE next to BerryPicker
 cd "$CHECKOUTS"
 [ -d Conv-VAE-PyTorch ] || git clone https://github.com/julian-8897/Conv-VAE-PyTorch
+# check out the ExpRunFlow exp/run and flow library next to BerryPicker
+[ -d ExpRunFlow ] || git clone https://github.com/lboloni/ExpRunFlow
 
 # create the data dirs
 mkdir -p ~/WORK/BerryPicker/data
@@ -33,7 +35,8 @@ pip install approxeng.input
 pip install pillow matplotlib pandas scipy tqdm tensorboardX pytest graphviz
 # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu132
-# flows run their notebooks with the kernel named berrypicker (src/flow.py)
+pip install -e "$CHECKOUTS/ExpRunFlow[flow]"
+# flows run their notebooks with the kernel named berrypicker (src/exp_run_config.py)
 python -m ipykernel install --user --name berrypicker --display-name "BerryPicker"
 
 # install the script for approxeng

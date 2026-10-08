@@ -33,7 +33,7 @@ class TestRCCOFlowGenerators(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         root = pathlib.Path(self.temporary.name)
-        self.old_exprun_path = Config().experiment_path
+        self.old_exprun_path = Config().get_exprun_path()
         self.old_results_path = Config().get_results_path()
         for name in ["expruns", "results"]:
             (root / name).mkdir()
@@ -47,7 +47,7 @@ class TestRCCOFlowGenerators(unittest.TestCase):
                           "bc_validation", "bc_testing"]}
 
     def tearDown(self):
-        Config().experiment_path = self.old_exprun_path
+        Config().set_exprun_path(self.old_exprun_path)
         Config().values["experiment_data"] = self.old_results_path
         self.temporary.cleanup()
 

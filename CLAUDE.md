@@ -9,8 +9,8 @@
 - When asked to design or propose a fix, produce a design only — do not change existing code unless explicitly told to implement it. When implementing, make the smallest possible change and follow the surrounding code's existing style.
 
 ## Config / exp_run_config bootstrap
-The codebase is driven by `src/exp_run_config.py` (a local `Config` singleton, not an installed package).
-- Every entry point sets `Config.PROJECTNAME = "BerryPicker"` before first use.
+The codebase is driven by the `Config` singleton of the ExpRunFlow library (`exprunflow.exp_run_config`, installed editable from the `ExpRunFlow` checkout next to BerryPicker). `src/exp_run_config.py` and `src/flow.py` are thin shims that re-export the library and set the BerryPicker values `Config.PROJECTNAME`, `Config.SRC_ROOT` and `Config.KERNEL_NAME`; code keeps importing `from exp_run_config import Config` and `from flow import ...`. The torch device (`Config().runtime["device"]`) and `exprunflow.reproducibility` also come from the library.
+- Every entry point sets `Config.PROJECTNAME = "BerryPicker"` before first use (now redundant with the shim, but harmless).
 - `Config()` reads `~/.config/BerryPicker/mainsettings.yaml`, whose only field, `configpath`, points at a machine-specific settings YAML that lives outside this repo and is not committed.
 - Experiment definitions live in `data/expruns/<family>/`: one `_defaults_<family>.yaml` plus one YAML per run. `Config().get_experiment(family, run)` merges defaults -> run config -> an optional system-dependent override, then creates `exp["data_dir"]` under the machine's configured `experiment_data` root.
 - Without a working `mainsettings.yaml`/`configpath` on the current machine, most modules will fail on import or on first `Config()` call — that is expected, not something to work around defensively.
@@ -21,8 +21,9 @@ Design docs are the source of truth for what's actually implemented vs. proposed
 - `src/visual_proprioception/DESIGN-TemporalVisualProprioception.md` — recursive estimators (EMA, Kalman, LSTM) over the observation stream, with the measured per-frame motion and error figures that motivate them. A proposal; no temporal component exists.
 - `src/robot_controller/DESIGN-RobotController.md` — the RCCO graph-controller framework.
 - `data/expruns/robot_controller/DESIGN_Training_Recipe.md` — the staged training recipe and controller-bundle export.
-- `data/expruns/DESIGN-ExpRun.md` — the exp/run framework: templates, paths, creation styles, the `input-to-notebook` field, the stage notebook contract and `exp.done()`.
-- `data/expruns/DESIGN-Flows.md` — flows: the workspace, queue building with `flow_entry`, fail-fast execution and the final report (`src/flow.py`).
+- `ExpRunFlow/docs/DESIGN-ExpRun.md` and `ExpRunFlow/docs/DESIGN-Flows.md` — the generic exp/run and flow contracts, shared with WaterberryFarms.
+- `data/expruns/DESIGN-ExpRun.md` — the exp/run framework as used in BerryPicker: templates, paths, creation styles, the `input-to-notebook` field, the stage notebook contract and `exp.done()`.
+- `data/expruns/DESIGN-Flows.md` — flows: the workspace, queue building with `flow_entry`, fail-fast execution, the final report, and the current BerryPicker flows.
 
 ## Tests
 Tests are plain `unittest`/`pytest` under `src/test/`, mirroring the `src/` package layout. Each test file inserts `src/` onto `sys.path` itself, so tests run from the repo root:
