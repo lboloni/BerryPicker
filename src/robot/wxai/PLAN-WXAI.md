@@ -422,6 +422,7 @@ src/robot/wxai/
 src/demonstration/
   demonstration_participant.py        WXAIParticipant, WXAILeaderParticipant, MujocoCameraParticipant, factories
   Verify_Robot_WXAI.ipynb             the stage notebook of every robot_wxai run
+  Show_WXAI_Simulation.ipynb          watch the MuJoCo arm move through waypoints, live and as a GIF
 src/test/robot/wxai/                  pose, kinematics, controller (fake), MuJoCo, leader, simulator
 src/test/demonstration/test_wxai_participant.py
 data/expruns/robot_wxai/              _defaults, position_controller_wxai_00 (real), _fake_wxai_00, _mujoco_wxai_00
@@ -608,7 +609,7 @@ The answers to Phase 0, from the `trossen_arm` 1.11.0 docstrings and the
 5. **One MuJoCo runtime per scene and process.** `stop_robot` releases it,
    so a stopped MuJoCo controller cannot be started again; create a new one.
 6. **Camera placement.** The fixed cameras of `scene_wxai_berrypicker.xml`
-   are placeholders and cut off the top of the arm; place them like the
+   are placeholders that show the whole workspace; place them like the
    real cameras.
 7. **The fake driver** moves instantaneously, and the fake leader stays in
    the sleep pose unless a test moves it.
