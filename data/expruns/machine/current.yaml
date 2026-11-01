@@ -1,3 +1,6 @@
 # Hardware bindings are deliberately supplied only by current_sysdep.yaml.
 machine_name: null
+# Robot software stacks installed on this machine (e.g. al5d, widowx, wxai).
+# Tests for a robot not listed here are skipped.
+robots: []
 bindings: {}

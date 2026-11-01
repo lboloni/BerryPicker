@@ -10,6 +10,8 @@ also name their local `exp`/`run`; behavior-specific runs such as AutoMove can
 be supplied by the collection recipe instead.
 `resources` prevent a collection recipe from acquiring the same physical device
 twice.
+`robots` lists the robot software stacks installed on the machine (`al5d`,
+`widowx`, `wxai`). Tests that need a robot stack not listed there are skipped.
 
 The component templates `controllers/fixed_cameras_sysdep.template.yaml` and
 `robot_al5d/pulse_controller_00_sysdep.template.yaml` belong in the same local

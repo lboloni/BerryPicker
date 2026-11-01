@@ -12,6 +12,11 @@ sys.path.extend([
     str(pathlib.Path(__file__).parents[1] / "robot" / "wxai"),
 ])
 
+from exp_run_config import Config
+
+if "wxai" not in Config().get_experiment("machine", "current")["robots"]:
+    raise unittest.SkipTest("wxai is not in the robots of machine/current")
+
 from demonstration_participant import (
     DemonstrationContext,
     MujocoCameraParticipant,

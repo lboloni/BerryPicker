@@ -13,7 +13,7 @@ sys.path.extend([
     str(pathlib.Path(__file__).parents[2] / "demonstration"),
 ])
 
-from import_aloha import AlohaImportError, import_aloha
+from demonstration.import_aloha import AlohaImportError, import_aloha
 
 
 class TestAlohaImport(unittest.TestCase):
@@ -136,7 +136,7 @@ class TestAlohaImport(unittest.TestCase):
             target = root / "target"
 
             with patch(
-                "import_aloha._write_video",
+                "demonstration.import_aloha._write_video",
                 side_effect=AlohaImportError("write failed"),
             ):
                 with self.assertRaisesRegex(AlohaImportError, "write failed"):

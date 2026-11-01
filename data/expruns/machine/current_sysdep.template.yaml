@@ -2,6 +2,8 @@
 # <experiment_system_dependent_dir>/machine/current_sysdep.yaml
 # Do not commit the copied file. It identifies machine-local hardware.
 machine_name: "replace-with-machine-name"
+# Robot software stacks installed on this machine. Tests for others are skipped.
+robots: [al5d, widowx]
 
 bindings:
   xbox:

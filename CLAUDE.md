@@ -29,8 +29,9 @@ Design docs are the source of truth for what's actually implemented vs. proposed
 ## Tests
 Tests are plain `unittest`/`pytest` under `src/test/`, mirroring the `src/` package layout. Each test file inserts `src/` onto `sys.path` itself, so tests run from the repo root:
 ```
-pytest src/test
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 venv/bin/python -m pytest src/test
 ```
+`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` is needed on machines that source ROS: ROS puts its own pytest plugins on `PYTHONPATH`, and they fail inside the venv. Run the whole suite in one call; it must not depend on which folders are run. Tests import project modules through their packages (`demonstration.import_aloha`), because a folder on `sys.path` such as `src/demonstration` turns `demonstration` into the module `demonstration.py` for all later tests. Tests for a robot stack (e.g. `wxai`) are skipped unless the robot is listed in `robots` of the `machine/current` exp/run (see `data/expruns/machine/README.md`).
 
 ## Notebooks
 Training/verification entry points are Jupyter notebooks (run via Papermill), not scripts. Each exp/run declares which notebook(s) are canonical via the `input-to-notebook` field (see `DESIGN-ExpRun.md`). Flows run them in order (see `DESIGN-Flows.md`).
