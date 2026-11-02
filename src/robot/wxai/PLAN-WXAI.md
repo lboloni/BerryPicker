@@ -434,7 +434,7 @@ data/expruns/demonstration_collector/ {automove,xbox}_{wxai,simulated_wxai,mujoc
 data/expruns/machine/current_sysdep.template.yaml   the WidowX AI bindings (all unavailable)
 ```
 
-The Mac profile in `Lotzi-BerryPicker-Settings/settings/experiment-config/szenes/machine/current_sysdep.yaml`
+The Mac profile in `Lotzi-ActivityReports/Projects/2-Continuous/CODE-BerryPicker/settings/experiment-config/szenes/machine/current_sysdep.yaml`
 has the fake, simulated and MuJoCo bindings available.
 
 ### Deviations from the plan
