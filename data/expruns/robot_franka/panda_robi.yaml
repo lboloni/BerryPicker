@@ -1,0 +1,30 @@
+# The Franka Panda, as normalized in Robi's experiments (2025-10,
+# position_controller_00_7DOF.yaml). His runs stored the joints under the
+# AL5D field names and learned the six AL5D fields; the joints below are in
+# that order (height, distance, heading, wrist_angle, wrist_rotation, gripper).
+# panda_joint6 (his 7th_number) was never learned.
+JOINTS: ["panda_joint3", "panda_joint1", "panda_joint2", "panda_joint4", "panda_joint5", "panda_joint7"]
+
+POS_DEFAULT:
+  "panda_joint3": 0.0
+  "panda_joint1": 0.0
+  "panda_joint2": 0.0
+  "panda_joint4": -2.0
+  "panda_joint5": 0.0
+  "panda_joint7": 0.0
+
+POS_MIN:
+  "panda_joint3": -1.15
+  "panda_joint1": -1.2
+  "panda_joint2": -1.05
+  "panda_joint4": -2.9
+  "panda_joint5": -1.05
+  "panda_joint7": -0.95
+
+POS_MAX:
+  "panda_joint3": 0.6
+  "panda_joint1": 1.15
+  "panda_joint2": 0.25
+  "panda_joint4": -1.7
+  "panda_joint5": 0.65
+  "panda_joint7": 1.9

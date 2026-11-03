@@ -1,0 +1,24 @@
+# The left arm of the Unitree G1 (Isaac Sim), pack g1-left-arm-freeform.
+# Only the four joints that move in the recorded data are used. The wrist
+# joints (left_wrist_pitch_joint, left_wrist_roll_joint, left_wrist_yaw_joint)
+# are recorded but constant (within +-0.001 rad).
+# Limits: the data range (min/max over the pack), rounded outward.
+JOINTS: ["left_shoulder_pitch_joint", "left_shoulder_roll_joint", "left_shoulder_yaw_joint", "left_elbow_joint"]
+
+POS_DEFAULT:
+  "left_shoulder_pitch_joint": 0.0
+  "left_shoulder_roll_joint": 0.0
+  "left_shoulder_yaw_joint": 0.0
+  "left_elbow_joint": 0.0
+
+POS_MIN:
+  "left_shoulder_pitch_joint": -0.75
+  "left_shoulder_roll_joint": -0.2
+  "left_shoulder_yaw_joint": -0.3
+  "left_elbow_joint": -0.25
+
+POS_MAX:
+  "left_shoulder_pitch_joint": 0.05
+  "left_shoulder_roll_joint": 0.1
+  "left_shoulder_yaw_joint": 0.1
+  "left_elbow_joint": 0.65

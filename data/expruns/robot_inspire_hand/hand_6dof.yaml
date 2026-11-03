@@ -1,0 +1,27 @@
+# The Inspire hand (left, 6 actuated joints), pack inspire-hand-freeform-6dof.
+# Limits: the data range rounded outward.
+JOINTS: ["L_index_joint", "L_middle_joint", "L_pinky_joint", "L_ring_joint", "L_thumb_proximal_joint", "L_thumb_joint"]
+
+POS_DEFAULT:
+  "L_index_joint": 0.0
+  "L_middle_joint": 0.0
+  "L_pinky_joint": 0.0
+  "L_ring_joint": 0.0
+  "L_thumb_proximal_joint": 0.0
+  "L_thumb_joint": 0.0
+
+POS_MIN:
+  "L_index_joint": -0.01
+  "L_middle_joint": -0.01
+  "L_pinky_joint": -0.01
+  "L_ring_joint": -0.01
+  "L_thumb_proximal_joint": -0.01
+  "L_thumb_joint": -0.01
+
+POS_MAX:
+  "L_index_joint": 1.25
+  "L_middle_joint": 1.2
+  "L_pinky_joint": 1.01
+  "L_ring_joint": 1.11
+  "L_thumb_proximal_joint": 0.7
+  "L_thumb_joint": 0.88

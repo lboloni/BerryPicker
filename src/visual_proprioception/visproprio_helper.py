@@ -16,7 +16,7 @@ import pathlib
 import torch
 import numpy as np
 from demonstration.demonstration import Demonstration
-from robot.al5d import RobotPosition
+from robot.position_factory import action_key
 import sensorprocessing.sp_helper as sp_helper
 import sensorprocessing.sp_factory as sp_factory
 # The multi-view dataset helpers live with the training-data code; they are
@@ -156,7 +156,7 @@ def load_demonstrations_as_proprioception_training(
                 i, camera=camera, transform=transform)
             timing = {"dt": timestep_interval(demo, i)} if temporal and timestep_interval else {}
             z = sp.process(sensor_readings, **timing)
-            rp = demo.get_action(i, "rc-position-target", exp_robot)
+            rp = demo.get_action(i, action_key(exp_robot), exp_robot)
             anorm = rp.to_normalized_vector(exp_robot)
             inp = torch.from_numpy(z)
             tgt = torch.from_numpy(anorm)
@@ -277,7 +277,7 @@ def load_multiview_demonstrations_as_proprioception_training(
                     z = sp.process(view_images, **timing)
 
             # Get robot position
-            rp = demo.get_action(i, "rc-position-target", exp_robot)
+            rp = demo.get_action(i, action_key(exp_robot), exp_robot)
             anorm = rp.to_normalized_vector(exp_robot)
 
             # Store encoded latent and target

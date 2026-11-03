@@ -41,7 +41,7 @@ class TestVisproprioHelper(unittest.TestCase):
     def test_multiview_loader_does_not_pass_device_to_demonstration(self):
         exp = {"training_data": [["demo-run", "demo-name", ["cam-1", "cam-2"]]]}
         spexp = {"num_views": 2}
-        exp_robot = object()
+        exp_robot = {}
 
         class FakePosition:
             def to_normalized_vector(self, received_exp_robot):
@@ -109,7 +109,7 @@ class TestVisproprioHelper(unittest.TestCase):
     def test_multiview_loader_uses_the_processor_demonstration_api(self):
         exp = {"training_data": [["demo-run", "demo-name", ["cam-2", "cam-1"]]]}
         spexp = {"num_views": 2}
-        exp_robot = object()
+        exp_robot = {}
 
         class FakePosition:
             def to_normalized_vector(self, received_exp_robot):

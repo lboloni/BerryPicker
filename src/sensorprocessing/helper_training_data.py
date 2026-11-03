@@ -7,6 +7,7 @@ import torch
 
 from demonstration.demonstration import Demonstration
 from exp_run_config import Config, Experiment
+from robot.position_factory import action_key
 from sensorprocessing.sp_helper import get_transform_to_sp
 
 Config.PROJECTNAME = "BerryPicker"
@@ -153,7 +154,7 @@ def _build_multiview_tensors(exp, exp_robot, dataset_name, transform):
                 frame_views.append(sensor_readings[0].cpu())
 
             position = demo.get_action(
-                index, "rc-position-target", exp_robot
+                index, action_key(exp_robot), exp_robot
             )
             normalized = position.to_normalized_vector(exp_robot)
             target = torch.from_numpy(normalized).cpu()
@@ -357,7 +358,7 @@ def load_images_as_proprioception_training(
                 input_list.append(sensor_readings[0])
 
                 position = demo.get_action(
-                    index, "rc-position-target", exp_robot
+                    index, action_key(exp_robot), exp_robot
                 )
                 normalized = position.to_normalized_vector(exp_robot)
                 target_list.append(torch.from_numpy(normalized))

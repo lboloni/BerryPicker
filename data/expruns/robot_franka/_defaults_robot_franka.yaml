@@ -1,0 +1,12 @@
+# The Franka Emika Panda (src/robot/franka).
+# Positions are vectors of named joints (src/robot/joint_position.py): a run
+# gives JOINTS (the joints of the normalized position vector, in order) and
+# POS_MIN, POS_MAX, POS_DEFAULT (keyed by joint name). The demonstrations
+# record the joint values under action_key (see robot/position_factory.py).
+robot_name: "franka"
+controller_type: "position_controller"
+action_key: "joint-position"
+# raise when a position is outside [POS_MIN, POS_MAX]
+enforce_limits: true
+
+input-to-notebook: []

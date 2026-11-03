@@ -1,0 +1,31 @@
+# The Inspire hand, as normalized in Robi's experiments (2025-10,
+# position_controller_00_Inspire_hand.yaml, "Inspire Hand Grasp 6 DOF").
+# These limits do not contain all of the data (e.g. L_index_joint reaches
+# 1.246, L_thumb_proximal_joint goes down to 0); his code did not check the
+# limits, so neither does this run: such values normalize outside [0, 1].
+JOINTS: ["L_index_joint", "L_middle_joint", "L_pinky_joint", "L_ring_joint", "L_thumb_proximal_joint", "L_thumb_joint"]
+enforce_limits: false
+
+POS_DEFAULT:
+  "L_index_joint": 0.0
+  "L_middle_joint": 0.0
+  "L_pinky_joint": 0.0
+  "L_ring_joint": 0.0
+  "L_thumb_proximal_joint": 0.049
+  "L_thumb_joint": 0.0
+
+POS_MIN:
+  "L_index_joint": 0.0
+  "L_middle_joint": 0.0
+  "L_pinky_joint": 0.0
+  "L_ring_joint": 0.0
+  "L_thumb_proximal_joint": 0.049
+  "L_thumb_joint": 0.0
+
+POS_MAX:
+  "L_index_joint": 1.209
+  "L_middle_joint": 1.199
+  "L_pinky_joint": 1.006
+  "L_ring_joint": 1.093
+  "L_thumb_proximal_joint": 0.7025
+  "L_thumb_joint": 0.8735

@@ -1,0 +1,31 @@
+# The left arm of the Unitree G1, as normalized in Robi's experiments
+# (2025-10, Robi_code_to_Dr_Boloni, the "G1_Smooth_dataset" block of
+# position_controller_00.yaml). His runs stored the joints under the AL5D
+# field names and learned the six AL5D fields; the joints below are in that
+# order (height, distance, heading, wrist_angle, wrist_rotation, gripper).
+# left_wrist_yaw_joint (his 7th_number) was never learned.
+JOINTS: ["left_elbow_joint", "left_shoulder_pitch_joint", "left_shoulder_yaw_joint", "left_wrist_pitch_joint", "left_wrist_roll_joint", "left_shoulder_roll_joint"]
+
+POS_DEFAULT:
+  "left_elbow_joint": 0.0
+  "left_shoulder_pitch_joint": 0.0
+  "left_shoulder_yaw_joint": 0.0
+  "left_wrist_pitch_joint": 0.0
+  "left_wrist_roll_joint": 0.0
+  "left_shoulder_roll_joint": 0.0
+
+POS_MIN:
+  "left_elbow_joint": -0.25
+  "left_shoulder_pitch_joint": -0.75
+  "left_shoulder_yaw_joint": -0.3
+  "left_wrist_pitch_joint": -0.1
+  "left_wrist_roll_joint": -0.1
+  "left_shoulder_roll_joint": -0.2
+
+POS_MAX:
+  "left_elbow_joint": 0.65
+  "left_shoulder_pitch_joint": 0.1
+  "left_shoulder_yaw_joint": 0.1
+  "left_wrist_pitch_joint": 0.1
+  "left_wrist_roll_joint": 0.1
+  "left_shoulder_roll_joint": 0.1

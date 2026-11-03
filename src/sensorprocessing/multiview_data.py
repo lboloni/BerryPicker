@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from demonstration.demonstration import Demonstration
 from exp_run_config import Config
+from robot.position_factory import action_key
 from sensorprocessing.sp_helper import get_transform_to_sp
 
 
@@ -184,7 +185,7 @@ class DemonstrationMultiViewDataset(Dataset):
 
     def _load_target(self, demonstration, timestep):
         position = demonstration.get_action(
-            timestep, "rc-position-target", self.robot_exp
+            timestep, action_key(self.robot_exp), self.robot_exp
         )
         normalized = np.asarray(
             position.to_normalized_vector(self.robot_exp), dtype=np.float32

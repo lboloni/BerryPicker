@@ -15,7 +15,7 @@ import pathlib
 import textwrap
 from sensorprocessing.sp_helper import load_picturefile_to_tensor, load_capture_to_tensor
 from torchvision import transforms
-from robot.al5d import RobotPosition
+from robot.position_factory import create_position
 
 
 def list_demos(exp, prefix = None):
@@ -117,11 +117,10 @@ class Demonstration:
         self.annotations[i][type] = value
 
     def get_action(self, i, type:str="rc-position-target", exp=None):
-        """Returns the action at timestep i. The action is a dictionary, and the type is the key to the dictionary. The default is "rc_position_target", which is the position of the robot in the world frame. Other types are "rc_velocity_target" and "rc_orientation_target".
+        """Returns the action at timestep i. The action is a dictionary, and the type is the key to the dictionary. The default is "rc-position-target", the position of the AL5D. If the robot exp/run is given, the action is returned as a position of that robot (see robot.position_factory), otherwise as recorded.
         """
-        if type == "rc-position-target":
-            values = self.actions[i][type]
-            return RobotPosition(exp, values)
+        if exp is not None:
+            return create_position(exp, self.actions[i][type])
         return self.actions[i][type]
 
     def __str__(self):
