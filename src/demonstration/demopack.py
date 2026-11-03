@@ -139,6 +139,16 @@ def group_chooser_sp_vp_standard(demo_names):
 
 
 
+def group_chooser_fixed_order(order, group_chooser):
+    """A group chooser that applies group_chooser to the demonstrations in the given
+    order instead of the sorted one. Used to reproduce a split made in the directory
+    order of another machine (e.g. Robi's multi-robot runs, PLAN-MultiRobot.md)."""
+    def chooser(demo_names):
+        assert sorted(order) == sorted(demo_names), f"The order {order} does not list the demonstrations {demo_names}"
+        return group_chooser(list(order))
+    return chooser
+
+
 def group_chooser_sp_vp_multiview(demo_names):
     """Group chooser for multiview visual proprioception.
 
