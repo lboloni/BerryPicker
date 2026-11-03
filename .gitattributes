@@ -1,0 +1,3 @@
+# Line endings: LF in the repository and in every checkout, on every OS.
+# Git detects binary files (images, model weights) and leaves them alone.
+* text=auto eol=lf

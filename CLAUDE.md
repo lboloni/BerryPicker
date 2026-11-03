@@ -6,6 +6,7 @@
 - This is research code: on error, the right behavior is to let an exception propagate and abort — do not silently catch or work around errors.
 - Do not add input validation for cases that would crash anyway.
 - Keep code short and human-understandable, matching the style already present in the file you're editing.
+- Line endings are LF everywhere (`.gitattributes`: `* text=auto eol=lf`). The files that had CRLF or mixed endings were converted on 2026-11-03. If a file still has CRLF (e.g. a new file written on Windows), convert it to LF instead of preserving the CRLF.
 - When asked to design or propose a fix, produce a design only — do not change existing code unless explicitly told to implement it. When implementing, make the smallest possible change and follow the surrounding code's existing style.
 
 ## Config / exp_run_config bootstrap
