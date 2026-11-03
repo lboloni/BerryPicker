@@ -69,6 +69,20 @@ the five fusion heads), with additional single-view-only and
 multi-view-only comparisons. Final results:
 `visual_proprioception_collections/flow_vp_comp_all`.
 
+`visual_proprioception/Flow_VisualProprioception_CrossRobot.ipynb` trains
+visual proprioception across robots (the G1 arm, the Franka Panda and the
+Inspire hand; see `src/visual_proprioception/PLAN-MultiRobot.md`). For each
+pair `(sp_pack, vp_pack)`, the sensor processors (Conv-VAE, VGG19, ResNet50)
+are trained on `sp_pack` and the regressors are trained and verified on
+`vp_pack`. Each pack names its robot, which gives the output sizes. Each sensor
+processor is trained once and shared by all the pairs that use it. The flow
+compares the regressors of each pair, then writes a summary table next to
+Robi's 2025-10 numbers. Its parameters select either his protocol (his robot
+runs, his demonstration order, evaluation on `vp_validation`) or the clean one
+(`robot_variant = "full"`, sorted order, `vp_testing`). Final results:
+`visual_proprioception_collections/crossrobot_<sp_pack>_to_<vp_pack>` and
+`crossrobot_summary.csv` in the results directory.
+
 `visual_proprioception/Flow_PtunVsRandProj_128.ipynb` trains two
 proprioception-tuned CNN variants (created with `create_exprun_variant`),
 regressors on them and on two training-free random-projection encoders, and
