@@ -158,6 +158,7 @@ For each demonstration, the script:
 - maps the AL5D-named fields back to the native joint names (the table above), into the action key `joint-position`;
 - writes `_metadata.yaml` with `cameras: [dev000]`, `maxsteps: 500` and `stored_as_images: True`;
 - writes a fresh `_annotation.yaml`;
+- for the Panda, records in `_metadata.yaml` the DREAM sequence the frames come from and the index of the demonstration's first frame in it (`source_sequence: DREAM panda-3cam_realsense`, `source_frame_offset: 730 + 500·k`; see [DESIGN-Import-Competitors.md](DESIGN-Import-Competitors.md));
 - keeps the JPEG frames as they are, because re-encoding to video would change the inputs of the reproduction.
 
 For each pack, the script:
