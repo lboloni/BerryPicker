@@ -2,8 +2,11 @@
 
 ## Status and intent
 
-**A proposal, not implemented** (2026-11-03; revised the same day, after porting Robi's multi-robot pipeline, see
-[PLAN-MultiRobot.md](PLAN-MultiRobot.md)).
+**The BerryPicker side is implemented; the methods themselves have not been run yet** (2026-11-03). The interface,
+the export, the import, the stage notebook, the flow and the drivers of both methods are in place, and the whole
+path runs on szenes with the ground-truth reference method `dream_ground_truth`. RoboPEPP and HPE need a Linux
+machine with CUDA (see "State of the implementation" at the end). The design was revised on 2026-11-03, after porting
+Robi's multi-robot pipeline ([PLAN-MultiRobot.md](PLAN-MultiRobot.md)).
 
 **The objective is access.** Two published robot pose estimation methods, RoboPEPP and HPE, should be usable from
 BerryPicker as one more way of estimating the position of a robot from its images:
@@ -44,21 +47,31 @@ Neither README describes training on a robot that it does not already support.
 ## The interface: an external estimator is an exp/run
 
 An external estimator is used like any other BerryPicker component, through an exp/run:
-- Family `data/expruns/external_proprioception/`, with one run per method × robot × checkpoint, e.g.
-  `robopepp_panda_published.yaml`, `hpe_panda_published.yaml`, `hpe_panda_matched.yaml`.
+- Family `data/expruns/external_proprioception/`, with one run per method × robot × checkpoint:
+  `robopepp_panda_published.yaml`, `hpe_panda_published.yaml`, and the reference `dream_ground_truth_panda.yaml`.
 - Fields:
-  - `method` and `checkpoint`;
-  - `robot_exp`/`robot_run`, the robot whose positions it predicts (e.g. `robot_franka/panda`);
-  - `testing_data`, the same `[pack, demonstration, camera]` triples as our runs;
-  - `input-to-notebook: [visual_proprioception/Run_External_Proprioception.ipynb]`.
-- **Result:** `predictions.npz` in the run's `data_dir`, with the per-frame joint angles of the method and the same
-  dictionary as `predict_positions()` (`targets`, `predictions`, `filtered`, `lengths`), normalized by the robot run.
-- **The one change to the existing code:** `predict_positions()` in `visproprio_helper.py` loads `predictions.npz` when
-  the run's experiment is `external_proprioception`, instead of running an SP and a regressor. Verify, Compare and the
+  - `method` (the driver `external_drivers/<method>_predict.py`) and `checkpoint` (a file or folder in the method's
+    checkpoint directory);
+  - `robot_exp`/`robot_run`, the robot whose positions it predicts: `robot_franka/panda_6dof` for RoboPEPP (joints
+    1–6, the only ones it predicts), `robot_franka/panda` for HPE (joints 1–7);
+  - `validation_data`, the `[pack, demonstration, camera]` triples it runs on. It is the field our runs are evaluated
+    on, so Verify and Compare need no change;
+  - `driver_args`, further arguments of the driver;
+  - `input-to-notebook: [visual_proprioception/Run_External_Proprioception.ipynb,
+    visual_proprioception/Verify_VisualProprioception.ipynb]`.
+- **Result:** `angles_validation_data.npz` in the run's `data_dir`: the per-frame joint angles of the method (radians),
+  their joint names and the original frame files.
+- **The one change to the existing code:** `predict_positions()` in `visproprio_helper.py` reads this file for runs of
+  `external_proprioception`, instead of running an SP and a regressor. It maps the angles by name onto the joints of
+  the robot run it is given, and applies the run's position filter as for our models. Verify, Compare and the
   collections then treat an external estimator like one of our runs.
+- **Mapping by joint name** lets one comparison hold methods that predict different joints. A collection on
+  `robot_franka/panda_6dof` compares RoboPEPP (joints 1–6) and HPE (joints 1–7, plus the finger) on joints 1–6.
+- Predicted positions outside the limits of the robot run normalize outside [0, 1], as the outputs of our regressors
+  can (`to_normalized_vector(exp, enforce_limits=False)`). The targets are checked against the limits as usual.
 
 Nothing in the interface is specific to a comparison. A flow can run an external estimator on any demonstration whose
-robot it supports, and use its positions.
+robot and source sequence it supports, and use its positions.
 
 ## Architecture in BerryPicker
 
@@ -67,28 +80,50 @@ pytorch3d versions, and CUDA on Linux. They are therefore run as **external tool
 
 ```text
 BerryPicker demonstration(s)
-   -> export: DREAM-format frames (images + per-frame JSON)   [BerryPicker venv]
-   -> run: RoboPEPP or HPE in its own conda env                [subprocess]
-   -> predictions file: per-frame joint angles (.npz)
-   -> import: positions of the robot run, same dict as predict_positions()   [BerryPicker venv]
+   -> export: DREAM-format folder, links to the original frames   [BerryPicker venv]
+   -> run: the driver of the method, with the Python of its env     [subprocess]
+   -> angles file: per-frame joint angles (.npz)
+   -> predict_positions(): positions of the robot run               [BerryPicker venv]
    -> Verify, Compare, flows: like any visual proprioception run
 ```
 
-The method repositories are external checkouts, like `ExpRunFlow`. Their code is not vendored into BerryPicker. Their
-paths and conda environment names are machine-specific. They go into the system-dependent override in the machine
-settings (`Lotzi-ActivityReports/Projects/2-Continuous/CODE-BerryPicker/settings`), not into the repository.
+The method repositories are external checkouts, like `ExpRunFlow`; their code is not vendored into BerryPicker. Their
+paths, the Python of their environments, their checkpoint directories and the machine-specific driver arguments are in
+the machine settings (`Lotzi-ActivityReports/Projects/2-Continuous/CODE-BerryPicker/settings/settings-<machine>.yaml`),
+under `external_proprioception`, next to the directories of the source sequences. `src/install/settings-sample.yaml`
+has a commented template:
 
-### New components
+```yaml
+external_proprioception:
+  sequences:
+    "DREAM panda-3cam_realsense": <the DREAM-format directory of the sequence>
+  robopepp:
+    code_dir: <the RoboPEPP checkout>
+    python: <the Python of its conda env>
+    checkpoint_dir: <its checkpoints>
+    driver_args:
+      jepa-path: <jepa_joints-ep200.pth.tar>
+      bbox-dir: <the GroundingDINO boxes of the sequence>
+  hpe:
+    code_dir: <the HPE checkout>
+    python: <the Python of its conda env>
+    checkpoint_dir: <the model zoo: one experiment folder per model>
+```
+
+### Components
 
 | Component | Role |
 |---|---|
-| `src/visual_proprioception/external_export.py` | Writes the frames of a run's `testing_data` (and, for fine-tuning, `training_data`) in DREAM format: `NNNNNN.rgb.jpg` and `NNNNNN.json` with joint angles, keypoints and camera data, plus `_camera_settings.json` with the intrinsics. For demonstrations taken from a DREAM sequence (`source_sequence` and `source_frame_offset` in `_metadata.yaml`), it links the original frames `source_frame_offset + i` of that sequence, at their original resolution and with the sequence's own `_camera_settings.json`, instead of re-encoding our resized copies. |
-| `src/visual_proprioception/external_import.py` | Reads the predictions file and turns each frame's joint angles into a position of the robot run, `create_position(exp_robot, angles).to_normalized_vector(exp_robot)`, so it uses exactly the joints, order and limits of our own models. Returns the same dict as `predict_positions()`. |
-| `src/visual_proprioception/Run_External_Proprioception.ipynb` | Stage notebook of an external run: export, run the external command through `subprocess`, import, save `predictions.npz` in `exp["data_dir"]`, `exp.done()`. |
-| `data/expruns/external_proprioception/` | `_defaults_external_proprioception.yaml` and the runs described above. |
-| `predict_positions()` in `visproprio_helper.py` | Loads `predictions.npz` for runs of `external_proprioception` (see above). |
-| Driver scripts | Small scripts (`berrypicker_predict.py`) that load a checkpoint, run on an exported folder and write the `.npz`. They are kept in BerryPicker under `src/visual_proprioception/external_drivers/` and copied or symlinked into the checkouts, because the evaluation scripts of both repositories print metrics but do not save per-frame predictions *(check)*. |
-| Tests in `src/test/visual_proprioception/` | Round trip: export a small demonstration and read it back; import a hand-written `.npz` and check it against `create_position` with known limits; check that a demonstration with `source_frame_offset` links the right original frames. No GPU, no external code. |
+| `src/visual_proprioception/external_proprioception.py` | `export_dream`: writes the frames of a run's `validation_data` as a DREAM-format folder, named after the sequence (both methods recognize the real DREAM sequences by the folder name). The demonstrations must come from a source sequence (`source_sequence`, `source_frame_offset` in `_metadata.yaml`). The files `NNNNNN.rgb.jpg` and `NNNNNN.json` are numbered in the order of the demonstrations and are symbolic links to the original frames, at their original resolution, with the sequence's `_camera_settings.json`. A driver finds the original frame by resolving the link, e.g. for RoboPEPP's per-frame bounding boxes. `run_external`: runs the driver with the Python of the method's environment. `load_external_predictions`: reads the angles back as positions of a robot run (see above). |
+| `src/visual_proprioception/external_drivers/robopepp_predict.py` | Loads a RoboPEPP checkpoint and predicts joints 1–6 for every exported frame. It reimplements the preprocessing of RoboPEPP's test dataset, because `datasets/dream_ssl.py` cannot be imported without GroundingDINO. The steps are: the precomputed GroundingDINO box, extended as for the RealSense sequence; crop; resize the longer side to 224; edge-pad to 224×224; ImageNet normalization. The joints come from the encoder, the predictor and the joint head, denormalized with the joint statistics of `test.py`; the keypoint heads and the PnP are not needed. |
+| `src/visual_proprioception/external_drivers/hpe_predict.py` | Loads an HPE model (an experiment folder of its model zoo) and predicts joints 1–7 and the finger, with HPE's own `make_cfg`, `DreamDataset` and model, and the depth scale of `scripts/test.py`. As in HPE's evaluation, the image crop comes from the ground-truth keypoints in the frames' JSON files. |
+| `src/visual_proprioception/external_drivers/dream_ground_truth_predict.py` | The reference method: the ground-truth joint angles of the frames' JSON files. It needs no model and no GPU, so it checks the whole path on any machine, and its error must be zero. |
+| `src/visual_proprioception/Run_External_Proprioception.ipynb` | Stage notebook of an external run: export, run the driver, print the per-joint RMSE, `exp.done()`. |
+| `src/visual_proprioception/Flow_External_Proprioception.ipynb` | Imports a pack and runs, verifies and compares the given external runs on one group of its demonstrations (by default `vp_testing`), on the joints of the robot run `compare_robot`. |
+| `data/expruns/external_proprioception/` | The family (see above). |
+| `data/expruns/robot_franka/panda_6dof.yaml` | Panda joints 1–6. |
+| `predict_positions()` in `visproprio_helper.py` | Reads the angles of external runs (see above). |
+| `src/test/visual_proprioception/test_external_proprioception.py` | The export links the right original frames in the order of the demonstrations; the angles are mapped by name onto the robot run (an extra joint, another order, values outside the limits); `predict_positions()` reads an external run; the driver command. No GPU, no external code. |
 
 ## The robots and their data
 
@@ -141,10 +176,15 @@ cannot be placed next to a method that predicts joints 1–6. For any joint-by-j
 
    If a number is not reproduced, stop and investigate before going on: the driver scripts would only reproduce the
    error.
-3. Write the driver scripts, `external_export.py`, `external_import.py` and `Run_External_Proprioception.ipynb`, and
-   the runs `robopepp_panda_published.yaml` and `hpe_panda_published.yaml` with `robot_franka/panda`.
-4. **Check the access end to end** on `panda-dream-freeform`: the joint angles imported from the predictions file must
-   reproduce the repository's own evaluation numbers on the same frames.
+3. *(Done on the BerryPicker side, 2026-11-03.)* The drivers, `external_proprioception.py`,
+   `Run_External_Proprioception.ipynb`, `Flow_External_Proprioception.ipynb`, and the runs
+   `robopepp_panda_published.yaml` (`robot_franka/panda_6dof`) and `hpe_panda_published.yaml` (`robot_franka/panda`).
+   - RoboPEPP additionally needs the GroundingDINO boxes of the sequence: `bbox_grounding_dino/create_bbox.py`, once.
+   - HPE needs its `data/deps/panda-description` and `models/hrnet_w32-36af842e_roc.pth` in its checkout.
+4. **Check the access end to end** on `panda-dream-freeform`, with `Flow_External_Proprioception.ipynb`
+   (`external_runs = ["dream_ground_truth_panda", "robopepp_panda_published", "hpe_panda_published"]`). Run the
+   repository's own evaluation on the same frames: export them, then point its `test.py` at the exported folder. The
+   joint errors in degrees of the two must agree; this checks the drivers' reimplemented preprocessing.
 5. Optionally, a fine-tuned checkpoint per method (the matched-label regime, below) as one more run.
 
 **Effort:** moderate, mostly installation and data plumbing. It does not depend on Part B.
@@ -157,7 +197,9 @@ A comparison with our models is fair only if all the following hold.
    - Robi's published numbers are on `vp_validation`: for the Panda, demonstrations 9 and 4 (DREAM frames 5230–5729 and
      2730–3229). Our sensor processing was trained on these frames, so our numbers there are optimistic.
    - A comparison uses the clean protocol of the cross-robot flow (`robot_variant = "full"`, sorted order,
-     `eval_group = "vp_testing"`). Its test demonstrations are 0 and 6: DREAM frames 730–1229 and 3730–4229.
+     `eval_group = "vp_testing"`). In the sorted order, its test demonstrations are the last two, 8 and 9: DREAM
+     frames 4730–5729. (In Robi's directory order, the test demonstrations would be 0 and 6, DREAM 730–1229 and
+     3730–4229, but his runs never used them.) The exported links of a run show which frames were used.
    - The sequence is continuous, so each test chunk borders training chunks in time. This is the same for all
      methods; state it.
 2. **Same joints and units.**
@@ -253,6 +295,27 @@ the same person):
 **Fallback if Part A fails.** If the reproduction fails for one method, use the other only, and cite the published
 numbers of the failed one with the caveat that they are on other frames. If both fail, the paper reports the published
 numbers from BASELINES.md and argues the comparison qualitatively.
+
+## State of the implementation (2026-11-03)
+
+Done and tested on szenes:
+- The interface, the export, the import, `predict_positions()`, the stage notebook and the flow.
+- The unit tests.
+- The whole path with `dream_ground_truth`, on the held-out demonstrations of `panda-dream-freeform`.
+- The DREAM RealSense sequence is installed at
+  `~/Documents/Develop/Data/BerryPicker-data-external/DREAM/panda-3cam_realsense`, from Robi's package.
+- The RoboPEPP and HPE checkouts are cloned next to BerryPicker (`~/Documents/Develop/Github/RoboPEPP`,
+  `~/Documents/Develop/Github/Holistic-Robot-Pose-Estimation`).
+
+Written but not run (they need CUDA):
+- `robopepp_predict.py` and `hpe_predict.py`, written against the code of the two repositories (RoboPEPP c4a43d9, HPE
+  77cd316).
+
+Next, on a Linux CUDA machine:
+1. Install both environments, the weights, RoboPEPP's I-JEPA encoder, and HPE's URDF and HRNet weights.
+2. Make RoboPEPP's GroundingDINO boxes.
+3. Add the `external_proprioception` section to that machine's settings.
+4. Run Part A steps 2 and 4.
 
 ## Risks
 
