@@ -1,0 +1,8 @@
+# RoboPEPP (Goswami et al., CVPR 2025) with its published weights for the DREAM
+# RealSense sequence: synthetic training plus self-supervised adaptation on the
+# unlabeled sequence (which includes our test frames). Predicts panda_joint1-6.
+name: robopepp_panda_published
+method: robopepp
+checkpoint: robopepp_ssl_realsense.pt
+robot_exp: robot_franka
+robot_run: panda_6dof

@@ -16,3 +16,30 @@ conv_vae:
   # Directory for the checkout of the CONV_VAE project 
   # https://github.com/julian-8897/Conv-VAE-PyTorch
   code_dir: '~/WORK/BerryPicker/src/Conv-VAE-PyTorch'
+
+
+# External robot pose estimators (src/visual_proprioception/external_proprioception.py,
+# DESIGN-Import-Competitors.md). For each source sequence, its DREAM-format directory;
+# for each method, its checkout, the Python of its own environment and the directory of
+# its checkpoints, and the machine-specific arguments of its driver. RoboPEPP and HPE
+# need Linux with CUDA; dream_ground_truth (a reference with zero error) runs anywhere.
+# external_proprioception:
+#   sequences:
+#     "DREAM panda-3cam_realsense": '~/WORK/BerryPicker/data_external/DREAM/panda-3cam_realsense'
+#   dream_ground_truth:
+#     code_dir: ''
+#     python: '~/WORK/BerryPicker/vm/berrypickervenv/bin/python'
+#     checkpoint_dir: ''
+#   robopepp:
+#     code_dir: '~/WORK/BerryPicker/src/RoboPEPP'
+#     python: '~/miniconda3/envs/robopepp/bin/python'
+#     checkpoint_dir: '~/WORK/BerryPicker/src/RoboPEPP/checkpoints'
+#     driver_args:
+#       jepa-path: '~/WORK/BerryPicker/src/RoboPEPP/checkpoints/jepa_joints-ep200.pth.tar'
+#       # the GroundingDINO boxes of the sequence (bbox_grounding_dino/create_bbox.py)
+#       bbox-dir: '~/WORK/BerryPicker/data_external/DREAM/real_annotated/panda-3cam_realsense'
+#   hpe:
+#     code_dir: '~/WORK/BerryPicker/src/Holistic-Robot-Pose-Estimation'
+#     python: '~/miniconda3/envs/hpe/bin/python'
+#     # the model zoo: one experiment folder (config.yaml, ckpt/) per model
+#     checkpoint_dir: '~/WORK/BerryPicker/src/Holistic-Robot-Pose-Estimation/experiments'

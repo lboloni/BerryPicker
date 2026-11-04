@@ -1,0 +1,12 @@
+# HPE / HoRoPose (Ban et al., ECCV 2024) with its published self-supervised model
+# for the DREAM RealSense sequence (adapted, without labels, on that sequence,
+# which includes our test frames). Predicts panda_joint1-7 (and the finger).
+# As in its own evaluation, the image crop comes from the ground-truth
+# keypoints of the frames.
+name: hpe_panda_published
+method: hpe
+# the experiment folder of the model zoo, relative to the checkpoint directory;
+# the driver loads <folder>/config.yaml and <folder>/ckpt/<model>.pk
+checkpoint: panda_realsense_self_supervised
+robot_exp: robot_franka
+robot_run: panda

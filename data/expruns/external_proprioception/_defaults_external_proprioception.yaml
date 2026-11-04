@@ -1,0 +1,19 @@
+# External robot pose estimators (RoboPEPP, HPE), run from BerryPicker through
+# their own environments; see src/visual_proprioception/DESIGN-Import-Competitors.md
+# and external_proprioception.py.
+#
+# A run gives the method (the driver external_drivers/<method>_predict.py),
+# the checkpoint (a file in the method's checkpoint directory, from the
+# machine settings), the robot whose positions it predicts (robot_exp,
+# robot_run), and the demonstrations it runs on (validation_data, the field
+# that Verify and Compare evaluate). The demonstrations must come from a
+# source sequence the method supports (source_sequence in their metadata).
+input-to-notebook:
+  - visual_proprioception/Run_External_Proprioception.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+# further arguments of the driver, on top of the machine-specific ones
+driver_args: {}
+# the position filter applied to the predictions, as for our models
+position_filter: none
+sample_interval: 0.1
+validation_data: []

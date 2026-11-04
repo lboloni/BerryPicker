@@ -1,0 +1,9 @@
+# A reference run: the ground-truth joint angles of the DREAM frames
+# (external_drivers/dream_ground_truth_predict.py). It needs no model and no
+# GPU, checks the whole path of an external run on any machine, and must
+# have zero error.
+name: dream_ground_truth_panda
+method: dream_ground_truth
+checkpoint: none
+robot_exp: robot_franka
+robot_run: panda

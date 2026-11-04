@@ -19,6 +19,7 @@ from demonstration.demonstration import Demonstration
 from robot.position_factory import action_key
 import sensorprocessing.sp_helper as sp_helper
 import sensorprocessing.sp_factory as sp_factory
+import visual_proprioception.external_proprioception as external_proprioception
 # The multi-view dataset helpers live with the training-data code; they are
 # re-exported here so existing imports keep working.
 from sensorprocessing.helper_training_data import (  # noqa: F401
@@ -394,6 +395,14 @@ def predict_positions(exp, exp_robot, datasetname="validation_data"):
     Returns:
         Dictionary with 'targets', 'predictions', 'filtered' and 'lengths'
     """
+    if exp["experiment_name"] == "external_proprioception":
+        # an external estimator (RoboPEPP, HPE): its predictions were saved by
+        # Run_External_Proprioception.ipynb
+        result = external_proprioception.load_external_predictions(exp, exp_robot, datasetname)
+        result["filtered"] = filter_sequence(
+            create_position_filter(exp), result["predictions"], result["lengths"],
+            exp.get("sample_interval", 0.1))
+        return result
     device = Config().runtime["device"]
     base = resolve_base_experiment(exp)
     spexp = Config().get_experiment(base["sp_experiment"], base["sp_run"])
