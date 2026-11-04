@@ -12,6 +12,9 @@ script copies such a pack into a clean demopack:
   _annotation.yaml has one empty annotation per step (Robi's were stale
   copies of an AL5D demonstration);
 * the pack yaml names the robot (robot_exp, robot_run);
+* where the source sequence is known (the Panda: the DREAM RealSense sequence),
+  _metadata.yaml records it and the index of the demonstration's first frame
+  in it (source_sequence, source_frame_offset);
 * the frames (NNNNN_dev000.jpg) are copied unchanged.
 
 The source is never modified. See src/visual_proprioception/PLAN-MultiRobot.md.
@@ -63,6 +66,15 @@ DESCRIPTION = {
 
 CAMERA = "dev000"
 
+# Where the frames of a pack come from, if known: the source sequence, and the
+# index in it of the first frame of the first demonstration. Robi's Panda pack
+# is the DREAM real RealSense sequence (5944 frames) without its first 730
+# frames, cut into consecutive demonstrations (cut_images.py, split_ds.py, in
+# the sorted order of the demonstration names); the frames were resized from
+# 640x480 to 256x256. Frame i of a demonstration is frame source_frame_offset + i
+# of the sequence (checked against the joint angles of the DREAM json files).
+SOURCE_FRAMES = {"panda": ("DREAM panda-3cam_realsense", 730)}
+
 
 def convert_action(action, robot):
     """One step of Robi's _action.yaml as a joint-position action"""
@@ -72,8 +84,9 @@ def convert_action(action, robot):
     return {"joint-position": {joint: float(value) for joint, value in values.items()}}
 
 
-def import_demo(source, target, robot):
-    """Copy one demonstration directory, converting its yaml files"""
+def import_demo(source, target, robot, source_frames=None):
+    """Copy one demonstration directory, converting its yaml files. source_frames is
+    the source sequence and the index in it of the first frame, if known."""
     with open(source / "_action.yaml") as f:
         actions = [convert_action(action, robot) for action in yaml.load(f, Loader=yaml.CSafeLoader)]
     frames = sorted(source.glob(f"*_{CAMERA}.jpg"))
@@ -85,9 +98,12 @@ def import_demo(source, target, robot):
         yaml.dump(actions, f, Dumper=yaml.CSafeDumper)
     with open(target / "_annotation.yaml", "w") as f:
         yaml.dump([{"comment": "", "labels": [], "reward": 0.0} for _ in actions], f)
+    metadata = {"cameras": [CAMERA], "maxsteps": len(actions),
+                "stored_as_images": True, "stored_as_video": False}
+    if source_frames is not None:
+        metadata["source_sequence"], metadata["source_frame_offset"] = source_frames
     with open(target / "_metadata.yaml", "w") as f:
-        yaml.dump({"cameras": [CAMERA], "maxsteps": len(actions),
-                   "stored_as_images": True, "stored_as_video": False}, f)
+        yaml.dump(metadata, f)
     return actions
 
 
@@ -97,8 +113,12 @@ def import_robi_pack(source, target, robot):
     assert not target.exists(), f"{target} already exists"
     demos = sorted(d for d in source.iterdir() if d.is_dir())
     joint_ranges = {}
+    source_frames = SOURCE_FRAMES.get(robot)
     for demo in demos:
-        for action in import_demo(demo, target / demo.name, robot):
+        actions = import_demo(demo, target / demo.name, robot, source_frames)
+        if source_frames is not None:
+            source_frames = (source_frames[0], source_frames[1] + len(actions))
+        for action in actions:
             for joint, value in action["joint-position"].items():
                 low, high = joint_ranges.get(joint, (value, value))
                 joint_ranges[joint] = (min(low, value), max(high, value))
