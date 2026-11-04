@@ -55,11 +55,15 @@ class JointPosition:
                 return False
         return True
 
-    def to_normalized_vector(self, exp: Experiment):
+    def to_normalized_vector(self, exp: Experiment, enforce_limits=None):
         """The joints mapped from [POS_MIN, POS_MAX] to [0, 1], in the order of JOINTS.
-        With enforce_limits false (reproductions of runs that did not check the limits),
-        values outside the limits map outside [0, 1] instead of raising."""
-        if exp["enforce_limits"] and not JointPosition.limit(exp, self):
+        With enforce_limits false, values outside the limits map outside [0, 1] instead of
+        raising: for reproductions of runs that did not check the limits (the exp/run sets
+        enforce_limits), and for predicted positions (the caller passes enforce_limits=False).
+        By default, the enforce_limits of the exp/run applies."""
+        if enforce_limits is None:
+            enforce_limits = exp["enforce_limits"]
+        if enforce_limits and not JointPosition.limit(exp, self):
             raise ValueError(f"Joint position outside the limits:\n{self}")
         return np.asarray([
             (self.values[field] - exp["POS_MIN"][field]) / (exp["POS_MAX"][field] - exp["POS_MIN"][field])

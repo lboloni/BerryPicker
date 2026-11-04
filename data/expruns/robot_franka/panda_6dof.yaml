@@ -1,0 +1,28 @@
+# The Franka Panda, joints 1-6: the joints that the DREAM-based pose
+# estimation papers report, and the only ones RoboPEPP predicts (its
+# joint 7 is fixed at 0). Limits as in panda.yaml.
+JOINTS: ["panda_joint1", "panda_joint2", "panda_joint3", "panda_joint4", "panda_joint5", "panda_joint6"]
+
+POS_DEFAULT:
+  "panda_joint1": 0.0
+  "panda_joint2": 0.0
+  "panda_joint3": 0.0
+  "panda_joint4": -2.0
+  "panda_joint5": 0.0
+  "panda_joint6": 2.0
+
+POS_MIN:
+  "panda_joint1": -1.2
+  "panda_joint2": -1.05
+  "panda_joint3": -1.15
+  "panda_joint4": -2.9
+  "panda_joint5": -1.05
+  "panda_joint6": 1.6
+
+POS_MAX:
+  "panda_joint1": 1.15
+  "panda_joint2": 0.25
+  "panda_joint3": 0.6
+  "panda_joint4": -1.7
+  "panda_joint5": 0.65
+  "panda_joint6": 3.0
