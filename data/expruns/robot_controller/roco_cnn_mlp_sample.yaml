@@ -1,5 +1,7 @@
 name: "ResNet-50 CNN encoder + deterministic MLP controller"
 class: GraphRobotController
+input-to-notebook:
+  - robot_controller/Visualize_roco.ipynb
 
 components:
   image_input:

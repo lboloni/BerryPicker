@@ -1,6 +1,8 @@
 # Runtime-only example: separately trained VAE encoder, LSTM, and MDN.
 name: "Conv-VAE-Neo + Residual LSTM + MDN"
 class: GraphRobotController
+input-to-notebook:
+  - robot_controller/Visualize_roco.ipynb
 
 components:
   image_input:

@@ -52,6 +52,36 @@ the field is in their family default. Families containing different kinds of
 runs, such as `behavior_cloning` and `visual_proprioception`, have an empty
 default and override it in each run.
 
+## The copy step of the stage notebooks
+
+Most BerryPicker stage notebooks (25 of them) have the optional copy step of
+the stage notebook contract. When `expruns_path` is given, the setup cell
+does:
+
+```python
+Config().set_exprun_path(expruns_path)
+Config().copy_experiment(experiment)
+Config().copy_experiment("demonstration")
+```
+
+It copies the notebook's own family and the families of the components it
+loads (typically `demonstration`, the robot family such as `robot_al5d` or
+`exp["robot_exp"]`, and the sensor-processing family), each as a whole, from
+the built-in `data/expruns` into the external tree. A built-in file replaces
+the external file of the same name; generated runs with other names are
+kept.
+
+In a flow the step is repeated at every stage, after `setup_flow()` has
+already copied the listed families. Therefore:
+
+- the generated runs have names that no checked-in run has (`_flow_...`,
+  `vp_..._<pack>`, ...); a generated run with the name of a checked-in run
+  would be replaced by the checked-in one at the next stage;
+- a flow does not edit a checked-in run or a `_defaults_<family>.yaml` in
+  the workspace; it writes a new run instead;
+- the built-in tree is always the source, also when another exp/run tree was
+  active when the flow started.
+
 ## Exceptions to the stage notebook contract
 
 - `demonstration/Verify_Demonstration.ipynb` does not call `exp.done()`: it

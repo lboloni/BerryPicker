@@ -22,8 +22,10 @@ evaluation groups.
 
 Unlike a flow over a checked-in collection, a BerryPicker flow **generates**
 most of its expruns, because their training data depends on the imported
-demopack. Each generator function writes one exprun YAML into the workspace
-and returns its `flow_entry`. A run in a homogeneous family inherits its
+demopack. A generator function writes the exprun YAML of a stage into the
+workspace and returns its `flow_entry`; the generators of the RCCO flows
+(`rcco_flow.py`) write several runs (the SP, the components, the controller,
+the recipe, the verification) and return one or two entries. A run in a homogeneous family inherits its
 notebook from the copied default, while a run in a mixed family such as
 `visual_proprioception` has it written by the generator.
 
@@ -54,7 +56,8 @@ The stage notebooks run with the `berrypicker` kernel
 
 ## Current flows
 
-All flows are in `src/<area>/`. Their `flow_name` parameter selects the
+All flows are in `src/<area>/` (the transfer flows in
+`src/visual_proprioception/transfer/`). Their `flow_name` parameter selects the
 workspace; reusing a name with `exist-ok` reuses previously trained models.
 
 `visual_proprioception/Flow_VisualProprioception.ipynb` trains the selected
@@ -95,6 +98,15 @@ run of the machine. `Flow_Transfer_Smoke.ipynb` runs the same stages with one
 target, a 32-dimensional VGG19 latent, every 25th frame and one epoch, to
 check the wiring. Final results:
 `visual_proprioception_transfer_compare/compare_<flow_name>`.
+
+`visual_proprioception/Flow_External_Proprioception.ipynb` runs external
+robot pose estimators (RoboPEPP, HPE, and the DREAM ground truth as the
+reference; see `src/visual_proprioception/DESIGN-Import-Competitors.md`) on
+the evaluation group of an imported pack, verifies each, and compares them.
+The checked-in `external_proprioception` runs are templates that only this
+flow can run: it writes `<run>_<eval_group>` with the `validation_data` of
+the pack. Final results:
+`visual_proprioception_collections/external_<pack>_<eval_group>`.
 
 `visual_proprioception/Flow_PtunVsRandProj_128.ipynb` trains two
 proprioception-tuned CNN variants (created with `create_exprun_variant`),
