@@ -1,0 +1,32 @@
+# MetaRidgeEncoder, design D5 (src/visual_proprioception/transfer/DESIGN-Transfer.md):
+# frozen VGG19 features pooled to feature_pool_size, a projection with
+# LayerNorm, meta-trained so that a ridge head fitted on K frames of a robot
+# predicts its joints.
+class: MetaRidgeSensorProcessing
+image_size: [256, 256]
+latent_size: 128
+feature_pool_size: [4, 4]
+projection_hidden_size: 512
+# the initial log of the ridge regularization lambda, which is meta-learned
+initial_log_lambda: 0.0
+# ridge: the closed-form ridge head; fomaml: first-order MAML over the projection and a linear head
+inner_solver: ridge
+inner_steps: 5
+inner_lr: 0.01
+# an episode: one robot, K (one of support_sizes) support frames from one
+# demonstration, query_size query frames from the other demonstrations, and
+# with probability joint_subset_prob a random subset of the joints
+support_sizes: [5, 10, 20, 50]
+query_size: 256
+tasks_per_step: 4
+joint_subset_prob: 0.5
+meta_steps: 20000
+validation_interval: 500
+validation_tasks: 20
+learning_rate: 0.0001
+frame_step: 1
+seed: 0
+# robots: as in sensorprocessing_transfer_encoder
+model_file: meta_ridge.pth
+input-to-notebook:
+  - visual_proprioception/transfer/Train_MetaRidge.ipynb

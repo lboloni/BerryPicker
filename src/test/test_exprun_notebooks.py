@@ -22,6 +22,8 @@ FLOW_NOTEBOOKS = (
     SOURCE_ROOT / "visual_proprioception" / "Flow_External_Proprioception.ipynb",
     SOURCE_ROOT / "visual_proprioception" / "Flow_FilteredVsUnfiltered.ipynb",
     SOURCE_ROOT / "visual_proprioception" / "Flow_PtunVsRandProj_128.ipynb",
+    SOURCE_ROOT / "visual_proprioception" / "transfer" / "Flow_Transfer.ipynb",
+    SOURCE_ROOT / "visual_proprioception" / "transfer" / "Flow_Transfer_Smoke.ipynb",
     SOURCE_ROOT / "robot_controller" / "Flow_RCCO_BehaviorCloning.ipynb",
     SOURCE_ROOT / "robot_controller" / "Flow_RCCO_Compare.ipynb",
 )

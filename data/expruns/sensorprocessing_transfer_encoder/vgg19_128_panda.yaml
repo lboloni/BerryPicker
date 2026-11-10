@@ -1,0 +1,16 @@
+# Example: the single-source VGG19 encoder of the Franka. The demonstration
+# names are those given by import_demopack(panda-dream-freeform,
+# group_chooser_sp_vp_standard); the flows generate such runs themselves.
+robots:
+  - name: panda
+    robot_exp: robot_franka
+    robot_run: panda
+    output_size: 7
+    training_data:
+      - [panda-dream-freeform, sp_training_00000, dev000]
+      - [panda-dream-freeform, sp_training_00001, dev000]
+      - [panda-dream-freeform, sp_training_00002, dev000]
+      - [panda-dream-freeform, sp_training_00003, dev000]
+    validation_data:
+      - [panda-dream-freeform, sp_validation_00000, dev000]
+      - [panda-dream-freeform, sp_validation_00001, dev000]

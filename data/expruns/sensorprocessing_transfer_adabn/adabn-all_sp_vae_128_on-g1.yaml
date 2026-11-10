@@ -1,0 +1,11 @@
+# Example: the Conv-VAE sp_vae_128 adapted to the unlabeled vp_training frames of the G1.
+base_sp_experiment: sensorprocessing_conv_vae
+base_sp_run: sp_vae_128
+image_size: [64, 64]
+latent_size: 128
+adapt_scope: all
+adaptation_data:
+  - [g1-left-arm-freeform, vp_training_00000, dev000]
+  - [g1-left-arm-freeform, vp_training_00001, dev000]
+  - [g1-left-arm-freeform, vp_training_00002, dev000]
+  - [g1-left-arm-freeform, vp_training_00003, dev000]

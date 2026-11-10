@@ -1,0 +1,5 @@
+# The comparison of the regressor stages listed in tocompare
+# (src/visual_proprioception/transfer/DESIGN-Transfer.md).
+source_experiment: visual_proprioception_transfer
+input-to-notebook:
+  - visual_proprioception/transfer/Compare_Transfer.ipynb

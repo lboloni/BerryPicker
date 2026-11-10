@@ -1,0 +1,11 @@
+# AdaBNSensorProcessing, design D4a (src/visual_proprioception/transfer/DESIGN-Transfer.md):
+# a trained SP (base_sp_experiment, base_sp_run) whose BatchNorm statistics are
+# re-estimated, at construction, on the unlabeled frames of adaptation_data.
+# image_size and latent_size must be those of the base SP. No training stage.
+class: AdaBNSensorProcessing
+# projection: the BatchNorm layers of the projection of a TransferEncoder (ViT);
+# all: every BatchNorm layer (e.g. the Conv-VAE)
+adapt_scope: projection
+adaptation_frame_step: 1
+adaptation_batch_size: 64
+input-to-notebook: []

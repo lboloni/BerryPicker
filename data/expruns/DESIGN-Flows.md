@@ -83,6 +83,19 @@ runs, his demonstration order, evaluation on `vp_validation`) or the clean one
 `visual_proprioception_collections/crossrobot_<sp_pack>_to_<vp_pack>` and
 `crossrobot_summary.csv` in the results directory.
 
+`visual_proprioception/transfer/Flow_Transfer.ipynb` runs the transfer
+experiments of the RAS 2027 paper (see
+`src/visual_proprioception/transfer/DESIGN-Transfer.md`). For every target robot
+it trains the encoders of the baseline and of the five designs: single-source,
+several sources, keypoints, masking, AdaBN, target Conv-VAE, and meta-learning.
+It fits regressors on K labeled target frames for a range of K, and compares
+them, with the random-projection and mean baselines. Its generators are in
+`transfer/transfer_flow.py`, and its packs come from a `transfer_datasets`
+run of the machine. `Flow_Transfer_Smoke.ipynb` runs the same stages with one
+target, a 32-dimensional VGG19 latent, every 25th frame and one epoch, to
+check the wiring. Final results:
+`visual_proprioception_transfer_compare/compare_<flow_name>`.
+
 `visual_proprioception/Flow_PtunVsRandProj_128.ipynb` trains two
 proprioception-tuned CNN variants (created with `create_exprun_variant`),
 regressors on them and on two training-free random-projection encoders, and

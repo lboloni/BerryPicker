@@ -1,0 +1,17 @@
+# Example: the encoder trained on the Franka (sensorprocessing_transfer_encoder/
+# vgg19_128_panda), with regressors fitted on the G1 and evaluated on its vp_testing.
+method: single-vgg19-from-panda
+target: g1
+seed: 0
+sp_experiment: sensorprocessing_transfer_encoder
+sp_run: vgg19_128_panda
+robot_exp: robot_g1
+robot_run: left_arm
+training_data:
+  - [g1-left-arm-freeform, vp_training_00000, dev000]
+  - [g1-left-arm-freeform, vp_training_00001, dev000]
+  - [g1-left-arm-freeform, vp_training_00002, dev000]
+  - [g1-left-arm-freeform, vp_training_00003, dev000]
+testing_data:
+  - [g1-left-arm-freeform, vp_testing_00000, dev000]
+  - [g1-left-arm-freeform, vp_testing_00001, dev000]

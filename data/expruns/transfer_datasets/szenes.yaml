@@ -1,0 +1,28 @@
+# The packs on szenes, in demopacks_path
+# (/Users/lboloni/Documents/Develop/Data/BerryPicker-Demopacks), as of
+# 2026-11-10. Each has 10 demonstrations.
+packs:
+  # the real AL5D, random motion (March 2025); camera dev2 (dev3 is the second camera)
+  al5d:
+    pack: random-both-cameras-video
+    camera: dev2
+    robot_exp: robot_al5d
+    robot_run: position_controller_00
+  # the real Franka Panda of DREAM (panda-3cam_realsense), 500 frames per demonstration
+  panda:
+    pack: panda-dream-freeform
+    camera: dev000
+    robot_exp: robot_franka
+    robot_run: panda
+  # the left arm of the Unitree G1 in Isaac Sim; the four joints that move
+  g1:
+    pack: g1-left-arm-freeform
+    camera: dev000
+    robot_exp: robot_g1
+    robot_run: left_arm
+  # the Inspire hand in Isaac Sim, six actuated joints
+  hand:
+    pack: inspire-hand-freeform-6dof
+    camera: dev000
+    robot_exp: robot_inspire_hand
+    robot_run: hand_6dof

@@ -1,0 +1,9 @@
+# The demonstration packs of the transfer experiments, one run per machine
+# (src/visual_proprioception/transfer/DESIGN-Transfer.md, "Datasets on other
+# machines"). A run lists, under packs, the short name of each robot with
+#   pack:      the directory of the pack in the demopacks_path of the machine
+#   camera:    the camera whose frames are used
+#   robot_exp, robot_run: the robot exp/run that normalizes its positions
+# The packs are imported with group_chooser_sp_vp_standard, so each needs 10
+# demonstrations (or another multiple of 5).
+input-to-notebook: []

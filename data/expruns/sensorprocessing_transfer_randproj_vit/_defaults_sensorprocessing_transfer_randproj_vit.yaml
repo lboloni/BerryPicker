@@ -1,0 +1,10 @@
+# The frozen ImageNet ViT-B/16 (CLS token) with a fixed random projection: the
+# reference R1 of the paper (src/visual_proprioception/transfer/DESIGN-Transfer.md).
+# Training-free; the CNN version is sensorprocessing_random_projection_cnn.
+class: ViTRandomProjectionSensorProcessing
+image_size: [224, 224]
+latent_size: 128
+feature_normalization: l2
+projection: rademacher
+projection_seed: 52817
+input-to-notebook: []

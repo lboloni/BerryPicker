@@ -1,0 +1,28 @@
+# TransferEncoder: a frozen backbone, a trainable projection to the latent, one
+# regression head per robot of robots (src/visual_proprioception/transfer/
+# DESIGN-Transfer.md). One robot: the single-source encoder of the paper;
+# several robots: D1; backbone vgg19_keypoints: D2; robot_mask: D3.
+class: TransferEncoderSensorProcessing
+# vgg19 (256 x 256), vgg19_keypoints (256 x 256) or vit_b_16 (224 x 224)
+backbone: vgg19
+image_size: [256, 256]
+latent_size: 128
+# vgg19_keypoints only: softmax (spatial softmax) or avg (mean and max, the ablation)
+keypoint_pooling: softmax
+# the hidden layers of the regression head of each robot
+head_hidden_size: 64
+batch_size_per_robot: 16
+learning_rate: 0.001
+epochs: 100
+# use every frame_step-th frame of the demonstrations
+frame_step: 1
+seed: 0
+# D3, with robot_mask.fill background_swap: the number of synthetic backgrounds,
+# in addition to the median backgrounds of background_swap_items
+synthetic_backgrounds: 16
+color_jitter: 0.0
+# robots: a list of {name, robot_exp, robot_run, output_size, training_data, validation_data}
+# robot_mask (optional): {threshold, dilate, fill: gray | background_swap}
+model_file: transfer_encoder.pth
+input-to-notebook:
+  - visual_proprioception/transfer/Train_TransferEncoder.ipynb

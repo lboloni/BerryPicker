@@ -1,0 +1,26 @@
+# Example: D5 meta-trained on the Franka and the hand (for the G1 as target).
+robots:
+  - name: hand
+    robot_exp: robot_inspire_hand
+    robot_run: hand_6dof
+    output_size: 6
+    training_data:
+      - [inspire-hand-freeform-6dof, sp_training_00000, dev000]
+      - [inspire-hand-freeform-6dof, sp_training_00001, dev000]
+      - [inspire-hand-freeform-6dof, sp_training_00002, dev000]
+      - [inspire-hand-freeform-6dof, sp_training_00003, dev000]
+    validation_data:
+      - [inspire-hand-freeform-6dof, sp_validation_00000, dev000]
+      - [inspire-hand-freeform-6dof, sp_validation_00001, dev000]
+  - name: panda
+    robot_exp: robot_franka
+    robot_run: panda
+    output_size: 7
+    training_data:
+      - [panda-dream-freeform, sp_training_00000, dev000]
+      - [panda-dream-freeform, sp_training_00001, dev000]
+      - [panda-dream-freeform, sp_training_00002, dev000]
+      - [panda-dream-freeform, sp_training_00003, dev000]
+    validation_data:
+      - [panda-dream-freeform, sp_validation_00000, dev000]
+      - [panda-dream-freeform, sp_validation_00001, dev000]

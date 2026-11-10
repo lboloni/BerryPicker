@@ -1,0 +1,21 @@
+# The regressor stage of the transfer flows (src/visual_proprioception/transfer/
+# DESIGN-Transfer.md): encode the training_data and testing_data of the target
+# with the SP (sp_experiment, sp_run); for every K of k_shots fit each of
+# regressors on K random training frames; evaluate on testing_data. Writes
+# results.csv. The trivial baseline mean is always computed.
+# The generated runs set method, target, seed, sp_experiment, sp_run,
+# robot_exp, robot_run, training_data and testing_data.
+# null in k_shots: all the training frames
+k_shots: [5, 10, 20, 50, 100, 200, null]
+# mlp, ridge (standardized latents) and ridge_meta (raw latents, the lambda of a MetaRidge SP)
+regressors: [mlp, ridge]
+regressor_steps: 3000
+regressor_hidden_size: 64
+batch_size: 64
+learning_rate: 0.001
+ridge_lambda: 1.0
+frame_step: 1
+encode_batch_size: 32
+seed: 0
+input-to-notebook:
+  - visual_proprioception/transfer/Train_TransferRegressor.ipynb
