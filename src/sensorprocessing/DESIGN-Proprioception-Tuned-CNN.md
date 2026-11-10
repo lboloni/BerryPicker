@@ -262,12 +262,12 @@ architecture; `model` is the operative field.
 - The single-view cache has no manifest describing the demonstrations or image
   transform. Changing those exp/run fields does not invalidate existing cache
   files automatically.
-- `Verify_ProprioTuned_CNN.ipynb` predates the generic wrapper refactor. It
-  imports wrapper class names that no longer exist in
-  `sp_propriotuned_cnn.py`, and
-  expects `testing_data`, while current runs provide `validation_data`. The
-  training and runtime implementation described above is current; that
-  verification notebook needs a separate update before it can exercise it.
+- `Verify_ProprioTuned_CNN.ipynb` creates the sensor processing with
+  `sp_factory.create_sp` and encodes the first frame of each demonstration of
+  `validation_data`, through the model and through `process()`. It checks
+  that the trained model loads and encodes; it does not report errors.
+- Checkpoints trained before the generic wrapper refactor (state-dict keys
+  `resnet.*`) do not load into the current model; such runs must be retrained.
 
 ## Related multiview model
 
