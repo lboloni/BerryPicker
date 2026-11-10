@@ -4,6 +4,12 @@ import unittest
 
 sys.path.append(str(pathlib.Path(__file__).parents[3]))
 
+from exp_run_config import Config
+
+# the bridge needs ROS (rclpy, sensor_msgs), which comes with the widowx stack
+if "widowx" not in Config().get_experiment("machine", "current")["robots"]:
+    raise unittest.SkipTest("widowx is not in the robots of machine/current")
+
 from robot.widowx.simulation.interbotix_gazebo_bridge import (
     ARM_JOINTS,
     GRIPPER_JOINTS,

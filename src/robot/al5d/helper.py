@@ -38,6 +38,7 @@ class RobotHelper:
     def angle_to_pulse(exp: Experiment, angle, constrain=True):
         """Returns the pulse that correspond to a certain angle. 
         If constrain is set, the angle will be constrained in the legal range."""
+        constrained = False
         if constrain:
             angle, constrained = RobotHelper.constrain(
                 angle, exp["CST_ANGLE_MIN"], exp["CST_ANGLE_MAX"])

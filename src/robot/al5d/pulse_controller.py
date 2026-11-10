@@ -127,14 +127,11 @@ class PulseController:
         """Sends a command a particular servo to change its position with 
         the specified pulse value (positive or negative), and a specific speed
         """
-        # TODO: some way to check whether a bad value was passed, probably error should be raised.
         # TODO: option to wait here to execute
         speed=self.exp["CST_SPEED_DEFAULT"]
         pulse = self.positions_pulse[servo] + relative_pulse
-        pulse, constrained = RobotHelper.constrain(
-            pulse, self.exp["CST_PULSE_MIN"], self.exp["CST_PULSE_MAX"])
-        if constrained:
-            logger.warning("out of range at control_servo_relative_pulse")
+        if not self.exp["CST_PULSE_MIN"] <= pulse <= self.exp["CST_PULSE_MAX"]:
+            raise ValueError(f"Servo {servo} pulse {pulse} is outside configured limits")
         self.control_servo_pulse(servo, pulse, speed)
 
     def __str__(self):
