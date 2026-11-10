@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-**Implemented, not yet run** (2026-11-10). The unit tests pass, and the queue of the smoke flow builds. No flow has been executed.
+**Implemented; the smoke flow has run, the full flow has not** (2026-11-10). The unit tests pass. `Flow_Transfer_Smoke.ipynb` ran all its 40 stages on szenes (MPS) as `Transfer_smoke_00` and wrote the comparison with all 21 methods; its numbers mean nothing. `Flow_Transfer.ipynb` has not been executed. The first smoke run found that the backward pass of `torch.linalg.solve` is not implemented on MPS, so `ridge_fit` solves on the CPU (`solve_on_cpu`).
 
 This directory holds the experiments on transferring visual proprioception from one robot to another, for the RAS 2027 paper (`paper-RAS2027-ProprioTransfer`). The paper's question is which components of a visual proprioception model trained on one robot can be reused on another.
 

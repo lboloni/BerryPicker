@@ -219,6 +219,12 @@ def with_bias(z):
     return torch.cat([z, torch.ones(z.shape[0], 1, device=z.device, dtype=z.dtype)], dim=1)
 
 
+def solve_on_cpu(a, b):
+    """torch.linalg.solve on the CPU: its backward pass is not implemented on
+    MPS. The matrices are small, at most the latent size + 1 square."""
+    return torch.linalg.solve(a.cpu(), b.cpu()).to(a.device)
+
+
 def ridge_fit(z, y, log_lambda):
     """The closed-form ridge regression of y [n, k] on z [n, d], with a bias:
     W [d+1, k]. Uses the Woodbury form when n < d+1."""
@@ -227,9 +233,9 @@ def ridge_fit(z, y, log_lambda):
     lam = log_lambda.exp() if torch.is_tensor(log_lambda) else math.exp(log_lambda)
     if n < d:
         a = zb @ zb.T + lam * torch.eye(n, device=z.device, dtype=z.dtype)
-        return zb.T @ torch.linalg.solve(a, y)
+        return zb.T @ solve_on_cpu(a, y)
     a = zb.T @ zb + lam * torch.eye(d, device=z.device, dtype=z.dtype)
-    return torch.linalg.solve(a, zb.T @ y)
+    return solve_on_cpu(a, zb.T @ y)
 
 
 def ridge_predict(z, w):
