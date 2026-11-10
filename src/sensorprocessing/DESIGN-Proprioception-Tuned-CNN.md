@@ -264,7 +264,7 @@ architecture; `model` is the operative field.
   files automatically.
 - `Verify_ProprioTuned_CNN.ipynb` predates the generic wrapper refactor. It
   imports wrapper class names that no longer exist in
-  `sp_propriotuned_cnn.py`, calls the deprecated `set_experiment_path()`, and
+  `sp_propriotuned_cnn.py`, and
   expects `testing_data`, while current runs provide `validation_data`. The
   training and runtime implementation described above is current; that
   verification notebook needs a separate update before it can exercise it.

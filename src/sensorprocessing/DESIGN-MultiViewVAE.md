@@ -67,7 +67,7 @@ Product-of-experts, mixture-of-experts, multi-decoder, cross-view
 reconstruction, shared/private latent, hierarchical, missing-view, and temporal
 VAEs are not currently implemented.
 
-## Proposed model families
+## Model families
 
 | Family | Input path | Objective | Resulting representation |
 |---|---|---|---|
@@ -123,7 +123,7 @@ trained, its final model file must contain all view-encoder, fusion, and
 proprioceptor weights. Runtime loading must not require the source VAE
 experiment.
 
-Proposed names:
+Names:
 
 - Model and training module: `src/sensorprocessing/conv_vae_neo_multiview_fusion.py`
 - Model class: `ConvVAENeoMultiViewFusionModel`
@@ -170,7 +170,7 @@ The Concat model is independent of the Fusion model. It does not instantiate
 `ViewBackbones`, `MultiViewFusion`, or a proprioceptor. Conversely, the Fusion
 model does not use the Concat model's composite-image forward path.
 
-Proposed names:
+Names:
 
 - Model and training module: `src/sensorprocessing/conv_vae_neo_multiview_concat.py`
 - Model class: `ConvVAENeoMultiViewConcatModel`
@@ -274,6 +274,10 @@ The Concat notebook should report reconstruction and KL losses, overall
 and per-camera reconstruction metrics, latent statistics, camera-separated
 reconstruction panels, and samples from the joint prior.
 
+Not reported at present: the latent shape and the backbone frozen state in the
+Fusion notebooks, and the latent statistics in the Concat notebooks (only the
+latent shape).
+
 ## Runtime integration
 
 Both wrappers should derive from the existing
@@ -320,6 +324,12 @@ The implementation should include tests for:
 - factory construction and multiview detection; and
 - training-step loss finiteness and gradient propagation.
 
+`src/test/sensorprocessing/test_conv_vae_neo_multiview.py` covers this list
+except: large composite geometry, view counts other than two, deterministic
+evaluation encodings, missing or duplicate cameras, a fine-tuned backbone,
+wrapped-checkpoint loading through the Neo wrappers, and a Fusion training
+step.
+
 ## Reuse and inheritance decision
 
 A shared root model class for the Fusion and Concat families is not
@@ -335,7 +345,12 @@ Reuse should instead occur through composition and small focused utilities:
 - one synchronized multiview dataset; and
 - one strict ordered-view validation/composition helper.
 
-## Proposed implementation order
+## Implementation order
+
+(The order that was followed. Step 7 is partial: the visual-proprioception
+runs `vp_vae_neo_multiview_{concat,fusion}_{128,256}` exist and
+`Train_VisualProprioception_multiview.ipynb` copies both families, but no
+comparison collection contains them.)
 
 1. Add and test only the model-independent ordered-view validation and lazy
    synchronized multiview dataset.

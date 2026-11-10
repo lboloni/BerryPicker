@@ -1,5 +1,11 @@
 # Random-projection CNN sensor processing
 
+**Status: implemented** (`sp_random_projection_cnn.py`, registered in
+`sp_factory.py`; six runs in `data/expruns/sensorprocessing_random_projection_cnn`;
+`Verify_RandomProjection_CNN.ipynb`; tests in
+`src/test/sensorprocessing/test_random_projection_cnn.py`). The document is
+written as the original proposal; where the code differs, it says so.
+
 ## Purpose and scope
 
 Define a sensor-processing model that converts a camera image into a compact
@@ -64,6 +70,15 @@ class RandomProjectionCNN(nn.Module):
         return self.encode(images)
 ```
 
+As implemented (`sp_random_projection_cnn.py`), the base class is
+`_RandomProjectionCNN(exp)`, and a subclass per backbone
+(`ResNet50RandomProjection`, `VGG19RandomProjection`) provides
+`create_feature_extractor(weights)`. `encode` also normalizes the image with
+the mean and standard deviation of the backbone weights and applies
+`AdaptiveAvgPool2d(exp["feature_pool_size"])` before flattening. With
+`backbone_weights: NONE` the backbone is not pretrained and the image is not
+normalized.
+
 `projection` is a registered buffer, not an `nn.Parameter`. It moves with the
 model and appears in a serialized `state_dict`, but it never receives a
 gradient.
@@ -104,7 +119,9 @@ therefore create its own projection matrix.
 
 ### ResNet50
 
-Remove the classification layer and retain ResNet50's global average pooling:
+Remove the classification layer and retain ResNet50's global average pooling
+(as implemented, ResNet50's own average pool is removed too, and the common
+`AdaptiveAvgPool2d` with `feature_pool_size: [1, 1]` gives the same result):
 
 ```text
 RGB image -> ResNet50 convolutional body and average pool
@@ -290,6 +307,8 @@ should only depend on `latent_size` and the ordinary single-view SP interface.
 Because there is no training operation, this family has no Train notebook. Its
 `input-to-notebook` should list a verification notebook that inspects latent
 shape, finiteness, determinism, latency, and downstream evaluation results.
+(`Verify_RandomProjection_CNN.ipynb` covers all but the last; the downstream
+comparison is in `visual_proprioception/Flow_PtunVsRandProj_128.ipynb`.)
 
 ## Runtime integration
 
@@ -324,7 +343,8 @@ vgg19_pool4_rademacher_256
 ```
 
 Create several projection-seed runs for every architecture. A single random
-draw is not sufficient to characterize the method.
+draw is not sufficient to characterize the method. (Not done: the six
+checked-in runs have one seed each.)
 
 Compare against:
 

@@ -59,7 +59,10 @@ context. Do not retain training computation graphs in the public wrapper.
 
 Existing stateless processors retain their behavior and have a no-op
 `reset_context()`. Fixed-rate temporal processors may use a sampling interval
-specified by their exp/run; variable-rate callers supply `dt` explicitly.
+specified by their exp/run (`sample_interval`; it is copied into the saved
+`.config.json` when the composite is created and read from there afterwards,
+so a later change of the yaml has no effect); variable-rate callers supply
+`dt` explicitly.
 File, capture, and demonstration helpers must forward timing to the temporal
 path without resetting context on every call.
 
@@ -174,8 +177,10 @@ history: the caller replays a prefix, supplies a saved context, or explicitly
 evaluates from a reset state. Seeking backwards likewise requires a deliberate
 reset/replay or context restoration.
 
-Current proprioception and behavior-cloning loaders reuse an SP across
-demonstrations without a reset. Their loops must become sequence-aware:
+The proprioception and behavior-cloning loaders reuse an SP across
+demonstrations, so their loops are sequence-aware (implemented:
+`visproprio_helper.py`, `bc_trainingdata.py`; tested in
+`src/test/sensorprocessing/test_memory_callers.py`):
 
 ```python
 for demonstration in demonstrations:
@@ -292,9 +297,13 @@ caches.
 - Forward timing through temporal inference helpers.
 - Reset at sequence boundaries in data loaders and controller integrations.
 - Provide a reference sequence-unrolling path without imposing one training
-  algorithm on all model families.
+  algorithm on all model families. (Not implemented; the other items of this
+  list are.)
 
 EMA, Kalman, LSTM, and transformer components remain separate implementations.
+None exists as an SP operation. Outside the SP layer there are EMA and Kalman
+filters on the predicted positions (`visual_proprioception/visproprio_filters.py`)
+and an LSTM controller component (`robot_controller/rcco_lstm.py`).
 The existing framewise execution path remains available for stateless models.
 No implicit global memory, graph scheduler, or automatic episode inference is
 required.

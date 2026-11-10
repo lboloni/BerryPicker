@@ -66,6 +66,13 @@ def encode(self, sensor_readings):
     return resolve(values, self.output)
 ```
 
+This sketch is the stateless path. In `composite.py` the loop is in
+`advance_steps(sensor_readings, context, dt=...)`, which also routes the
+context of temporal steps; for a composite with temporal steps,
+`forward_steps`, `encode` and `forward` raise a `RuntimeError`, and callers
+use `advance()` (see
+[DESIGN-SensorProcessingMemory.md](DESIGN-SensorProcessingMemory.md)).
+
 `resolve` supports a step name and, for a structured result, a named field such
 as `segmentation.masks`. No expression language, automatic scheduling, or
 implicit conversion is needed. Intermediate results exist for one invocation;
@@ -495,16 +502,22 @@ cannot pin the model version.
 
 ## Minimal implementation and verification
 
-Proposed files:
+Files:
 
-- `composite.py`: tensor model, ordered execution, and step construction.
-- `processing_steps.py`: basic transforms, mask operations, encoder adapters,
-  and adapters to existing fusion heads. Model-specific SAM/API adapters may
-  live in separate modules and load dependencies only when selected.
-- `sp_composite.py`: single-view and multiview inference wrappers.
-- `sp_factory.py`: register the two wrappers and multiview classification.
-- One composite experiment family and a proprioception training entry point
-  using the existing harness.
+- `composite.py` (implemented): tensor model, ordered execution, and step
+  construction.
+- `processing_steps.py` (proposed, does not exist): basic transforms, mask
+  operations, encoder adapters, and adapters to existing fusion heads.
+  Model-specific SAM/API adapters may live in separate modules and load
+  dependencies only when selected.
+- `sp_composite.py` (implemented): single-view and multiview inference
+  wrappers.
+- `sp_factory.py` (implemented): registers the two wrappers and the multiview
+  classification.
+- The composite experiment family `data/expruns/sensorprocessing_composite`
+  (implemented; its one run is illustrative, and its only notebook is
+  `Visualize_Composite.ipynb`). A proprioception training entry point using
+  the existing harness is proposed and does not exist.
 
 Start with filtering, mask selection/application, encoder reuse, concatenation,
 addition, and existing fusion heads. Initially use frozen pretrained branches
