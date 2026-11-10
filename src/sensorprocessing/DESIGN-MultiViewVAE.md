@@ -347,10 +347,10 @@ Reuse should instead occur through composition and small focused utilities:
 
 ## Implementation order
 
-(The order that was followed. Step 7 is partial: the visual-proprioception
-runs `vp_vae_neo_multiview_{concat,fusion}_{128,256}` exist and
-`Train_VisualProprioception_multiview.ipynb` copies both families, but no
-comparison collection contains them.)
+(The order that was followed. For step 7, the visual-proprioception runs
+`vp_vae_neo_multiview_{concat,fusion}_{128,256}` and the collections
+`comp_vae_neo_multiview_{128,256}` exist, and
+`Train_VisualProprioception_multiview.ipynb` copies both families.)
 
 1. Add and test only the model-independent ordered-view validation and lazy
    synchronized multiview dataset.

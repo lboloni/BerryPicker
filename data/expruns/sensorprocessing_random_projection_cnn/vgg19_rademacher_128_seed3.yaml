@@ -1,0 +1,5 @@
+# vgg19_rademacher_128 with another draw of the projection
+model: VGG19RandomProjection
+latent_size: 128
+feature_pool_size: [8, 8]
+projection_seed: 20493

@@ -343,8 +343,9 @@ vgg19_pool4_rademacher_256
 ```
 
 Create several projection-seed runs for every architecture. A single random
-draw is not sufficient to characterize the method. (Not done: the six
-checked-in runs have one seed each.)
+draw is not sufficient to characterize the method. (Each of the six runs has two
+further draws, `<run>_seed2` and `<run>_seed3`; no flow compares the seeds
+yet.)
 
 Compare against:
 

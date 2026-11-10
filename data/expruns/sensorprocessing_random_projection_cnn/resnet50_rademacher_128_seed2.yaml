@@ -1,0 +1,5 @@
+# resnet50_rademacher_128 with another draw of the projection
+model: ResNet50RandomProjection
+latent_size: 128
+feature_pool_size: [1, 1]
+projection_seed: 74017
