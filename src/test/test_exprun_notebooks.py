@@ -119,6 +119,12 @@ class TestExprunNotebooks(unittest.TestCase):
             final = "".join(notebook["cells"][-1]["source"])
             self.assertRegex(final, r"^\w+\.done\(\)$", notebook_path)
 
+    def test_no_checked_in_run_has_a_generated_name(self):
+        # the copy step of the stage notebooks replaces a generated run that
+        # has the name of a checked-in one; _flow_ is reserved for generated runs
+        for path in EXPRUN_ROOT.glob("*/_flow_*.yaml"):
+            self.fail(f"{path.parent.name}/{path.name} has a name reserved for generated runs")
+
     def test_notebooks_have_no_saved_execution_state(self):
         paths = [SOURCE_ROOT / notebook for notebook in declared_notebooks()]
         paths += [*FLOW_NOTEBOOKS, MULTIFLOW_NOTEBOOK]
