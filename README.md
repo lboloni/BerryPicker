@@ -11,6 +11,8 @@ The type of skills we aim to develop include (but are not limited to) agricultur
 * pyyaml
 * tensorboardX
 * pyserial
+* papermill
+* ExpRunFlow (https://github.com/lboloni/ExpRunFlow), installed editable from a checkout next to BerryPicker
 * opencv-python, opencv-contrib-python
 * ROS 2 Humble packages `sensor_msgs` and `gazebo_plugins` for Gazebo camera collection
 
@@ -23,13 +25,13 @@ Developing and validating robotics requires extensive experimentation with vario
 
 ## Main configuration
 
-The main configuration object is the singleton Config class in settings. From anywhere in the system, the various top level configuration settings can be used as follows:
+The main configuration object is the singleton `Config` class of the ExpRunFlow library (`exprunflow.exp_run_config`), re-exported by `src/exp_run_config.py`. From anywhere in the system, the various top level configuration settings can be used as follows:
 
 ```
 from exp_run_config import Config
 Config.PROJECTNAME = "BerryPicker"
 
-Config()["robot"]["usb_port"]
+Config()["demopacks_path"]
 ```
 
 The configuration is loaded as follows. Config first reads the file HOMEDIR/.config/BerryPicker/mainsettings.yaml. This file contains one field, the location of the main config file 

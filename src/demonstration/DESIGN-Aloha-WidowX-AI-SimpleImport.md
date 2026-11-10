@@ -2,6 +2,10 @@
 
 ## Status and intent
 
+**Implemented:** `src/demonstration/import_aloha.py`, with the exp/run
+`data/expruns/demonstration/aloha-widowx-ai-simple-import.yaml` and the tests
+in `src/test/demonstration/test_import_aloha.py`.
+
 This document specifies a deliberately partial and temporary importer for
 Aloha WidowX-AI demonstrations. Its purpose is to make the immediately useful
 RGB and robot data available through the current BerryPicker
@@ -44,7 +48,7 @@ observed robot state. The importer preserves the seven numeric values without
 renaming joints, changing units, normalizing them, or converting them into an
 AL5D `rc-position-target` or a Cartesian `widowx-command`.
 
-The proposed action and annotation records are:
+The action and annotation records are:
 
 ```yaml
 # _action.yaml
