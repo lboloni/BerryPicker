@@ -603,7 +603,7 @@ Implemented as designed, in:
   `data/expruns/robot_controller/DESIGN_Training_Recipe.md`.
 
 Fix outside the design: `Config.set_exprun_path` and
-`Config.set_results_path` (`exp_run_config.py`) now accept strings.
+`Config.set_results_path` (`exp_run_config.py`; since the move to ExpRunFlow, `exprunflow/exp_run_config.py`) now accept strings.
 `Train_VAE_GAN.ipynb` passed the papermill path parameters (strings)
 unconverted and failed when first run as a flow stage.
 
@@ -916,6 +916,12 @@ Implemented as designed, in:
 
 Differences from the design above:
 
+- **Names and signatures.** The chunking is one class,
+  `RobotControllerChunkLoader` (`training_data.py`), not a
+  `RobotControllerChunkDataset` with a sampler. The training model's method
+  is `forward(inputs, state=None)`, which also takes cached latents and
+  returns `(outputs, state)`. The graph builder is
+  `build_controller_graph(name, encoder_run, lstm_run, head_run, head_type)`.
 - **MLP heads keep the sigmoid output** and one hidden layer, instead of
   the linear (`identity`) head of `bc_LSTM`: `MLPController` requires a
   hidden layer, and the sigmoid keeps actions in the `[0, 1]` range that

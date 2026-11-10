@@ -33,7 +33,7 @@ missing required model files raise exceptions.
 | `SP_CNN` | `RCCO_SP_CNN` | `image` → `z` | the latent of a proprioception-tuned VGG19 or ResNet-50 CNN, without its regression head |
 | `SP_VAE` | `RCCO_SP_VAE` | `image` → `z` | the deterministic latent mean of a Conv-VAE-Neo or VAE-GAN encoder; the decoder is not used |
 | `LSTM` | `RCCO_LSTM` | `z` → `h` | a recurrent feature; see "LSTM components and their state" |
-| `MLP` | `RCCO_MLP` | `z` → `a` | a deterministic action; a sigmoid output keeps it in `[0, 1]` |
+| `MLP` | `RCCO_MLP` | `z` → `a` | a deterministic action; the default `output_activation: sigmoid` keeps it in `[0, 1]` (`identity` is also accepted) |
 | `MDN` | `RCCO_MDN` | `h` → `mu`, `sigma`, `pi`, `a` | mixture parameters, and an action selected by sampling, expected value, or the most probable component |
 | `Output` | `RCCO_Output` | `output` → | the normalized action for the robot-facing caller |
 
@@ -41,7 +41,14 @@ The encoder components accept only the encoder architectures above, because
 their trainable and bundle-loadable modules are built from them
 (`ProprioTunedCNNSensorProcessing.encoder_classes`, `ConvVAENeoEncoder`).
 Other sensor processors (ViT, random projection, legacy Conv-VAE, multi-view)
-cannot enter a controller. `RCCO_MLP` reads its input on port `z`, so it can
+cannot be trained in a controller or loaded from a bundle. At inference
+without a bundle (`load_state=True`) the component takes the encoder of
+whatever `create_sp()` returns for its `sp_experiment`/`sp_run`, so the
+restriction is not enforced there (see "What the RCCO model supports today"
+in [DESIGN-BehaviorCloningFlow.md](DESIGN-BehaviorCloningFlow.md)). The
+factory also accepts `rcco-type: Z-combinator` (`rcco_z_combinator.py`), an
+old component that does not follow the current component interface and is
+not used by any controller. `RCCO_MLP` reads its input on port `z`, so it can
 follow an encoder or an LSTM.
 
 Torch tensors remain on the configured runtime device while moving through the

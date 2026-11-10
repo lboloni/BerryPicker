@@ -91,6 +91,10 @@ stages:
 checkpoint_interval: 1
 keep_checkpoints: 3
 
+robot:
+  exp: robot_al5d
+  run: position_controller_00
+
 training_data:
   - ["demonstration-run", "training-demo", "dev2"]
 
@@ -171,7 +175,14 @@ instead of windows.
 7. Restore the stage's best state before advancing.
 8. Export all final component states and the aggregate bundle.
 
-A `trec_factory.py` should construct the recipe selected by `exp["class"]`.
+`create_training_recipe` in `training_recipe.py` constructs the recipe
+selected by `exp["class"]`; `trec_factory.py` re-exports it.
+
+As implemented, the example above differs from the code in three points: the
+`robot` reference is required (`exp_trec["robot"]`); `required` and
+`checkpoint_interval` are not read; and
+the checked-in `trec_vae_neo_lstm_mdn_sample.yaml` has other stages
+(`policy_warmup` on `[lstm, mdn]`, with a randomly initialized LSTM).
 
 ## Exp/run data directory
 
@@ -202,7 +213,10 @@ robot_controller_training/<run>/
 `-- controller_bundle.pth
 ```
 
-Source checkpoints are copied rather than symlinked. The source manifest
+`sources/` has one file per neural component, also for the randomly
+initialized ones. Source checkpoints are copied rather than symlinked; for an
+`SP_VAE` component only the encoder state extracted from the VAE checkpoint
+is written. The source manifest
 records their original exp/run, filename, architecture signature, and
 checksum. The final bundle contains the resolved controller identity, every
 component state dictionary, architecture signatures, and provenance.
@@ -221,15 +235,20 @@ not_started -> initializing -> running -> stage_complete -> completed
                                   `-> failed ------> running
 ```
 
+As implemented there is no `stage_complete` state: the recipe goes back to
+`not_started` after materializing the sources, each stage has its own state
+(`running`, `completed`) in the status file, and the recipe as a whole is
+`running`, `completed`, `interrupted` or `failed`.
+
 Each epoch checkpoint contains:
 
 - Stage index and name.
 - Next epoch.
 - Complete aggregate model state.
 - Optimizer and scheduler states.
-- Best validation metric and early-stopping state.
+- Best validation metric. (There is no early stopping.)
 - Python, NumPy, Torch, and CUDA random-number states.
-- Recipe and controller configuration fingerprints.
+- The fingerprint of the recipe and controller configuration (one combined value).
 
 Status and checkpoint writes are atomic. On `KeyboardInterrupt`, the recipe
 records `interrupted`, preserves the latest valid checkpoint, and re-raises.
@@ -248,7 +267,7 @@ from `recipe_status.json` without loading model weights.
 Controller nodes use the following states:
 
 - Green: trainable in the current stage.
-- Blue: frozen pretrained component.
+- Blue: frozen neural component (pretrained or randomly initialized).
 - Gray: non-trainable input or output.
 - Dashed: not yet initialized.
 - Bold border: changed by the current stage.
