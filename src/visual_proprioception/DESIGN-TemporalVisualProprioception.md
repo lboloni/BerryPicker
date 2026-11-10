@@ -9,11 +9,25 @@ measurement of the same position. This document examines which recursive
 estimators can exploit that redundancy, where such an estimator belongs, and
 what the repository would need before one can be configured.
 
-Nothing described here is implemented. The temporal execution framework already
+**Status.** The first experiment of this document is implemented: the
+exponential average and the constant-velocity Kalman filter exist as filters on
+the predicted positions, outside the sensor processor
+([visproprio_filters.py](visproprio_filters.py): `EMAPositionFilter`,
+`KalmanPositionFilter`, `tune_ema`, `tune_kalman`). `predict_positions()` in
+[visproprio_helper.py](visproprio_helper.py) applies the filter named by the
+`position_filter` field of a `visual_proprioception` run (`none`, `ema`,
+`kalman`; runs `vp_*_ema`, `vp_*_kalman`, collections `comp_filter_*`), with
+`sample_interval: 0.1` in the family default. `Tune_PositionFilter.ipynb` tunes
+the parameters, `Flow_FilteredVsUnfiltered.ipynb` runs the comparison, and the
+tests are in `src/test/visual_proprioception/test_visproprio_filters.py`. The
+measured result is below. The LSTM, the switching model and every estimator
+inside the sensor processor are not implemented.
+
+The temporal execution framework already
 exists and is documented in
 [DESIGN-SensorProcessingMemory.md](../sensorprocessing/DESIGN-SensorProcessingMemory.md);
 this document does not restate its context, timing, or reset semantics. What is
-missing is any concrete temporal component: no operation in `src/` is registered
+missing is any concrete temporal operation of the framework: no operation in `src/` is registered
 with `temporal=True`, and the only such registration in the repository is a test
 double in `src/test/sensorprocessing/test_composite.py`. The one composite
 exp/run on disk, `sensorprocessing_composite/appearance_foreground_256`, is
@@ -202,11 +216,13 @@ regressor, so the placement it supports today is exactly the one that suits the
 fewest estimators. Exponential averaging and a recurrent encoder are defensible
 on latents; a Kalman filter is not. Filtering in position space within the
 framework requires the regressor to become a composite operation, so that one
-composite spans encoder, regressor, and filter. The regressor is currently
-constructed only in notebooks
-([visproprio_models.py](visproprio_models.py), instantiated in
-`Train_`/`Verify_`/`Compare_VisualProprioception*.ipynb`) and is not reachable
-from a composite step.
+composite spans encoder, regressor, and filter. The regressor
+([visproprio_models.py](visproprio_models.py)) is constructed in the training
+notebooks and in `predict_positions()` of
+[visproprio_helper.py](visproprio_helper.py), which Verify and Compare call; it
+is not reachable from a composite step. The implemented position filters
+therefore sit outside the framework, after `predict_positions()` has the
+regressor's output.
 
 ## Candidate estimators
 
@@ -299,7 +315,8 @@ filter, is the interesting change, and it should be justified on its own terms.
 
 ## Prerequisites
 
-Ordered by what blocks what. None of these are satisfied today.
+Ordered by what blocks what. Only item 5 is satisfied today (`sample_interval: 0.1`
+in the `visual_proprioception` default).
 
 1. No temporal operation is registered, so no temporal composite can be
    configured. This blocks everything inside the framework.
@@ -326,6 +343,11 @@ Items 1 and 2 are independent: the first experiment below needs neither.
 The central question -- how much error is observation noise that a causal filter
 can remove -- can be answered without changing the framework, and should be
 answered before any operation is implemented.
+
+(Done: see the status at the top and the measured result. The paragraph below
+is the original proposal; Verify now gets its predictions from
+`predict_positions()`, which keeps the demonstration order and applies the
+filter.)
 
 Validation latents are loaded in demonstration order and `test_loader` uses
 `shuffle=False`, so the `ypred` array produced by

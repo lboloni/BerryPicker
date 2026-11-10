@@ -29,7 +29,7 @@ Each method is named in the results as follows.
 | `single-<bb>-from-<s>` | baseline (the paper) | trained on one other robot s |
 | `randproj-vgg19`, `randproj-vit_b_16` | baseline R1 | frozen backbone and a random projection, never trained |
 | `multi-<bb>` | D1 | trained on all the other robots, one head each (leave-one-robot-out) |
-| `kp-native`, `kp-from-<s>`, `kp-multi` | D2 | VGG19 up to `relu4_4`, 1×1 convolution to K/2 heatmaps, spatial softmax: a latent of image-space keypoints |
+| `kp-native`, `kp-from-<s>`, `kp-multi` | D2 | VGG19 up to `relu4_4`, 1×1 convolution to K/2 heatmaps, spatial softmax: a latent of image-space keypoints. `kp-multi` is generated only when D1 is also selected |
 | `mask-from-<s>` | D3 | the robot masked against the median background of each demonstration; gray background |
 | `maskswap-from-<s>` | D3 | the same, trained with random backgrounds (synthetic, and those of robots that are neither source nor target) and color jitter |
 | `adabn-vit_b_16-from-<s>`, `adabn-vae-from-<s>` | D4a | the source encoder with its BatchNorm statistics re-estimated on unlabeled frames of t |

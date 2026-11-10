@@ -2,7 +2,7 @@
 
 ## Status and intent
 
-**A plan, being implemented** (2026-11-03; revised the same day: one package and family per robot, as for the AL5D and the WidowX). Robi (Robert) extended an older BerryPicker (commit `fb03d17`, 2026-01-09) so that the visual proprioception pipeline trains on demonstrations of other robots: the Unitree G1 left arm, the Franka Panda (DREAM) and the Inspire hand. He also ran cross-robot experiments: the sensor processing (SP) is trained on one robot, and the regressor on another. His material is in `~/Downloads/Robi-SourceCode` (unpacked in `unpacked/`).
+**A plan, mostly implemented: parts 1–3 are on `main`; the full reproduction and the clean protocol remain** (see "Implementation status" at the end) (2026-11-03; revised the same day: one package and family per robot, as for the AL5D and the WidowX). Robi (Robert) extended an older BerryPicker (commit `fb03d17`, 2026-01-09) so that the visual proprioception pipeline trains on demonstrations of other robots: the Unitree G1 left arm, the Franka Panda (DREAM) and the Inspire hand. He also ran cross-robot experiments: the sensor processing (SP) is trained on one robot, and the regressor on another. His material is in `~/Downloads/Robi-SourceCode` (unpacked in `unpacked/`).
 
 This plan has three parts:
 1. port the extension cleanly, in the style of the current code;
@@ -41,7 +41,7 @@ The Inspire hand pack uses its own joint names: `L_index_joint`, `L_middle_joint
   - Panda MAX: 0.6, 1.15, 0.25, -1.7, 0.65, 1.9.
   - G1 MIN: height -0.25, distance -0.75, heading -0.3, wrist_angle -0.1, wrist_rotation -0.1, gripper -0.2.
   - G1 MAX: 0.65, 0.1, 0.1, 0.1, 0.1, 0.1.
-  - Hand: `~/Downloads/Robi-SourceCode/position_controller_00_Inspire_hand.yaml`. MIN is 0, except thumb_proximal at 0.049; MAX is 1.209, 1.199, 1.006, 1.093, 0.7025, 0.8735. The data slightly exceeds this MAX (L_index reaches 1.246). His code did not check the limits; ours raises.
+  - Hand: `~/Downloads/Robi-SourceCode/position_controller_00_Inspire_hand.yaml`. MIN is 0, except thumb_proximal at 0.049; MAX is 1.209, 1.199, 1.006, 1.093, 0.7025, 0.8735 (in the order of `JOINTS` in the run: index, middle, pinky, ring, thumb_proximal, thumb). The data slightly exceeds this MAX (L_index reaches 1.246). His code did not check the limits; ours raises.
 - **Splits:** `group_chooser_sp_vp_standard` on 10 demos of 500 frames, camera `dev000` only. His `import_demopack` did not sort the demos, so the split followed the directory order of his Linux machine. The order is recovered from his configs (`sensorprocessing_propriotuned_cnn/vgg19_128.yaml`, `visual_proprioception/vp_ptun_vgg19_128.yaml`) and confirmed against `GT_data.csv` of all three robots (the ground truth is demo `2025_10_26__03_27_03` followed by `2025_10_24__20_17_15`, matching to 1e-7):
   - `2025_10_26__03_27_03`, `2025_10_24__20_17_15`, `2025_10_25__02_58_05`, `2025_10_25__18_59_04` (SP training; the first two also VP validation);
   - `2025_10_24__19_30_56`, `2025_10_25__21_34_30` (SP validation and VP training), `2025_10_24__02_18_43`, `2025_10_24__01_51_54` (VP training);
@@ -128,7 +128,7 @@ The full runs use limits from the data (`dataset_info` min/max rounded outward).
   - The titles come from the position fields of `exp_robot` instead of the hard-coded AL5D list.
   - The subplot grid is sized from the field count.
   - The stray `POS_MAX` cell in Verify is removed.
-  - Compare checks that all compared runs have the same robot (one `exp_robot` per collection).
+  - Compare uses the one robot of the collection (`exp_robot`, from its `robot_exp`/`robot_run`) for all the compared runs. (As implemented, it does not check that the runs themselves have that robot.)
   - Compare also writes the per-joint RMSE values to a CSV that is overwritten, not appended.
 
 ### 1.7 Tests (`src/test/robot/`, `src/test/demonstration/`)
@@ -167,7 +167,7 @@ For each pack, the script:
 - writes a `README.md` with the provenance;
 - writes a zip next to the pack, as for the existing packs.
 
-The checked-in `data/expruns/demonstration/<pack>.yaml` files describe the cameras, like `random-both-cameras-video.yaml`.
+The `demonstration/<pack>.yaml` files describe the cameras, like `random-both-cameras-video.yaml`. (As implemented, they are not checked in for the three new packs: they are in the pack, and `import_demopack` copies them into the workspace.)
 
 Not imported:
 - `freeform_dummy_7`: an AL5D pack with a dummy 7th field (`22222`), and its `_action.yaml` does not parse.
@@ -191,7 +191,7 @@ Add `src/visual_proprioception/Flow_VisualProprioception_CrossRobot.ipynb`, a ne
 **Queue:**
 1. `import_demopack(pack, group_chooser_sp_vp_standard)` for every pack.
 2. **SP trainings, once per pack that appears as an `sp_pack`**, for each SP type and latent size. The propriotuned CNNs get the pack's robot and its `output_size`. The run names carry the pack, e.g. `sp_vgg19_128_g1`.
-3. **One VP regressor per pair × SP**: `sp_experiment`/`sp_run` point to the SP of `sp_pack`, `training_data` comes from `vp_pack`'s `vp_training`, `validation_data` from `vp_pack`'s `eval_group`, and `robot_exp`/`robot_run` and `output_size` come from `vp_pack`'s robot. The run names carry both packs, e.g. `vp_vgg19_128_sp-g1_vp-panda`. The regressor sees only the latent of the SP, so a different output width on the two sides is no problem.
+3. **One VP regressor per pair × SP**: `sp_experiment`/`sp_run` point to the SP of `sp_pack`, `training_data` comes from `vp_pack`'s `vp_training`, `validation_data` from `vp_pack`'s `eval_group`, and `robot_exp`/`robot_run` and `output_size` come from `vp_pack`'s robot. The run names carry both packs, `vp_<sp_type>_<latent>_<sp_pack>_to_<vp_pack>`, e.g. `vp_vgg19_128_g1_to_panda`. The regressor sees only the latent of the SP, so a different output width on the two sides is no problem.
 4. **One comparison per pair** in `visual_proprioception_collections` (`crossrobot_<sp>_to_<vp>`), comparing all SP types of that pair. This mirrors Robi's four result directories plus the hand one.
 5. **A final summary stage**: a small notebook `Summarize_CrossRobot.ipynb` (or a cell of the flow) writes one table in the shape of the target table above, with Robi's numbers next to ours.
 
@@ -214,7 +214,7 @@ Document the flow in `data/expruns/DESIGN-Flows.md` (Current flows), and add a c
 4. **Part 3, reproduction.** Run with `robot_variant=robi`, `eval_group=vp_validation`, 300/1000 epochs and all SP types, on a CUDA machine (about 6 SPs × 3 packs plus 30 regressors; too slow for szenes). Accept the reproduction if the ranking of SP types per pair matches and the mean RMSE values are within about ±0.02 of the target table. Differences in random seed and library version make an exact match unlikely.
 5. **Then the clean protocol.** Run `robot_variant=full` and `eval_group=vp_testing`. These are the numbers to put in the paper, with Robi's protocol reported as the earlier result.
 
-## Implementation status (2026-11-03, branch `multi-robot-vp`, not committed)
+## Implementation status (2026-11-03; committed on `main`: `a745de0`, `02c48e6`, `611be3a`, `df8dbf8`)
 
 Done:
 - **Part 1.**

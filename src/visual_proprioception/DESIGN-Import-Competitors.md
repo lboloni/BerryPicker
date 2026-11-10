@@ -55,10 +55,18 @@ An external estimator is used like any other BerryPicker component, through an e
   - `robot_exp`/`robot_run`, the robot whose positions it predicts: `robot_franka/panda_6dof` for RoboPEPP (joints
     1–6, the only ones it predicts), `robot_franka/panda` for HPE (joints 1–7);
   - `validation_data`, the `[pack, demonstration, camera]` triples it runs on. It is the field our runs are evaluated
-    on, so Verify and Compare need no change;
+    on, so Verify and Compare need no change. The checked-in runs do not set it (the family default is `[]`): they
+    are templates, see below;
   - `driver_args`, further arguments of the driver;
   - `input-to-notebook: [visual_proprioception/Run_External_Proprioception.ipynb,
     visual_proprioception/Verify_VisualProprioception.ipynb]`.
+- **The checked-in runs only run in the flow.** Which demonstrations a method runs on depends on the imported pack
+  and its split, so `Flow_External_Proprioception.ipynb` writes, for every checked-in run, the run
+  `<run>_<eval_group>` (e.g. `robopepp_panda_published_vp_testing`) with `validation_data` filled in, and queues that
+  one. `Run_External_Proprioception.ipynb` run directly on a checked-in run, such as its default
+  `robopepp_panda_published`, stops at the assert of `source_sequence()`, because an empty `validation_data` has no
+  source sequence. To run the notebook by hand, point it at the workspace of a flow (`expruns_path`, `results_path`)
+  and at a run the flow generated.
 - **Result:** `angles_validation_data.npz` in the run's `data_dir`: the per-frame joint angles of the method (radians),
   their joint names and the original frame files.
 - **The one change to the existing code:** `predict_positions()` in `visproprio_helper.py` reads this file for runs of
@@ -97,6 +105,10 @@ has a commented template:
 external_proprioception:
   sequences:
     "DREAM panda-3cam_realsense": <the DREAM-format directory of the sequence>
+  dream_ground_truth:        # every method of a run needs a section, also the reference
+    code_dir: ''
+    python: <the Python of the BerryPicker venv>
+    checkpoint_dir: ''
   robopepp:
     code_dir: <the RoboPEPP checkout>
     python: <the Python of its conda env>
@@ -118,7 +130,7 @@ external_proprioception:
 | `src/visual_proprioception/external_drivers/robopepp_predict.py` | Loads a RoboPEPP checkpoint and predicts joints 1–6 for every exported frame. It reimplements the preprocessing of RoboPEPP's test dataset, because `datasets/dream_ssl.py` cannot be imported without GroundingDINO. The steps are: the precomputed GroundingDINO box, extended as for the RealSense sequence; crop; resize the longer side to 224; edge-pad to 224×224; ImageNet normalization. The joints come from the encoder, the predictor and the joint head, denormalized with the joint statistics of `test.py`; the keypoint heads and the PnP are not needed. |
 | `src/visual_proprioception/external_drivers/hpe_predict.py` | Loads an HPE model (an experiment folder of its model zoo) and predicts joints 1–7 and the finger, with HPE's own `make_cfg`, `DreamDataset` and model, and the depth scale of `scripts/test.py`. As in HPE's evaluation, the image crop comes from the ground-truth keypoints in the frames' JSON files. |
 | `src/visual_proprioception/external_drivers/dream_ground_truth_predict.py` | The reference method: the ground-truth joint angles of the frames' JSON files. It needs no model and no GPU, so it checks the whole path on any machine, and its error must be zero. |
-| `src/visual_proprioception/Run_External_Proprioception.ipynb` | Stage notebook of an external run: export, run the driver, print the per-joint RMSE, `exp.done()`. |
+| `src/visual_proprioception/Run_External_Proprioception.ipynb` | Stage notebook of an external run: export, run the driver, print the RMSE per position field (normalized units), `exp.done()`. |
 | `src/visual_proprioception/Flow_External_Proprioception.ipynb` | Imports a pack and runs, verifies and compares the given external runs on one group of its demonstrations (by default `vp_testing`), on the joints of the robot run `compare_robot`. |
 | `data/expruns/external_proprioception/` | The family (see above). |
 | `data/expruns/robot_franka/panda_6dof.yaml` | Panda joints 1–6. |
@@ -220,7 +232,7 @@ A comparison with our models is fair only if all the following hold.
    - **Matched-label regime:** their network fine-tuned with the joint loss on the same labeled demonstrations our
      regressor sees (the 4 `vp_training` demonstrations, and the few-shot sizes 10–200). This isolates the architecture
      from the data, and avoids the self-supervision on the test frames.
-5. Add the external runs and ours to one `visual_proprioception_collections` run (e.g. `comp_external_panda.yaml`).
+5. Add the external runs and ours to one `visual_proprioception_collections` run (the flow generates it as `external_<pack>_<eval_group>`; no such run is checked in).
 
 ## Part B: using them on our other robots
 
@@ -234,7 +246,7 @@ model, a calibrated camera, keypoint labels and a large synthetic training set. 
 | **Original frames** | Our recordings | Not in Robi's package; needed from Robi (the packs hold 256×256 resized copies) | Same |
 | **Camera intrinsics** | Calibrate each camera (checkerboard, or ArUco with `sensorprocessing/aruco`) | Exact, from Isaac Sim; needed from Robi | Exact, from Isaac Sim; needed from Robi |
 | **Camera-to-base extrinsics** (for keypoints and HPE's root pose) | Calibrate: an ArUco marker at the base, or hand–eye calibration | Exact, from Isaac Sim | Exact, from Isaac Sim |
-| **2D keypoints per frame** | Forward kinematics + extrinsics + intrinsics, projected; computed by `external_export.py` | Same, or exported by Isaac Sim | Same |
+| **2D keypoints per frame** | Forward kinematics + extrinsics + intrinsics, projected; computed by a new `external_export.py` (proposed; the existing export is `export_dream` in `external_proprioception.py`) | Same, or exported by Isaac Sim | Same |
 | **Bounding boxes** | GroundingDINO, as RoboPEPP uses at test time | From the projected keypoints or the sim | Same |
 | **Masks** (HPE self-supervision) | SAM 2 (from Grounded-SAM-2) | Isaac Sim segmentation | Isaac Sim segmentation |
 | **Synthetic training set** (~100k domain-randomized images, as in DREAM) | Needs a simulated AL5D: e.g. a MuJoCo scene from the URDF, reusing the MuJoCo camera code of `src/robot/wxai` | Isaac Sim Replicator with domain randomization | Isaac Sim Replicator |

@@ -16,4 +16,8 @@ driver_args: {}
 # the position filter applied to the predictions, as for our models
 position_filter: none
 sample_interval: 0.1
+# The checked-in runs are templates and only run in the flow:
+# Flow_External_Proprioception.ipynb writes <run>_<eval_group> with the
+# validation_data of the imported pack. Run directly, they fail on the
+# empty validation_data.
 validation_data: []
