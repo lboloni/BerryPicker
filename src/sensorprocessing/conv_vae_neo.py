@@ -7,6 +7,7 @@ experiment/run.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 import math
 import random
 
@@ -78,8 +79,8 @@ class _UpsampleBlock(nn.Sequential):
         )
 
 
-class ConvVAENeo(nn.Module):
-    """A resolution-scalable convolutional VAE implemented inside BerryPicker."""
+class ConvAutoencoderBase(nn.Module, ABC):
+    """Shared convolutional encoder and decoder for single-view autoencoders."""
 
     def __init__(self, exp):
         super().__init__()
@@ -141,8 +142,7 @@ class ConvVAENeo(nn.Module):
         self.flatten_size = (
             self.channel_widths[-1] * encoded_height * encoded_width
         )
-        self.fc_mu = nn.Linear(self.flatten_size, self.latent_size)
-        self.fc_logvar = nn.Linear(self.flatten_size, self.latent_size)
+        self._build_latent(exp)
         self.fc_decode = nn.Linear(self.latent_size, self.flatten_size)
 
         decoder_blocks = []
@@ -158,6 +158,10 @@ class ConvVAENeo(nn.Module):
             nn.Conv2d(previous_channels, self.input_channels, 3, padding=1),
         )
         self._initialize_weights()
+
+    @abstractmethod
+    def _build_latent(self, exp):
+        """Create the layers between the convolutional encoder and decoder."""
 
     def _initialize_weights(self):
         for module in self.modules():
@@ -184,28 +188,6 @@ class ConvVAENeo(nn.Module):
         if not images.is_floating_point():
             raise TypeError("Conv-VAE-Neo input tensor must be floating point")
 
-    def encode_distribution(self, images):
-        """Return the mean and log-variance of ``q(z | images)``."""
-        self._validate_images(images)
-        features = self.encoder(images).flatten(1)
-        if features.size(1) != self.flatten_size:
-            raise RuntimeError(
-                f"Encoder produced {features.size(1)} features; expected "
-                f"{self.flatten_size}"
-            )
-        return self.fc_mu(features), self.fc_logvar(features)
-
-    def encode(self, images):
-        """Return the deterministic latent mean used by sensor processing."""
-        mu, _ = self.encode_distribution(images)
-        return mu
-
-    @staticmethod
-    def reparameterize(mu, logvar):
-        if mu.shape != logvar.shape:
-            raise ValueError("mu and logvar must have identical shapes")
-        return mu + torch.randn_like(mu) * torch.exp(0.5 * logvar)
-
     def decode(self, latent):
         """Decode a ``[batch, latent_size]`` tensor to RGB images in ``[0, 1]``."""
         if not isinstance(latent, torch.Tensor):
@@ -227,6 +209,36 @@ class ConvVAENeo(nn.Module):
                 align_corners=False,
             )
         return torch.sigmoid(decoded)
+
+
+class ConvVAENeo(ConvAutoencoderBase):
+    """Convolutional VAE with a diagonal Gaussian posterior."""
+
+    def _build_latent(self, exp):
+        self.fc_mu = nn.Linear(self.flatten_size, self.latent_size)
+        self.fc_logvar = nn.Linear(self.flatten_size, self.latent_size)
+
+    def encode_distribution(self, images):
+        """Return the mean and log-variance of ``q(z | images)``."""
+        self._validate_images(images)
+        features = self.encoder(images).flatten(1)
+        if features.size(1) != self.flatten_size:
+            raise RuntimeError(
+                f"Encoder produced {features.size(1)} features; expected "
+                f"{self.flatten_size}"
+            )
+        return self.fc_mu(features), self.fc_logvar(features)
+
+    def encode(self, images):
+        """Return the deterministic latent mean used by sensor processing."""
+        mu, _ = self.encode_distribution(images)
+        return mu
+
+    @staticmethod
+    def reparameterize(mu, logvar):
+        if mu.shape != logvar.shape:
+            raise ValueError("mu and logvar must have identical shapes")
+        return mu + torch.randn_like(mu) * torch.exp(0.5 * logvar)
 
     def forward(self, images):
         mu, logvar = self.encode_distribution(images)
@@ -489,12 +501,12 @@ def seed_everything(seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def train(exp, *, epochs=None):
-    """Load, resume, or train a configured Conv-VAE-Neo model."""
+def train_autoencoder(exp, model_class, loss_class, *, epochs=None):
+    """Load, resume, or train a single-view convolutional autoencoder."""
     seed_everything(exp.get("random_seed", 0))
     training_loader, validation_loader = make_dataloaders(exp)
-    model = ConvVAENeo(exp).to(Config().runtime["device"])
-    loss_function = ConvVAENeoLoss(exp)
+    model = model_class(exp).to(Config().runtime["device"])
+    loss_function = loss_class(exp)
     optimizer_name = exp.get("optimizer", "adam")
     if not isinstance(optimizer_name, str):
         raise ValueError("Conv-VAE-Neo optimizer must be a string")
@@ -534,3 +546,7 @@ def train(exp, *, epochs=None):
         epochs=epochs,
         keep_checkpoints=exp.get("keep_checkpoints", 2),
     )
+
+
+def train(exp, *, epochs=None):
+    return train_autoencoder(exp, ConvVAENeo, ConvVAENeoLoss, epochs=epochs)

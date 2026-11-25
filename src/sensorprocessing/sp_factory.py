@@ -11,6 +11,7 @@ from functools import partial
 from sensorprocessing import (
     sp_composite,
     sp_vae_gan,
+    sp_vq_vae,
     sp_conv_vae_neo,
     sp_conv_vae_neo_multiview_concat,
     sp_conv_vae_neo_multiview_fusion,
@@ -93,6 +94,7 @@ def _create_singleview_cnn(spexp, model=None):
 
 
 _PROCESSOR_CLASSES = {
+    "VQVAESensorProcessing": sp_vq_vae.VQVAESensorProcessing,
     "CompositeSensorProcessing": sp_composite.CompositeSensorProcessing,
     "CompositeMultiViewSensorProcessing": sp_composite.CompositeMultiViewSensorProcessing,
     "VAEGANSensorProcessing": sp_vae_gan.VAEGANSensorProcessing,

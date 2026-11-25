@@ -151,3 +151,17 @@ bindings:
     exp: controllers
     run: wxai_leader_fake_00
     available: false
+
+  wxai_guided:
+    factory: hand_guided
+    exp: robot_wxai
+    run: position_controller_wxai_00
+    available: false
+    resources: [wxai_robot]
+
+  widowx_guided:
+    factory: hand_guided
+    exp: robot_widowx
+    run: position_controller_wx250s_00
+    available: false
+    resources: [widowx_robot]

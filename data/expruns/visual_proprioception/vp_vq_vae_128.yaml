@@ -1,0 +1,18 @@
+input-to-notebook:
+  - visual_proprioception/Train_VisualProprioception.ipynb
+  - visual_proprioception/Verify_VisualProprioception.ipynb
+
+name: "vq_vae-128"
+encoding_size: 128
+loss: MSE
+batch_size: 64
+sensor_processing: "VQVAESensorProcessing"
+sp_experiment: "sensorprocessing_vq_vae"
+sp_run: "sp_vq_vae_128_256px"
+
+# Reserved for the final comparison, after both training stages.
+heldout_data:
+  - ["random-both-cameras-video", "2025_03_08__14_26_12", "dev2"]
+  - ["random-both-cameras-video", "2025_03_08__14_27_55", "dev2"]
+proprioception_heldout_input_file: heldout_inputs.pt
+proprioception_heldout_target_file: heldout_targets.pt

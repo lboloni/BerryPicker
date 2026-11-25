@@ -2,7 +2,7 @@
 #from pathlib import Path
 import cv2
 import logging
-from time import perf_counter
+from time import monotonic, perf_counter
 
 logger = logging.getLogger(__name__)
 #import time
@@ -52,6 +52,8 @@ class CameraController:
                 self.caption += f"{view_name} "
                 print(f"camera {view_name} on device {device} works")
         self.caption += "Press q to quit"
+        self.read_times = {}
+        self.last_key = -1
         self.images = {}
         self.visualize = True # if true, visualizes the captured images
 
@@ -69,6 +71,7 @@ class CameraController:
         
         If it returns True, a key to exit was pressed
         """
+        self.read_times = {}
         for index in self.capture_devs:
             cap = self.capture_devs[index]
             started = perf_counter()
@@ -78,6 +81,7 @@ class CameraController:
                 logger.info("camera[%s] read=%.4fs", index, perf_counter() - started)
             if not success:
                 continue
+            self.read_times[index] = monotonic()
             if self.img_size != None:
                 image = cv2.resize(image, self.img_size)
             self.images[index] = image
@@ -95,4 +99,5 @@ class CameraController:
                 key = cv2.waitKey(1)
             finally:
                 logger.info("camera display waitKey=%.4fs", perf_counter() - started)
-            return (key & 0xFF) == ord('q')
+            self.last_key = key & 0xFF
+            return self.last_key == ord('q')

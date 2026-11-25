@@ -1,0 +1,13 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: cameras
+    binding: fixed_cameras
+    record_timing: true
+  - name: teaching_arm
+    binding: wxai_guided
+    max_timesteps: 3000
+    state_interval: 0.01
+    timeout_s: 1.0

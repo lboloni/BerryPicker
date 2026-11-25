@@ -1,0 +1,14 @@
+demonstration:
+  exp: demonstration
+  run: freeform
+tick_interval: 0.1
+participants:
+  - name: cameras
+    binding: fixed_cameras
+    record_timing: true
+  - name: teaching_arm
+    binding: widowx_guided
+    max_timesteps: 3000
+    state_interval: 0.01
+    joint_names: [waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate, left_finger]
+    timeout_s: 1.0

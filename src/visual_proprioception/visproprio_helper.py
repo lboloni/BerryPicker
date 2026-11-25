@@ -36,6 +36,8 @@ from visual_proprioception.visproprio_models import VisProprio_SimpleMLPRegressi
 
 # Which cached-latent fields hold each dataset, as the notebooks name them.
 DATASET_FILES = {
+    "heldout_data": (
+        "proprioception_heldout_input_file", "proprioception_heldout_target_file"),
     "training_data": (
         "proprioception_input_file", "proprioception_target_file"),
     "validation_data": (
