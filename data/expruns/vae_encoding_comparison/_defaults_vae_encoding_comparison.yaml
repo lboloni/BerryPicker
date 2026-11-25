@@ -1,0 +1,8 @@
+epochs: 6
+batch_size: 8
+frame_stride: 20
+random_seed: 73017
+latent_size: 128
+input-to-notebook: []
+patience: 0
+min_relative_gain: 0.005

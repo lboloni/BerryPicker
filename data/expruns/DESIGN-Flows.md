@@ -60,6 +60,17 @@ All flows are in `src/<area>/` (the transfer flows in
 `src/visual_proprioception/transfer/`). Their `flow_name` parameter selects the
 workspace; reusing a name with `exist-ok` reuses previously trained models.
 
+`sensorprocessing/Flow_VAE_EncodingComparison.ipynb` trains the old Conv-VAE,
+VAE-Neo, VAE-GAN and VQ-VAE on the random-moving AL5D demopack
+`random-both-cameras-video` (camera `dev2`). It samples identical source
+frames for all four and holds out entire demonstrations. Only the old VAE
+resizes its input to 64 × 64. The others use the decoded video resolution.
+The flow plots matched originals and reconstructions, absolute RGB error and
+training losses. A validation-tuned ridge probe also measures how well each
+frozen encoding predicts the recorded commanded pose. The default six-epoch
+run samples every twentieth frame; both parameters are exposed in the flow.
+Final results: `vae_encoding_comparison/compare/report.md` in the flow workspace.
+
 `visual_proprioception/Flow_VisualProprioception.ipynb` trains the selected
 single-view sensor processors (Conv-VAE, VGG19, ResNet50, ViT) for latent
 sizes 128 and 256, one regressor on top of each, and the comparisons of all
