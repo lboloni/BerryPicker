@@ -169,7 +169,7 @@ before collection.
 For the mobile-camera variant, select:
 
 ```python
-collector_run = "widowx_al5d_mobile_camera"
+collector_run = "_experimental_widowx_al5d_mobile_camera"
 ```
 
 This additionally requires an available `mobile_camera` binding. If the leader

@@ -99,7 +99,7 @@ bindings:
   mobile_camera:
     factory: mobile_camera
     exp: controllers
-    run: mobile_camera_controller_00
+    run: _experimental_mobile_camera_controller_00
     available: false
     resources: [mobile_camera]
 

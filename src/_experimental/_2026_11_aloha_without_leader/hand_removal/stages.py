@@ -27,7 +27,7 @@ def prepare(exp):
 
 
 def clips(exp):
-    path = Path(exp["results_root"])/"hand_removal"/"prepare"/"manifest.json"
+    path = Path(exp["results_root"])/"_experimental_hand_removal"/"prepare"/"manifest.json"
     return (Clip(p) for p in json.loads(path.read_text()))
 
 
@@ -51,7 +51,7 @@ def mask_stage(exp):
 
 
 def edits(exp,c):
-    return np.load(Path(exp["results_root"])/"hand_removal"/"masks"/c.spec["episode"]/"masks.npy", mmap_mode="r")
+    return np.load(Path(exp["results_root"])/"_experimental_hand_removal"/"masks"/c.spec["episode"]/"masks.npy", mmap_mode="r")
 
 
 def candidate(c, edit):
@@ -151,7 +151,7 @@ def verify(exp, multi=False):
                 from .learned import RemovalNet, inputs
                 rgb,source,donor = candidate(c,edit)
                 model = RemovalNet().eval()
-                model.load_state_dict(torch.load(Path(exp["results_root"])/"hand_removal"/"train"/"weights.pt",
+                model.load_state_dict(torch.load(Path(exp["results_root"])/"_experimental_hand_removal"/"train"/"weights.pt",
                                                  weights_only=True))
                 x = inputs(c.rgb, edit, rgb, source!=UNKNOWN)
                 with torch.no_grad():
@@ -198,7 +198,7 @@ def compare(exp):
     rows = []
     out = Path(exp["data_dir"])
     for stage in exp["compare_stages"]:
-        root = Path(exp["results_root"])/"hand_removal"/stage
+        root = Path(exp["results_root"])/"_experimental_hand_removal"/stage
         for c in clips(exp):
             if c.spec["split"] != "test":
                 continue
@@ -228,7 +228,7 @@ def compare(exp):
     for c in clips(exp):
         if c.spec["split"] != "test" or "clean" not in c.spec:
             continue
-        d = Path(exp["results_root"])/"hand_removal"/"single"/c.spec["episode"]
+        d = Path(exp["results_root"])/"_experimental_hand_removal"/"single"/c.spec["episode"]
         if not {"past","bidirectional"}.issubset(exp["methods"]):
             continue
         from .clip import frames

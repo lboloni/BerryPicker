@@ -12,9 +12,9 @@ class MobileCamera:
         from interbotix_common_modules.common_robot.robot import robot_shutdown
         from interbotix_common_modules.common_robot.robot import robot_startup
         from interbotix_xs_modules.xs_robot.arm import InterbotixManipulatorXS
-        from mobile_camera.mobile_camera_decision import SimpleHighLowMobileCameraDecision
-        from mobile_camera.observation_dome import ObservationDome
-        from mobile_camera.widowx_observation_dome import WidowX_ObservationDomeDriver
+        from .mobile_camera_decision import SimpleHighLowMobileCameraDecision
+        from .observation_dome import ObservationDome
+        from .widowx_observation_dome import WidowX_ObservationDomeDriver
 
         self.exp = exp
         self.robot_controller = robot_controller

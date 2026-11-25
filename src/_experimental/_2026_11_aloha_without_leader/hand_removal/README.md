@@ -84,8 +84,8 @@ for controlled scenes or paired evaluation where that model holds.
 
 ## Hand-guided robot collection
 
-The demonstration collector recipes are hand_guided_wxai_cameras and
-hand_guided_widowx_cameras. Select the matching task-arm binding in the
+The demonstration collector recipes are _experimental_hand_guided_wxai_cameras and
+_experimental_hand_guided_widowx_cameras. Select the matching task-arm binding in the
 machine-local settings (see the machine template). The WXAI reader uses its
 existing gravity-compensated external-effort teaching mode. For a wx250s
 start the manufacturer's supported gravity-compensation session separately

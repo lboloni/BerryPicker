@@ -717,7 +717,7 @@ class MobileCameraParticipant(DemonstrationParticipant):
             )
 
     def start(self, context):
-        from mobile_camera.mobile_camera_controller import MobileCamera
+        from _experimental._2026_10_mobile_camera.mobile_camera_controller import MobileCamera
 
         self.controller = MobileCamera(self.exp, self.target_robot.controller)
 
