@@ -97,7 +97,13 @@ def cmd_label(args: argparse.Namespace) -> None:
         else None
     )
     sam3_teacher = (
-        SAM3Teacher(prompt=args.sam3_prompt, checkpoint=args.sam3_ckpt, device=args.device)
+        SAM3Teacher(
+            prompt=args.sam3_prompt,
+            checkpoint=args.sam3_ckpt,
+            conf=args.sam3_conf,
+            imgsz=args.sam3_imgsz,
+            device=args.device,
+        )
         if args.teacher == "sam3"
         else None
     )
@@ -264,6 +270,8 @@ def build_parser() -> argparse.ArgumentParser:
     s_lbl.add_argument("--no-box", action="store_true")
     s_lbl.add_argument("--sam3-prompt", default="robot arm")
     s_lbl.add_argument("--sam3-ckpt", default=None)
+    s_lbl.add_argument("--sam3-conf", type=float, default=0.25)
+    s_lbl.add_argument("--sam3-imgsz", type=int, default=644)
     s_lbl.set_defaults(func=cmd_label)
 
     s_tr = sub.add_parser("train", help="Steps 4-5: train single-frame student")

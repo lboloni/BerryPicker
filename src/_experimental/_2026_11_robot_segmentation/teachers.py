@@ -405,25 +405,198 @@ class SAM2Teacher:
         )
 
 
-class SAM3Teacher:
-    """Offline text-prompted SAM 3 video teacher with motion identity cross-check.
+class SAM3DirectSegmenter:
+    """Single-frame SAM 3 / SAM 3.1 predictor implementing ``segment(frame_rgb) -> mask``.
 
-    Requires the optional ``sam3`` package in an offline environment.
+    Defaults to Ultralytics ``SAM3SemanticPredictor`` (which runs ``sam3.1_multiplex.pt``
+    and ``sam3.pt`` on CUDA, Apple MPS, or CPU). Also supports ``backend='meta_sam3'``
+    if the upstream ``facebookresearch/sam3`` package is installed.
+    """
+
+    def __init__(
+        self,
+        checkpoint: str | Path,
+        prompt: str = "robot arm",
+        conf: float = 0.25,
+        imgsz: int = 644,
+        device: str = "auto",
+        camera_id: str = "dev2",
+        backend: str = "ultralytics",
+    ):
+        import torch
+
+        self.checkpoint = str(checkpoint)
+        self.prompt = prompt
+        self.conf = float(conf)
+        self.imgsz = int(imgsz)
+        self.camera_id = camera_id
+        self.backend = backend
+        if device == "auto":
+            if torch.cuda.is_available():
+                self.device = "cuda"
+            elif torch.backends.mps.is_available():
+                self.device = "mps"
+            else:
+                self.device = "cpu"
+        else:
+            self.device = str(device)
+
+        if backend == "ultralytics":
+            from ultralytics.models.sam.predict import SAM3SemanticPredictor
+
+            overrides = dict(
+                conf=self.conf,
+                task="segment",
+                mode="predict",
+                model=self.checkpoint,
+                imgsz=self.imgsz,
+                device=self.device,
+                half=False,
+                save=False,
+                verbose=False,
+            )
+            self._predictor = SAM3SemanticPredictor(overrides=overrides)
+        elif backend == "meta_sam3":
+            from PIL import Image
+            from sam3.model.sam3_image_processor import Sam3Processor
+            from sam3.model_builder import build_sam3_image_model
+
+            self._pil_image = Image
+            self._model = build_sam3_image_model(checkpoint_path=self.checkpoint)
+            self._processor = Sam3Processor(self._model)
+        else:
+            raise ValueError(f"Unknown SAM3 backend: {backend}")
+
+    def _sync(self) -> None:
+        import torch
+
+        if self.device.startswith("cuda"):
+            torch.cuda.synchronize()
+        elif self.device == "mps":
+            torch.mps.synchronize()
+
+    def segment(self, frame_rgb: np.ndarray) -> np.ndarray:
+        mask, _ = self.segment_timed(frame_rgb)
+        return mask
+
+    def segment_timed(
+        self, frame_rgb: np.ndarray, frame_id: int | None = None, capture_ts: float | None = None
+    ) -> tuple[np.ndarray, dict]:
+        import torch
+
+        h, w = frame_rgb.shape[:2]
+        t0 = time.perf_counter()
+        if self.backend == "ultralytics":
+            bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+            t1 = time.perf_counter()
+            self._predictor.set_image(bgr)
+            results = self._predictor(text=[self.prompt])
+            self._sync()
+            t2 = time.perf_counter()
+            res = results[0]
+            if res.masks is None or len(res.masks.data) == 0:
+                mask = np.zeros((h, w), dtype=np.uint8)
+                t3 = t2
+                t4 = time.perf_counter()
+            else:
+                raw = (res.masks.data.amax(dim=0) > 0.5).cpu().numpy().astype(np.uint8)
+                t3 = time.perf_counter()
+                mask = cv2.resize(raw, (w, h), interpolation=cv2.INTER_NEAREST) if raw.shape != (h, w) else raw
+                t4 = time.perf_counter()
+        else:
+            pil = self._pil_image.fromarray(frame_rgb)
+            t1 = time.perf_counter()
+            with torch.inference_mode():
+                state = self._processor.set_image(pil)
+                out = self._processor.set_text_prompt(state=state, prompt=self.prompt)
+            self._sync()
+            t2 = time.perf_counter()
+            masks = out.get("masks", [])
+            if len(masks) == 0:
+                mask = np.zeros((h, w), dtype=np.uint8)
+            else:
+                combined = np.any(
+                    np.asarray([m.cpu().numpy() if hasattr(m, "cpu") else m for m in masks]) > 0, axis=0
+                )
+                if combined.ndim == 3:
+                    combined = combined.any(axis=0)
+                mask = combined.astype(np.uint8)
+            t3 = time.perf_counter()
+            if mask.shape != (h, w):
+                mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
+            t4 = time.perf_counter()
+
+        return mask, {
+            "frame_id": frame_id,
+            "capture_ts": capture_ts,
+            "deliver_ts": t4,
+            "preprocess_ms": (t1 - t0) * 1000.0,
+            "inference_ms": (t2 - t1) * 1000.0,
+            "transfer_ms": (t3 - t2) * 1000.0,
+            "resize_ms": (t4 - t3) * 1000.0,
+            "total_ms": (t4 - t0) * 1000.0,
+        }
+
+    def save(self, out_dir: str | Path) -> Path:
+        root = Path(out_dir)
+        root.mkdir(parents=True, exist_ok=True)
+        meta = {
+            "kind": "sam3_direct",
+            "checkpoint": self.checkpoint,
+            "prompt": self.prompt,
+            "conf": self.conf,
+            "imgsz": self.imgsz,
+            "camera_id": self.camera_id,
+            "backend": self.backend,
+        }
+        (root / "config.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+        return root
+
+
+class SAM3Teacher:
+    """Offline text-prompted SAM 3 / SAM 3.1 teacher with motion identity cross-check.
+
+    Uses Ultralytics ``SAM3SemanticPredictor`` by default (compatible with
+    ``sam3.1_multiplex.pt`` and ``sam3.pt`` on CUDA, MPS, or CPU) and falls back
+    to the upstream ``sam3`` video predictor when ``backend='meta_sam3'``.
     """
 
     def __init__(
         self,
         prompt: str = "robot arm",
         checkpoint: str | Path | None = None,
-        device: str = "cpu",
+        conf: float = 0.25,
+        imgsz: int = 644,
+        device: str = "auto",
         min_motion_overlap: float = 0.05,
         min_fg_pixels: int = 50,
+        backend: str = "ultralytics",
+        segmenter: SAM3DirectSegmenter | None = None,
     ):
         self.prompt = prompt
         self.checkpoint = str(checkpoint) if checkpoint is not None else None
+        self.conf = float(conf)
+        self.imgsz = int(imgsz)
         self.device = device
         self.min_motion_overlap = float(min_motion_overlap)
         self.min_fg_pixels = int(min_fg_pixels)
+        self.backend = backend
+        self._segmenter = segmenter
+
+    def _get_segmenter(self, camera: str) -> SAM3DirectSegmenter:
+        if self._segmenter is None:
+            if self.checkpoint is None:
+                raise ValueError("SAM3Teacher requires a checkpoint path (e.g. sam3.1_multiplex.pt)")
+            self._segmenter = SAM3DirectSegmenter(
+                checkpoint=self.checkpoint,
+                prompt=self.prompt,
+                conf=self.conf,
+                imgsz=self.imgsz,
+                device=self.device,
+                camera_id=camera,
+                backend=self.backend,
+            )
+        return self._segmenter
 
     def label_episode(
         self,
@@ -433,41 +606,50 @@ class SAM3Teacher:
         episode: str,
         camera: str,
     ) -> TeacherEpisodeResult:
-        import torch
-        from sam3.model_builder import build_sam3_video_predictor
-
-        predictor = build_sam3_video_predictor(checkpoint_path=self.checkpoint)
         n, h, w = frames_rgb.shape[:3]
         raw_masks = np.zeros((n, h, w), dtype=np.uint8)
 
-        with tempfile.TemporaryDirectory(prefix="sam3_frames_") as tmpdir:
-            for t, rgb in enumerate(frames_rgb):
-                cv2.imwrite(str(Path(tmpdir) / f"{t:05d}.jpg"), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
-            with torch.inference_mode():
-                session = predictor.handle_request({"type": "start_session", "resource_path": tmpdir})
-                sid = session["session_id"]
-                predictor.handle_request(
-                    {"type": "add_prompt", "session_id": sid, "frame_index": 0, "text": self.prompt}
-                )
-                for resp in predictor.handle_stream_request({"type": "propagate_in_video", "session_id": sid}):
-                    t = int(resp["frame_index"])
-                    masks = resp["outputs"]["out_binary_masks"]
-                    if len(masks) > 0:
-                        raw_masks[t] = (np.any(np.asarray(masks) > 0, axis=0)).astype(np.uint8)
-                predictor.handle_request({"type": "close_session", "session_id": sid})
+        if self.backend == "meta_sam3_video":
+            import torch
+            from sam3.model_builder import build_sam3_video_predictor
+
+            predictor = build_sam3_video_predictor(checkpoint_path=self.checkpoint)
+            with tempfile.TemporaryDirectory(prefix="sam3_frames_") as tmpdir:
+                for t, rgb in enumerate(frames_rgb):
+                    cv2.imwrite(str(Path(tmpdir) / f"{t:05d}.jpg"), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
+                with torch.inference_mode():
+                    session = predictor.handle_request({"type": "start_session", "resource_path": tmpdir})
+                    sid = session["session_id"]
+                    predictor.handle_request(
+                        {"type": "add_prompt", "session_id": sid, "frame_index": 0, "text": self.prompt}
+                    )
+                    for resp in predictor.handle_stream_request({"type": "propagate_in_video", "session_id": sid}):
+                        t = int(resp["frame_index"])
+                        masks = resp["outputs"]["out_binary_masks"]
+                        if len(masks) > 0:
+                            raw_masks[t] = (np.any(np.asarray(masks) > 0, axis=0)).astype(np.uint8)
+                    predictor.handle_request({"type": "close_session", "session_id": sid})
+        else:
+            seg = self._get_segmenter(camera)
+            for t in range(n):
+                raw_masks[t] = seg.segment(frames_rgb[t])
 
         # Cross-check identity against motion while allowing static parts/pauses to survive
         motion = frame_motion_scores(frames_rgb)
         pauses, pause_thr = detect_pause_flags(motion)
         labels = np.where(raw_masks > 0, FG, BG).astype(np.uint8)
         retained = np.zeros(n, dtype=bool)
+        motion_by_fidx = (
+            {int(fi): i for i, fi in enumerate(motion_result.frame_indices)} if motion_result is not None else {}
+        )
         for t in range(n):
             fg = raw_masks[t] > 0
             if int(fg.sum()) < self.min_fg_pixels:
                 labels[t] = UNKNOWN
                 continue
-            if motion_result is not None and (not pauses[t]):
-                mfg = motion_result.labels[t] == FG
+            fidx = int(frame_indices[t])
+            if motion_result is not None and (not pauses[t]) and (fidx in motion_by_fidx):
+                mfg = motion_result.labels[motion_by_fidx[fidx]] == FG
                 if mfg.any():
                     overlap = float((fg & mfg).sum()) / float(mfg.sum())
                     if overlap < self.min_motion_overlap:
@@ -488,58 +670,13 @@ class SAM3Teacher:
             metadata={
                 "prompt": self.prompt,
                 "checkpoint": self.checkpoint,
+                "conf": self.conf,
+                "imgsz": self.imgsz,
+                "backend": self.backend,
                 "min_motion_overlap": self.min_motion_overlap,
                 "pause_threshold": pause_thr,
             },
         )
-
-
-class SAM3DirectSegmenter:
-    """Optional single-frame SAM 3 runtime predictor implementing ``segment(frame_rgb) -> mask``."""
-
-    def __init__(self, prompt: str = "robot arm", checkpoint: str | Path | None = None, device: str = "cpu"):
-        from PIL import Image
-        from sam3.model.sam3_image_processor import Sam3Processor
-        from sam3.model_builder import build_sam3_image_model
-
-        self._pil_image = Image
-        self.prompt = prompt
-        self.device = device
-        self.model = build_sam3_image_model(checkpoint_path=checkpoint)
-        self.processor = Sam3Processor(self.model)
-
-    def segment(self, frame_rgb: np.ndarray) -> np.ndarray:
-        import torch
-
-        h, w = frame_rgb.shape[:2]
-        with torch.inference_mode():
-            state = self.processor.set_image(self._pil_image.fromarray(frame_rgb))
-            out = self.processor.set_text_prompt(state=state, prompt=self.prompt)
-        masks = out.get("masks", [])
-        if len(masks) == 0:
-            return np.zeros((h, w), dtype=np.uint8)
-        combined = np.any(np.asarray([m.cpu().numpy() if hasattr(m, "cpu") else m for m in masks]) > 0, axis=0)
-        if combined.ndim == 3:
-            combined = combined.any(axis=0)
-        return combined.astype(np.uint8)
-
-    def segment_timed(
-        self, frame_rgb: np.ndarray, frame_id: int | None = None, capture_ts: float | None = None
-    ) -> tuple[np.ndarray, dict]:
-        t0 = time.perf_counter()
-        mask = self.segment(frame_rgb)
-        t1 = time.perf_counter()
-        ms = (t1 - t0) * 1000.0
-        return mask, {
-            "frame_id": frame_id,
-            "capture_ts": capture_ts,
-            "deliver_ts": t1,
-            "preprocess_ms": 0.0,
-            "inference_ms": ms,
-            "transfer_ms": 0.0,
-            "resize_ms": 0.0,
-            "total_ms": ms,
-        }
 
 
 def save_teacher_outputs(

@@ -61,6 +61,7 @@ from _experimental._2026_11_robot_segmentation.models import (
 )
 from _experimental._2026_11_robot_segmentation.teachers import (
     MotionLabelTeacher,
+    SAM3Teacher,
     save_teacher_outputs,
     select_motion_anchors,
 )
@@ -371,3 +372,39 @@ def test_viz_comparison_strip_and_review_video(tmp_path: Path):
     assert strip.shape[1] == 64 * 2
     out_mp4 = write_review_video(frames, {"UNet": seg}, tmp_path / "review.mp4", fps=10.0)
     assert out_mp4.is_file() and out_mp4.stat().st_size > 0
+
+
+def test_sam3_teacher_motion_crosscheck(tmp_path: Path):
+    """Verify SAM3Teacher retains static/matching masks and rejects identity jumps."""
+    v1 = tmp_path / "cam1.mp4"
+    _make_synthetic_episode(v1, n_frames=16, size=64, seed=7)
+    ids, frames = read_video_frames(v1)
+    bg = MedianBackgroundModel.fit_from_frames(frames, threshold=0.10)
+    mres = MotionLabelTeacher(bg, offsets=(1, 2), flow_min_px=0.3, min_fg_pixels=10).label_episode(
+        frames, ids, episode="ep0", camera="dev2"
+    )
+
+    class _FakeSAM3:
+        def __init__(self):
+            self.call = 0
+
+        def segment(self, frame_rgb):
+            t = self.call
+            self.call += 1
+            m = np.zeros(frame_rgb.shape[:2], dtype=np.uint8)
+            if t == 2:
+                # Simulate an identity jump onto the top-left corner away from motion
+                m[:12, :12] = 1
+            else:
+                # Cover robot area (base + arm)
+                m[10:62, 12:56] = 1
+            return m
+
+    teacher = SAM3Teacher(prompt="robot arm", min_motion_overlap=0.1, min_fg_pixels=20, segmenter=_FakeSAM3())
+    res = teacher.label_episode(frames, ids, mres, episode="ep0", camera="dev2")
+    assert res.teacher_name == "sam3"
+    assert res.retained.sum() >= 10
+    # Frame 2 jumped away from moving robot -> marked UNKNOWN and not retained
+    if (mres.labels[2] == FG).any() and (not res.pause_flags[2]):
+        assert not res.retained[2]
+        assert (res.labels[2] == UNKNOWN).all()

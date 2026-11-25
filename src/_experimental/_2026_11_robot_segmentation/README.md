@@ -66,8 +66,8 @@ PYTHONPATH=src $PY -m _experimental._2026_11_robot_segmentation.cli benchmark \
 
 Two standalone notebooks live alongside the package (using the `berrypicker` kernel and a tagged `parameters` cell, with zero `ExpRunFlow` imports):
 
-- `Explore_RobotSegmentation.ipynb` — Steps 1–3: episode inventory and frozen 6/2/2 split plot, median-background + MAD + static-control inspection, motion teacher `FG`/`BG`/`UNKNOWN` coverage and overlays on moving vs. paused frames.
-- `Verify_RobotSegmentation.ipynb` — Steps 4–7: trains or loads `SmallSegUNet` and `YOLO26SemanticNet`, plots training curves, displays moving/paused side-by-side panels and embedded H.264 validation review video, and runs the paced 10 Hz latency & freshness benchmark (1-view and 2-view).
+- `Explore_RobotSegmentation.ipynb` — Steps 1–3: episode inventory and frozen 6/2/2 split plot, median-background + MAD + static-control inspection, motion teacher vs. Meta SAM 3.1 (`sam3.1_multiplex.pt`) coverage, prompt/resolution checks, and overlays on moving vs. paused frames.
+- `Verify_RobotSegmentation.ipynb` — Steps 4–7: trains or loads `SmallSegUNet` and `YOLO26SemanticNet` on both motion and Meta SAM 3.1 labels, compares them side-by-side against Meta SAM 3.1 (zero-shot ceiling) in strips, pause stability, and an embedded H.264 validation review video, and runs the paced 10 Hz latency & freshness benchmark.
 
 Run them interactively in VS Code or via `papermill` into a results directory (so source notebooks stay output-free in git):
 

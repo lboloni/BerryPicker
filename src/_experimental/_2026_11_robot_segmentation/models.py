@@ -480,4 +480,16 @@ def load_segmenter(artifact_dir: str | Path, device: str = "auto") -> Any:
         return MedianBackgroundModel.load(root)
     if kind == "static_control":
         return StaticMaskControl.load(root)
+    if kind == "sam3_direct":
+        from .teachers import SAM3DirectSegmenter
+
+        return SAM3DirectSegmenter(
+            checkpoint=meta["checkpoint"],
+            prompt=meta["prompt"],
+            conf=meta["conf"],
+            imgsz=meta["imgsz"],
+            device=device,
+            camera_id=meta["camera_id"],
+            backend=meta["backend"],
+        )
     raise ValueError(f"Unknown artifact kind: {kind}")
