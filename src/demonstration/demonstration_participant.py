@@ -6,9 +6,6 @@ from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass, field
 import math
-from time import monotonic
-from threading import Event, Thread
-from queue import Empty, SimpleQueue
 
 from exp_run_config import Config
 from robot.al5d import PositionController, SimulatedPositionController
@@ -177,63 +174,6 @@ class WXAIParticipant(WidowXParticipant):
     def update(self, context, dt):
         super().update(context, dt)
         self.controller.update(dt)
-
-
-class HandGuidedParticipant(DemonstrationParticipant):
-    """Record measured waypoints from one manually guided task arm."""
-    def start(self, context):
-        self.remaining = self.spec["max_timesteps"]
-        if self.exp["robot_name"] == "wxai":
-            from robot.wxai.leader_controller import LeaderController
-            self.reader = LeaderController(self.exp)
-        else:
-            from robot.widowx.guided_reader import JointStateReader
-            self.reader = JointStateReader(self.exp, self.spec)
-        self.reader.start()
-        self.samples = SimpleQueue()
-        self.end = Event()
-        self.worker = Thread(target=self._poll, daemon=True)
-        self.worker.start()
-
-    def _poll(self):
-        try:
-            while not self.end.is_set():
-                joints = self.reader.get_joints()
-                sample = {"joints": joints, "read_monotonic": monotonic()}
-                if hasattr(self.reader, "stamp"):
-                    sample["ros_stamp"] = self.reader.stamp
-                self.samples.put(sample)
-                self.end.wait(self.spec["state_interval"])
-        except Exception as error:
-            self.samples.put(error)
-
-    def update(self, context, dt):
-        if self.remaining <= 0 or context.values.get("key") is True:
-            context.request_stop()
-        self.remaining -= 1
-
-    def sample(self, context):
-        # Preserve high-rate measurements between camera ticks, including startup.
-        samples = [self.samples.get(timeout=self.spec["timeout_s"])]
-        while True:
-            try:
-                samples.append(self.samples.get_nowait())
-            except Empty:
-                break
-        for item in samples:
-            if isinstance(item, Exception):
-                raise item
-        key = context.values.get("camera_key")
-        return DemonstrationSample(
-            action={"taught-joints": samples[-1]["joints"]},
-            telemetry={"state_samples": samples},
-            annotations={"gripper_event": {ord("g"): "grasp", ord("r"): "release"}.get(key)}
-        )
-
-    def stop(self, context):
-        self.end.set()
-        self.worker.join()
-        self.reader.stop()
 
 
 class WXAILeaderParticipant(DemonstrationParticipant):
@@ -796,6 +736,12 @@ def _load_participant_experiment(spec, binding):
     return Config().get_experiment(exp_name, run_name)
 
 
+def _create_hand_guided(name, spec, exp):
+    from _experimental._2026_11_aloha_without_leader.hand_guided_participant import HandGuidedParticipant
+
+    return HandGuidedParticipant(name, spec, exp)
+
+
 def create_participants(collection_exp, machine_exp):
     """Create and validate participants from a collection recipe and machine profile."""
     try:
@@ -830,7 +776,7 @@ def create_participants(collection_exp, machine_exp):
         ),
         "mujoco_cameras": MujocoCameraParticipant,
         "wxai_leader": WXAILeaderParticipant,
-        "hand_guided": HandGuidedParticipant,
+        "hand_guided": _create_hand_guided,
         "widowx_leader": WidowXLeaderParticipant,
         "widowx_observer": WidowXObserverParticipant,
         "mobile_camera": MobileCameraParticipant,

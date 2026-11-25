@@ -7,10 +7,10 @@ import unittest
 import cv2
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from hand_removal.clip import Clip
-from hand_removal.fixture import generate
-from hand_removal.reconstruct import masks, reconstruct, TEMPORAL, UNKNOWN
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from _experimental._2026_11_aloha_without_leader.hand_removal.clip import Clip
+from _experimental._2026_11_aloha_without_leader.hand_removal.fixture import generate
+from _experimental._2026_11_aloha_without_leader.hand_removal.reconstruct import masks, reconstruct, TEMPORAL, UNKNOWN
 
 
 class OfflineTests(unittest.TestCase):
@@ -43,7 +43,7 @@ class OfflineTests(unittest.TestCase):
         self.assertTrue(np.array_equal(rgb,self.clip.series("clean")))
 
     def test_sparse_keyframes_and_video_reader(self):
-        from hand_removal.clip import video
+        from _experimental._2026_11_aloha_without_leader.hand_removal.clip import video
         s = json.loads(self.path.read_text())
         video(self.path.parent/"source.mp4",self.clip.rgb,12)
         s["rgb"]="source.mp4"
@@ -56,8 +56,8 @@ class OfflineTests(unittest.TestCase):
 
     def test_reader_export_keeps_action_rows_across_gaps(self):
         from types import SimpleNamespace
-        from hand_removal.clip import pngs, write_json
-        from hand_removal.demonstrations import export_view, import_view
+        from _experimental._2026_11_aloha_without_leader.hand_removal.clip import pngs, write_json
+        from _experimental._2026_11_aloha_without_leader.hand_removal.demonstrations import export_view, import_view
         from demonstration.demonstration import Demonstration
         root = self.path.parent
         out_exp = SimpleNamespace(data_dir=lambda: root/"demos")
@@ -74,7 +74,7 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(json.loads(path.read_text())["frame_ids"], list(range(13)))
 
     def test_calibration_clock_offset(self):
-        from hand_removal.calibration import time_offset
+        from _experimental._2026_11_aloha_without_leader.hand_removal.calibration import time_offset
         offset, residual = time_offset([1.02, 2.02, 3.02], [1.,2.,3.])
         self.assertAlmostEqual(offset,.02)
         self.assertLess(residual,1e-10)
@@ -92,12 +92,13 @@ class OfflineTests(unittest.TestCase):
 
     def test_one_arm_teaching_without_motor_hardware(self):
         from unittest.mock import patch
-        from demonstration.demonstration_participant import DemonstrationContext, HandGuidedParticipant
+        from demonstration.demonstration_participant import DemonstrationContext
+        from _experimental._2026_11_aloha_without_leader.hand_guided_participant import HandGuidedParticipant
         context = DemonstrationContext()
         context.values["camera_key"] = ord("g")
         spec = dict(timeout_s=1, state_interval=.005, max_timesteps=4)
         p = HandGuidedParticipant("arm",spec,dict(robot_name="widowx"))
-        with patch("robot.widowx.guided_reader.JointStateReader") as reader:
+        with patch("_experimental._2026_11_aloha_without_leader.guided_reader.JointStateReader") as reader:
             reader.return_value.get_joints.return_value = [0.1]*7
             reader.return_value.stamp = 1.
             p.start(context)
@@ -112,7 +113,7 @@ class OfflineTests(unittest.TestCase):
             reader.return_value.stop.assert_called_once()
 
     def test_sparse_calibrated_auxiliary_texture(self):
-        from hand_removal.reconstruct import project_auxiliary
+        from _experimental._2026_11_aloha_without_leader.hand_removal.reconstruct import project_auxiliary
         c = self.clip
         aux = c.spec["auxiliary"]
         # Three visible points on the same physical patch in the planar fixture.
@@ -128,7 +129,7 @@ class OfflineTests(unittest.TestCase):
 
     def test_exposure_interpolation_preserves_event_indices(self):
         from types import SimpleNamespace
-        from hand_removal.demonstrations import joints_at_exposure
+        from _experimental._2026_11_aloha_without_leader.hand_removal.demonstrations import joints_at_exposure
         rows = [dict(teaching_arm={"state_samples":[{"read_monotonic":float(i),"joints":[float(i)]*7}]},
                      cameras={"read_monotonic":{"front":i+.5}}) for i in range(3)]
         pose = joints_at_exposure(SimpleNamespace(annotations=rows),"front",0,1.1)

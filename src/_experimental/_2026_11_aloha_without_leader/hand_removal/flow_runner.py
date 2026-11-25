@@ -28,7 +28,7 @@ def run_hand_removal(flow_name, manifests=(), *, learn=True, multiview=True, flo
         run = flow_name if stage=="compare" else stage
         config = dict(results_root=str(results), manifests=[str(Path(p).resolve()) for p in manifests],
                       methods=methods, epochs=epochs, compare_stages=["single","multi"] if multiview else ["single"])
-        config["input-to-notebook"] = [f"hand_removal/{notebook}.ipynb"]
+        config["input-to-notebook"] = [f"_experimental/_2026_11_aloha_without_leader/hand_removal/{notebook}.ipynb"]
         (expruns/family/f"{run}.yaml").write_text(yaml.safe_dump(config))
         entries.append(flow_entry(stage,family,run,0,creation_style))
     execution = run_flow(entries,expruns,results,books)
