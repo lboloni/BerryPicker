@@ -483,6 +483,8 @@ def load_segmenter(artifact_dir: str | Path, device: str = "auto") -> Any:
     if kind == "sam3_direct":
         from .teachers import SAM3DirectSegmenter
 
+        pcb = np.load(root / "pcb_mask.npz")["pcb_mask"] if meta.get("has_pcb_mask") else None
+        bg = MedianBackgroundModel.load(root / "bg_model") if meta.get("has_bg_model") else None
         return SAM3DirectSegmenter(
             checkpoint=meta["checkpoint"],
             prompt=meta["prompt"],
@@ -491,5 +493,10 @@ def load_segmenter(artifact_dir: str | Path, device: str = "auto") -> Any:
             device=device,
             camera_id=meta["camera_id"],
             backend=meta["backend"],
+            selection_mode=meta.get("selection_mode", "union"),
+            bg_model=bg,
+            pcb_mask=pcb,
+            bg_match_threshold=meta.get("bg_match_threshold", 0.10),
+            positive_boxes=meta.get("positive_boxes"),
         )
     raise ValueError(f"Unknown artifact kind: {kind}")

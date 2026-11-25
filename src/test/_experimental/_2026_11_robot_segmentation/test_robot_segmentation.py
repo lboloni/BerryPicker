@@ -62,7 +62,11 @@ from _experimental._2026_11_robot_segmentation.models import (
 from _experimental._2026_11_robot_segmentation.teachers import (
     MotionLabelTeacher,
     SAM3Teacher,
+    TeacherEpisodeResult,
+    apply_occlusion_safe_pcb_inclusion,
+    apply_static_consensus_gating,
     save_teacher_outputs,
+    select_consistent_hypothesis,
     select_motion_anchors,
 )
 from _experimental._2026_11_robot_segmentation.train import (
@@ -408,3 +412,63 @@ def test_sam3_teacher_motion_crosscheck(tmp_path: Path):
     if (mres.labels[2] == FG).any() and (not res.pause_flags[2]):
         assert not res.retained[2]
         assert (res.labels[2] == UNKNOWN).all()
+
+
+def test_sam3_stabilization_stages_a_b_c():
+    """Verify Stage A occlusion-safe PCB inclusion, Stage B consensus gating, and Stage C selection."""
+    bg_img = np.full((64, 64, 3), 180, dtype=np.uint8)
+    bg = MedianBackgroundModel.fit_from_frames(np.stack([bg_img, bg_img], axis=0), threshold=0.10)
+
+    # Static PCB on the right; raw SAM 3 mask covers arm+base but missed the PCB
+    pcb = np.zeros((64, 64), dtype=np.uint8)
+    pcb[20:40, 44:60] = 1
+    raw_arm_only = np.zeros((64, 64), dtype=np.uint8)
+    raw_arm_only[20:40, 20:44] = 1
+
+    # Stage A: non-robot occluder covers top half of PCB (diff >= threshold) -> NOT forced to FG;
+    # unoccluded bottom half of PCB matches median bg -> included as FG (1).
+    frame_occ = bg_img.copy()
+    frame_occ[20:30, 44:60] = 30  # foreign hand/object in front of top half of PCB
+    included = apply_occlusion_safe_pcb_inclusion(raw_arm_only, frame_occ, bg, pcb, bg_match_threshold=0.10)
+    assert (included[20:30, 44:60] == 0).all()  # occluded PCB pixels not forced FG
+    assert (included[30:40, 44:60] == 1).all()  # unoccluded static PCB included as FG
+    assert (included[20:40, 20:44] == 1).all()  # rest of robot preserved
+
+    # Stage C: nested hypotheses (whole arm+base+PCB vs arm-only) -> prefer whole-assembly mask
+    m_whole = np.zeros((64, 64), dtype=np.uint8)
+    m_whole[20:40, 20:60] = 1
+    chosen = select_consistent_hypothesis(
+        [(m_whole, 0.43), (raw_arm_only, 0.45)], prev_mask=m_whole, static_pcb=pcb
+    )
+    assert np.array_equal(chosen, m_whole)
+
+    # Stage B: static consensus gating across 10 frames:
+    # - base [40:55, 20:35]: FG on all 10 frames (freq=1.0 -> FG)
+    # - pcb [20:40, 44:60]: confirmed static PCB -> forced FG even if raw freq was lower
+    # - flickering wire rim [30:40, 35:44]: FG on 5/10 frames (freq=0.5 -> UNKNOWN)
+    # - bg [0:15, 0:15]: FG on 0/10 frames (freq=0.0 -> BG)
+    n = 10
+    frames = np.stack([bg_img.copy() for _ in range(n)], axis=0)
+    labels = np.full((n, 64, 64), BG, dtype=np.uint8)
+    labels[:, 40:55, 20:35] = FG
+    labels[:5, 30:40, 35:44] = FG
+    res = TeacherEpisodeResult(
+        episode="ep0",
+        camera="dev2",
+        teacher_name="sam3",
+        frame_indices=list(range(n)),
+        raw_masks=(labels == FG).astype(np.uint8),
+        labels=labels,
+        retained=np.ones(n, dtype=bool),
+        pause_flags=np.zeros(n, dtype=bool),
+        metadata={},
+    )
+    gated, freq = apply_static_consensus_gating(
+        {"ep0": res}, {"ep0": frames}, bg, low_freq=0.15, high_freq=0.85, pcb_mask=pcb
+    )
+    g0 = gated["ep0"].labels[0]
+    assert (g0[40:55, 20:35] == FG).all()
+    assert (g0[20:40, 44:60] == FG).all()
+    assert (g0[30:40, 35:44] == UNKNOWN).all()
+    assert (g0[0:15, 0:15] == BG).all()
+    assert freq[35, 38] == pytest.approx(0.5)

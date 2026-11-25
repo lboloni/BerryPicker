@@ -27,7 +27,15 @@ from .data import (
 )
 from .evaluate import evaluate_predictor, extract_annotation_pack
 from .models import load_segmenter
-from .teachers import MotionLabelTeacher, SAM2Teacher, SAM3Teacher, save_teacher_outputs
+from .teachers import (
+    MotionLabelTeacher,
+    SAM2Teacher,
+    SAM3DirectSegmenter,
+    SAM3Teacher,
+    apply_static_consensus_gating,
+    estimate_static_pcb_mask,
+    save_teacher_outputs,
+)
 from .train import load_teacher_samples, train_semantic_student, train_yolo_instance_student
 
 
@@ -96,19 +104,37 @@ def cmd_label(args: argparse.Namespace) -> None:
         if args.teacher == "sam2"
         else None
     )
-    sam3_teacher = (
-        SAM3Teacher(
+    sam3_seg = None
+    pcb_mask = None
+    sam3_teacher = None
+    if args.teacher == "sam3":
+        sam3_seg = SAM3DirectSegmenter(
+            checkpoint=args.sam3_ckpt,
+            prompt=args.sam3_prompt,
+            conf=args.sam3_conf,
+            imgsz=args.sam3_imgsz,
+            device=args.device,
+            camera_id=args.camera,
+            selection_mode=args.sam3_selection_mode,
+        )
+        if not args.no_sam3_stabilize:
+            pcb_mask = estimate_static_pcb_mask(
+                sam3_seg, bg, pcb_prompts=tuple(args.sam3_pcb_prompts), conf=args.sam3_pcb_conf
+            )
+            sam3_seg.bg_model = bg
+            sam3_seg.pcb_mask = pcb_mask
+        sam3_seg.save(out / "models" / f"sam3_direct_{args.camera}")
+        sam3_teacher = SAM3Teacher(
             prompt=args.sam3_prompt,
             checkpoint=args.sam3_ckpt,
             conf=args.sam3_conf,
             imgsz=args.sam3_imgsz,
             device=args.device,
+            segmenter=sam3_seg,
         )
-        if args.teacher == "sam3"
-        else None
-    )
 
-    summaries = []
+    results_by_ep = {}
+    frames_by_ep = {}
     for ep in episodes:
         ids, frames = read_video_frames(
             camera_video_path(args.pack_path, ep, args.camera), step=args.step, max_frames=args.max_frames
@@ -122,7 +148,30 @@ def cmd_label(args: argparse.Namespace) -> None:
         else:
             assert sam3_teacher is not None
             res = sam3_teacher.label_episode(frames, ids, mres, episode=ep, camera=args.camera)
-        summary = save_teacher_outputs(res, frames, out / "teachers", save_overlays_every=args.overlay_every)
+        results_by_ep[ep] = res
+        frames_by_ep[ep] = frames
+
+    # Stage B: static consensus gating across training episodes for SAM 3.1 (PCB included as FG)
+    if args.teacher == "sam3" and not args.no_sam3_stabilize:
+        train_eps = [ep for ep in episodes if ep in split.train]
+        if train_eps:
+            train_res = {ep: results_by_ep[ep] for ep in train_eps}
+            train_frms = {ep: frames_by_ep[ep] for ep in train_eps}
+            gated_train, freq = apply_static_consensus_gating(
+                train_res, train_frms, bg, pcb_mask=pcb_mask
+            )
+            results_by_ep.update(gated_train)
+            np.savez_compressed(
+                out / "teachers" / f"sam3_static_consensus_{args.camera}.npz",
+                static_freq=freq,
+                pcb_mask=pcb_mask if pcb_mask is not None else np.zeros(freq.shape, dtype=np.uint8),
+            )
+
+    summaries = []
+    for ep in episodes:
+        summary = save_teacher_outputs(
+            results_by_ep[ep], frames_by_ep[ep], out / "teachers", save_overlays_every=args.overlay_every
+        )
         summaries.append({k: v for k, v in summary.items() if k != "frames"})
     (out / "teachers" / f"{args.teacher}_{args.camera}_summary.json").write_text(
         json.dumps(summaries, indent=2) + "\n", encoding="utf-8"
@@ -272,6 +321,10 @@ def build_parser() -> argparse.ArgumentParser:
     s_lbl.add_argument("--sam3-ckpt", default=None)
     s_lbl.add_argument("--sam3-conf", type=float, default=0.25)
     s_lbl.add_argument("--sam3-imgsz", type=int, default=644)
+    s_lbl.add_argument("--sam3-selection-mode", choices=["union", "consistent"], default="union")
+    s_lbl.add_argument("--sam3-pcb-prompts", nargs="+", default=["circuit board"])
+    s_lbl.add_argument("--sam3-pcb-conf", type=float, default=0.50)
+    s_lbl.add_argument("--no-sam3-stabilize", action="store_true")
     s_lbl.set_defaults(func=cmd_label)
 
     s_tr = sub.add_parser("train", help="Steps 4-5: train single-frame student")

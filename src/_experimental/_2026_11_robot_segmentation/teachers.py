@@ -405,12 +405,204 @@ class SAM2Teacher:
         )
 
 
+def apply_occlusion_safe_pcb_inclusion(
+    mask: np.ndarray,
+    frame_rgb: np.ndarray,
+    bg_model: MedianBackgroundModel,
+    pcb_mask: np.ndarray,
+    bg_match_threshold: float = 0.10,
+) -> np.ndarray:
+    """Stage A: include static PCB pixels as robot FG only where the frame matches median background.
+
+    - Unoccluded PCB (``diff_map < bg_match_threshold``) -> forced ``FG (1)`` consistently.
+    - Robot arm moving over PCB -> ``diff_map >= bg_match_threshold``, already ``FG (1)`` in ``mask``.
+    - Non-robot occluder (hand / held object) over PCB -> ``diff_map >= bg_match_threshold``, not forced to ``FG``.
+    """
+    out = (np.asarray(mask) > 0).astype(np.uint8).copy()
+    pcb = np.asarray(pcb_mask) > 0
+    if not pcb.any():
+        return out
+    matches_bg = bg_model.diff_map(frame_rgb) < float(bg_match_threshold)
+    out[pcb & matches_bg] = 1
+    return out
+
+
+def select_consistent_hypothesis(
+    candidates: Sequence[tuple[np.ndarray, float]],
+    prev_mask: np.ndarray | None = None,
+    static_pcb: np.ndarray | None = None,
+    nested_overlap_thresh: float = 0.70,
+    pcb_bonus: float = 0.20,
+    continuity_weight: float = 0.50,
+) -> np.ndarray:
+    """Stage C: choose consistent whole-assembly mask(s) across nested hypotheses.
+
+    Groups nested hypotheses (where one candidate contains >= ``nested_overlap_thresh``
+    of another), scores each candidate by confidence + temporal IoU continuity + bonus
+    for covering the attached static PCB, and unions the winning mask per disjoint group.
+    """
+    if not candidates:
+        raise ValueError("candidates must be non-empty")
+
+    pcb = (np.asarray(static_pcb) > 0) if static_pcb is not None else None
+    pcb_area = int(pcb.sum()) if pcb is not None else 0
+    masks = [(np.asarray(m) > 0) for m, _ in candidates]
+    confs = [float(c) for _, c in candidates]
+    prev = (np.asarray(prev_mask) > 0) if prev_mask is not None else None
+
+    def _score(idx: int) -> float:
+        m = masks[idx]
+        s = confs[idx]
+        if pcb is not None and pcb_area > 0 and pcb_bonus > 0.0:
+            s += pcb_bonus * (float((m & pcb).sum()) / float(pcb_area))
+        if prev is not None and (prev.any() or m.any()):
+            inter = int((m & prev).sum())
+            union = int((m | prev).sum())
+            iou = inter / union if union > 0 else 0.0
+            s += continuity_weight * iou
+        return s
+
+    k = len(masks)
+    parent = list(range(k))
+
+    def _find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i in range(k):
+        ai = int(masks[i].sum())
+        if ai == 0:
+            continue
+        for j in range(i + 1, k):
+            aj = int(masks[j].sum())
+            if aj == 0:
+                continue
+            inter = int((masks[i] & masks[j]).sum())
+            if inter / float(min(ai, aj)) >= nested_overlap_thresh:
+                ri, rj = _find(i), _find(j)
+                if ri != rj:
+                    parent[rj] = ri
+
+    groups: dict[int, list[int]] = {}
+    for i in range(k):
+        groups.setdefault(_find(i), []).append(i)
+
+    combined = np.zeros_like(masks[0], dtype=bool)
+    for idxs in groups.values():
+        best_i = max(idxs, key=_score)
+        combined |= masks[best_i]
+    return combined.astype(np.uint8)
+
+
+def estimate_static_pcb_mask(
+    sam3_seg: "SAM3DirectSegmenter",
+    bg_model: MedianBackgroundModel,
+    pcb_prompts: Sequence[str] = ("circuit board",),
+    conf: float = 0.50,
+    dilate_px: int = 2,
+) -> np.ndarray:
+    """Stage A: query SAM 3.1 once on the training median background for the attached controller PCB."""
+    h, w = bg_model.background_rgb.shape[:2]
+    combined = np.zeros((h, w), dtype=np.uint8)
+    for prompt in pcb_prompts:
+        m = sam3_seg.segment_prompt(bg_model.background_rgb, prompt=prompt, conf=conf)
+        combined |= (m > 0).astype(np.uint8)
+    if dilate_px > 0 and combined.any():
+        k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * dilate_px + 1, 2 * dilate_px + 1))
+        combined = cv2.dilate(combined, k, iterations=1)
+    return combined
+
+
+def apply_static_consensus_gating(
+    results_by_ep: dict[str, TeacherEpisodeResult],
+    frames_by_ep: dict[str, np.ndarray],
+    bg_model: MedianBackgroundModel,
+    low_freq: float = 0.15,
+    high_freq: float = 0.85,
+    bg_match_threshold: float = 0.10,
+    pcb_mask: np.ndarray | None = None,
+    min_static_obs: int = 5,
+) -> tuple[dict[str, TeacherEpisodeResult], np.ndarray]:
+    """Stage B: compute per-pixel static FG frequency across training episodes and gate flicker.
+
+    For pixels matching the median background (stationary pixels):
+      - ``pcb_mask`` (attached controller PCB) -> ``FG (1)``
+      - ``freq >= high_freq`` (consistent static base) -> ``FG (1)``
+      - ``low_freq < freq < high_freq`` (flickering wire/rim edges) -> ``UNKNOWN (255)``
+      - ``freq <= low_freq`` (consistent static background) -> ``BG (0)``
+    Moving pixels (``diff_from_bg >= bg_match_threshold``) are left untouched.
+    """
+    sample_res = next(iter(results_by_ep.values()))
+    h, w = sample_res.labels.shape[1:3]
+    fg_sum = np.zeros((h, w), dtype=np.float64)
+    obs_sum = np.zeros((h, w), dtype=np.float64)
+
+    for ep, res in results_by_ep.items():
+        frames = frames_by_ep[ep]
+        for t in range(len(res.frame_indices)):
+            if not res.retained[t]:
+                continue
+            matches_bg = bg_model.diff_map(frames[t]) < float(bg_match_threshold)
+            valid = matches_bg & (res.labels[t] != UNKNOWN)
+            obs_sum += valid.astype(np.float64)
+            fg_sum += (valid & (res.labels[t] == FG)).astype(np.float64)
+
+    freq = np.where(obs_sum >= min_static_obs, fg_sum / np.maximum(obs_sum, 1.0), np.nan).astype(np.float32)
+    valid_stat = np.isfinite(freq)
+    uncertain_static = valid_stat & (freq > float(low_freq)) & (freq < float(high_freq))
+    stable_fg_static = valid_stat & (freq >= float(high_freq))
+    stable_bg_static = valid_stat & (freq <= float(low_freq))
+    pcb = (np.asarray(pcb_mask) > 0) if pcb_mask is not None else np.zeros((h, w), dtype=bool)
+
+    updated: dict[str, TeacherEpisodeResult] = {}
+    for ep, res in results_by_ep.items():
+        frames = frames_by_ep[ep]
+        new_labels = res.labels.copy()
+        for t in range(len(res.frame_indices)):
+            if not res.retained[t]:
+                continue
+            matches_bg = bg_model.diff_map(frames[t]) < float(bg_match_threshold)
+            lbl = new_labels[t]
+            lbl[matches_bg & stable_bg_static] = BG
+            lbl[matches_bg & stable_fg_static] = FG
+            lbl[matches_bg & uncertain_static] = UNKNOWN
+            if pcb.any():
+                lbl[matches_bg & pcb] = FG
+            new_labels[t] = lbl
+
+        meta = dict(res.metadata)
+        meta["static_consensus"] = {
+            "low_freq": float(low_freq),
+            "high_freq": float(high_freq),
+            "bg_match_threshold": float(bg_match_threshold),
+            "uncertain_static_px": int((uncertain_static & (~pcb)).sum()),
+            "stable_fg_static_px": int((stable_fg_static | pcb).sum()),
+            "pcb_px": int(pcb.sum()),
+        }
+        updated[ep] = TeacherEpisodeResult(
+            episode=res.episode,
+            camera=res.camera,
+            teacher_name=res.teacher_name,
+            frame_indices=list(res.frame_indices),
+            raw_masks=res.raw_masks,
+            labels=new_labels,
+            retained=res.retained,
+            pause_flags=res.pause_flags,
+            metadata=meta,
+        )
+    return updated, freq
+
+
 class SAM3DirectSegmenter:
     """Single-frame SAM 3 / SAM 3.1 predictor implementing ``segment(frame_rgb) -> mask``.
 
     Defaults to Ultralytics ``SAM3SemanticPredictor`` (which runs ``sam3.1_multiplex.pt``
-    and ``sam3.pt`` on CUDA, Apple MPS, or CPU). Also supports ``backend='meta_sam3'``
-    if the upstream ``facebookresearch/sam3`` package is installed.
+    and ``sam3.pt`` on CUDA, Apple MPS, or CPU). Supports:
+      - Stage A: occlusion-safe static PCB inclusion (``bg_model`` + ``pcb_mask``)
+      - Stage C: ``selection_mode='union'`` or ``'consistent'`` (whole-assembly temporal continuity)
+      - Stage D: optional camera-level ``positive_boxes`` (``[[x1, y1, x2, y2], ...]``)
     """
 
     def __init__(
@@ -422,6 +614,11 @@ class SAM3DirectSegmenter:
         device: str = "auto",
         camera_id: str = "dev2",
         backend: str = "ultralytics",
+        selection_mode: str = "union",
+        bg_model: MedianBackgroundModel | None = None,
+        pcb_mask: np.ndarray | None = None,
+        bg_match_threshold: float = 0.10,
+        positive_boxes: Sequence[Sequence[float]] | None = None,
     ):
         import torch
 
@@ -431,6 +628,13 @@ class SAM3DirectSegmenter:
         self.imgsz = int(imgsz)
         self.camera_id = camera_id
         self.backend = backend
+        self.selection_mode = selection_mode
+        self.bg_model = bg_model
+        self.pcb_mask = (np.asarray(pcb_mask) > 0).astype(np.uint8) if pcb_mask is not None else None
+        self.bg_match_threshold = float(bg_match_threshold)
+        self.positive_boxes = [list(map(float, b)) for b in positive_boxes] if positive_boxes else None
+        self._prev_mask: np.ndarray | None = None
+
         if device == "auto":
             if torch.cuda.is_available():
                 self.device = "cuda"
@@ -467,6 +671,9 @@ class SAM3DirectSegmenter:
         else:
             raise ValueError(f"Unknown SAM3 backend: {backend}")
 
+    def reset_state(self) -> None:
+        self._prev_mask = None
+
     def _sync(self) -> None:
         import torch
 
@@ -474,6 +681,26 @@ class SAM3DirectSegmenter:
             torch.cuda.synchronize()
         elif self.device == "mps":
             torch.mps.synchronize()
+
+    def segment_prompt(self, frame_rgb: np.ndarray, prompt: str, conf: float | None = None) -> np.ndarray:
+        """Query an arbitrary text prompt without mutating temporal state or applying PCB inclusion."""
+        if self.backend != "ultralytics":
+            raise NotImplementedError("segment_prompt requires backend='ultralytics'")
+        h, w = frame_rgb.shape[:2]
+        bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+        old_conf = self._predictor.args.conf
+        if conf is not None:
+            self._predictor.args.conf = float(conf)
+        try:
+            self._predictor.set_image(bgr)
+            res = self._predictor(text=[prompt])[0]
+            self._sync()
+        finally:
+            self._predictor.args.conf = old_conf
+        if res.masks is None or len(res.masks.data) == 0:
+            return np.zeros((h, w), dtype=np.uint8)
+        raw = (res.masks.data.amax(dim=0) > 0.5).cpu().numpy().astype(np.uint8)
+        return cv2.resize(raw, (w, h), interpolation=cv2.INTER_NEAREST) if raw.shape != (h, w) else raw
 
     def segment(self, frame_rgb: np.ndarray) -> np.ndarray:
         mask, _ = self.segment_timed(frame_rgb)
@@ -490,13 +717,34 @@ class SAM3DirectSegmenter:
             bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
             t1 = time.perf_counter()
             self._predictor.set_image(bgr)
-            results = self._predictor(text=[self.prompt])
+            call_kwargs: dict = {"text": [self.prompt]}
+            if self.positive_boxes:
+                call_kwargs["bboxes"] = self.positive_boxes
+                call_kwargs["labels"] = [1] * len(self.positive_boxes)
+            results = self._predictor(**call_kwargs)
             self._sync()
             t2 = time.perf_counter()
             res = results[0]
             if res.masks is None or len(res.masks.data) == 0:
                 mask = np.zeros((h, w), dtype=np.uint8)
                 t3 = t2
+                t4 = time.perf_counter()
+            elif self.selection_mode == "consistent":
+                cands_np = (res.masks.data > 0.5).cpu().numpy().astype(np.uint8)
+                confs = [float(c) for c in res.boxes.conf] if res.boxes is not None else [1.0] * len(cands_np)
+                t3 = time.perf_counter()
+                resized = [
+                    (cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST) if m.shape != (h, w) else m, c)
+                    for m, c in zip(cands_np, confs)
+                ]
+                static_pcb = None
+                if self.pcb_mask is not None and self.bg_model is not None:
+                    static_pcb = (self.pcb_mask > 0) & (
+                        self.bg_model.diff_map(frame_rgb) < self.bg_match_threshold
+                    )
+                mask = select_consistent_hypothesis(
+                    resized, prev_mask=self._prev_mask, static_pcb=static_pcb
+                )
                 t4 = time.perf_counter()
             else:
                 raw = (res.masks.data.amax(dim=0) > 0.5).cpu().numpy().astype(np.uint8)
@@ -526,6 +774,16 @@ class SAM3DirectSegmenter:
                 mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
             t4 = time.perf_counter()
 
+        # Stage A: occlusion-safe static PCB inclusion (robot FG)
+        if self.pcb_mask is not None and self.bg_model is not None:
+            mask = apply_occlusion_safe_pcb_inclusion(
+                mask, frame_rgb, self.bg_model, self.pcb_mask, bg_match_threshold=self.bg_match_threshold
+            )
+            t4 = time.perf_counter()
+
+        if mask.any():
+            self._prev_mask = mask
+
         return mask, {
             "frame_id": frame_id,
             "capture_ts": capture_ts,
@@ -540,6 +798,12 @@ class SAM3DirectSegmenter:
     def save(self, out_dir: str | Path) -> Path:
         root = Path(out_dir)
         root.mkdir(parents=True, exist_ok=True)
+        has_pcb = self.pcb_mask is not None
+        if has_pcb:
+            np.savez_compressed(root / "pcb_mask.npz", pcb_mask=self.pcb_mask)
+        has_bg = self.bg_model is not None
+        if has_bg:
+            self.bg_model.save(root / "bg_model")
         meta = {
             "kind": "sam3_direct",
             "checkpoint": self.checkpoint,
@@ -548,6 +812,11 @@ class SAM3DirectSegmenter:
             "imgsz": self.imgsz,
             "camera_id": self.camera_id,
             "backend": self.backend,
+            "selection_mode": self.selection_mode,
+            "bg_match_threshold": self.bg_match_threshold,
+            "has_pcb_mask": has_pcb,
+            "has_bg_model": has_bg,
+            "positive_boxes": self.positive_boxes,
         }
         (root / "config.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
         return root
@@ -631,6 +900,8 @@ class SAM3Teacher:
                     predictor.handle_request({"type": "close_session", "session_id": sid})
         else:
             seg = self._get_segmenter(camera)
+            if hasattr(seg, "reset_state"):
+                seg.reset_state()
             for t in range(n):
                 raw_masks[t] = seg.segment(frames_rgb[t])
 
