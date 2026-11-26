@@ -140,6 +140,9 @@ class YOLO26SemanticNet(nn.Module):
         full_model = yolo.model
         # Keep backbone + PAN neck (layers 0..22), drop final Segment26/Detect head
         self.layers = nn.ModuleList(list(full_model.model)[:23])
+        # Ultralytics sets requires_grad=False when loading pretrained .pt checkpoints; unfreeze for fine-tuning
+        for p in self.layers.parameters():
+            p.requires_grad_(True)
         self.save_set = set(full_model.save) | set(self.TAP_LAYERS)
         self.weights_or_cfg = weights_or_cfg
         self.decoder_channels = int(decoder_channels)

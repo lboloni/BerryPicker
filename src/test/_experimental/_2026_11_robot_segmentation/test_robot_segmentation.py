@@ -231,6 +231,10 @@ def test_letterbox_and_models_roundtrip(tmp_path: Path):
         m[18:20, 18:46] = UNKNOWN
         lbls.append(m)
 
+    # Ensure YOLO26SemanticNet backbone parameters are trainable (not left frozen by Ultralytics loader)
+    ymodel = YOLO26SemanticNet("yolo26n-seg.yaml", decoder_channels=16)
+    assert all(p.requires_grad for p in ymodel.layers.parameters())
+
     for arch, kwargs in [
         ("unet", {"base_channels": 8}),
         ("yolo26_semantic", {"weights_or_cfg": "yolo26n-seg.yaml", "decoder_channels": 16}),
