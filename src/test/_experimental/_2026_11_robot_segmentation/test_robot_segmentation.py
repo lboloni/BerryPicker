@@ -476,3 +476,65 @@ def test_sam3_stabilization_stages_a_b_c():
     assert (g0[30:40, 35:44] == UNKNOWN).all()
     assert (g0[0:15, 0:15] == BG).all()
     assert freq[35, 38] == pytest.approx(0.5)
+
+
+def test_segmented_demo_white_bg_and_summary(tmp_path: Path):
+    """Verify white-background compositing, sibling episode creation, and CSV pairing."""
+    from _experimental._2026_11_robot_segmentation.segmented_demo import (
+        apply_white_background,
+        save_white_bg_preview,
+        segment_episode_video,
+        summarize_comparison_csv,
+    )
+
+    rgb = np.full((32, 32, 3), 50, dtype=np.uint8)
+    mask = np.zeros((32, 32), dtype=np.uint8)
+    mask[8:24, 10:22] = 1
+    out = apply_white_background(rgb, mask)
+    assert out.dtype == np.uint8 and out.shape == (32, 32, 3)
+    assert np.all(out[8:24, 10:22] == 50)
+    assert np.all(out[:8, :] == 255)
+
+    # Synthetic episode directory with metadata + video
+    src_ep = tmp_path / "src" / "ep0"
+    dst_ep = tmp_path / "dst" / "ep0"
+    src_ep.mkdir(parents=True)
+    _make_synthetic_episode(src_ep / "video_dev2.mp4", n_frames=5, size=64, seed=4)
+    (src_ep / "_metadata.yaml").write_text("maxsteps: 5\nstored_as_video: true\nstored_as_images: false\n", encoding="utf-8")
+    (src_ep / "_action.yaml").write_text("- rc-position-target: [0, 0, 0, 0, 0, 0]\n", encoding="utf-8")
+    (src_ep / "_annotation.yaml").write_text("- reward: 0\n", encoding="utf-8")
+
+    class _BoxSeg:
+        def segment(self, frame_rgb):
+            m = np.zeros(frame_rgb.shape[:2], dtype=np.uint8)
+            m[16:48, 16:48] = 1
+            return m
+
+    st = segment_episode_video(src_ep, dst_ep, camera="dev2", segmenter=_BoxSeg())
+    assert st["frames"] == 5
+    assert st["cached"] is False
+    assert (dst_ep / "video_dev2.mp4").is_file()
+    assert (dst_ep / "_action.yaml").read_text(encoding="utf-8") == (src_ep / "_action.yaml").read_text(encoding="utf-8")
+    assert st["sample_white"][0, 0].tolist() == [255, 255, 255]
+
+    # Second call with overwrite=False reuses cached video
+    st2 = segment_episode_video(src_ep, dst_ep, camera="dev2", segmenter=_BoxSeg(), overwrite=False)
+    assert st2["cached"] is True
+
+    preview = save_white_bg_preview([st], tmp_path / "preview.png")
+    assert preview.is_file() and preview.stat().st_size > 0
+
+    # Paired comparison CSV summarization
+    csv_path = tmp_path / "all_msecomparison_values.csv"
+    csv_path.write_text(
+        "Title,vp_vae_neo_128_orig,vp_vae_neo_128_seg,vp_vit_base_128_orig,vp_vit_base_128_seg\n"
+        "height,0.10,0.08,0.05,0.06\n"
+        "distance,0.20,0.18,0.07,0.06\n",
+        encoding="utf-8",
+    )
+    paired, md = summarize_comparison_csv(csv_path)
+    assert len(paired) == 2
+    assert paired[0]["model"] == "vp_vae_neo_128"
+    assert paired[0]["orig_mean_rmse"] == pytest.approx(0.15)
+    assert paired[0]["seg_mean_rmse"] == pytest.approx(0.13)
+    assert "vp_vit_base_128" in md

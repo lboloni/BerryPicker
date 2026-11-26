@@ -68,6 +68,7 @@ Two standalone notebooks live alongside the package (using the `berrypicker` ker
 
 - `Explore_RobotSegmentation.ipynb` — Steps 1–3: episode inventory and frozen 6/2/2 split plot, median-background + MAD + static-control inspection, motion teacher vs. Meta SAM 3.1 (`sam3.1_multiplex.pt`) coverage, prompt/resolution checks, and overlays on moving vs. paused frames.
 - `Verify_RobotSegmentation.ipynb` — Steps 4–7: trains or loads `SmallSegUNet` and `YOLO26SemanticNet` on both motion and Meta SAM 3.1 labels, compares them side-by-side against Meta SAM 3.1 (zero-shot ceiling) in strips, pause stability, and an embedded H.264 validation review video, and runs the paced 10 Hz latency & freshness benchmark.
+- `Flow_SegmentedVP.ipynb` (with `segmented_demo.py`) — BerryPicker flow comparing white-background segmented visual proprioception (`<demopack>_seg_white`) against unsegmented (`orig`) visual proprioception across `Conv-VAE-Neo`, `ProprioTuned ViT`, and optional CNNs on held-out `vp_testing` and `vp_validation`.
 
 Run them interactively in VS Code or via `papermill` into a results directory (so source notebooks stay output-free in git):
 
