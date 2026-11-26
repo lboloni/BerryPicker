@@ -1,0 +1,32 @@
+name: dr_photo
+description: Mask-free photometric, lighting, and sensor-noise domain randomization
+seed: 201
+copies_per_episode: 1
+requires_mask: false
+pipeline:
+  - op: lighting_gradient
+    p: 0.70
+    strength_range: [0.10, 0.32]
+    mode: random
+  - op: white_balance
+    p: 0.70
+    gain_range: [0.85, 1.15]
+  - op: color_jitter
+    p: 0.85
+    brightness: 0.25
+    contrast: 0.25
+    saturation: 0.25
+    hue: 0.05
+  - op: gamma
+    p: 0.50
+    gamma_range: [0.75, 1.35]
+  - op: gaussian_noise
+    p: 0.45
+    sigma_range: [2.0, 10.0]
+  - op: gaussian_blur
+    p: 0.25
+    kernel_sizes: [3, 5]
+    sigma_range: [0.4, 1.1]
+  - op: jpeg_compression
+    p: 0.30
+    quality_range: [45, 92]

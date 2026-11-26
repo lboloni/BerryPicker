@@ -1,0 +1,49 @@
+name: dr_full
+description: Full composite domain randomization (random backgrounds, distractors, lighting, color jitter, noise, cutout)
+seed: 401
+copies_per_episode: 1
+requires_mask: true
+pipeline:
+  - op: background_replace
+    p: 1.0
+    edge_feather_px: 1
+    mask_jitter_px: 1
+    sources:
+      - kind: smooth_field
+        grid_size: 4
+        weight: 0.30
+      - kind: geometric_pattern
+        style: random
+        weight: 0.30
+      - kind: multi_scale_noise
+        scales: [4, 16, 64]
+        weight: 0.25
+      - kind: solid_color
+        mode: random
+        weight: 0.15
+  - op: distractors
+    p: 0.75
+    count_range: [1, 4]
+    placement: background_only
+    size_frac_range: [0.06, 0.22]
+  - op: lighting_gradient
+    p: 0.65
+    strength_range: [0.10, 0.30]
+    mode: random
+  - op: white_balance
+    p: 0.60
+    gain_range: [0.88, 1.12]
+  - op: color_jitter
+    p: 0.80
+    brightness: 0.22
+    contrast: 0.22
+    saturation: 0.22
+    hue: 0.04
+  - op: gaussian_noise
+    p: 0.40
+    sigma_range: [2.0, 9.0]
+  - op: random_erasing
+    p: 0.30
+    count_range: [1, 2]
+    area_frac_range: [0.015, 0.06]
+    fill: random_color

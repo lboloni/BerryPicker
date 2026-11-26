@@ -1,0 +1,23 @@
+name: dr_bg_swap
+description: Mask-based random synthetic background replacement (no distractors or photometric jitter)
+seed: 301
+copies_per_episode: 1
+requires_mask: true
+pipeline:
+  - op: background_replace
+    p: 1.0
+    edge_feather_px: 1
+    mask_jitter_px: 1
+    sources:
+      - kind: smooth_field
+        grid_size: 4
+        weight: 0.30
+      - kind: geometric_pattern
+        style: random
+        weight: 0.30
+      - kind: multi_scale_noise
+        scales: [4, 16, 64]
+        weight: 0.25
+      - kind: solid_color
+        mode: random
+        weight: 0.15

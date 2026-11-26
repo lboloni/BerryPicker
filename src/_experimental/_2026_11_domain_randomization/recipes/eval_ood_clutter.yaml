@@ -1,0 +1,30 @@
+name: eval_ood_clutter
+description: Disjoint held-out OOD clutter and lighting stress test for vp_testing (background distractors + shift, robot untouched except lighting)
+seed: 9001
+copies_per_episode: 1
+requires_mask: true
+pipeline:
+  - op: background_replace
+    p: 1.0
+    edge_feather_px: 1
+    mask_jitter_px: 0
+    sources:
+      - kind: geometric_pattern
+        style: voronoi
+        weight: 0.50
+      - kind: multi_scale_noise
+        scales: [6, 24, 96]
+        weight: 0.50
+  - op: distractors
+    p: 1.0
+    count_range: [4, 7]
+    placement: background_only
+    size_frac_range: [0.08, 0.24]
+    shapes: [rect, circle, polygon, line]
+  - op: lighting_gradient
+    p: 1.0
+    strength_range: [0.18, 0.32]
+    mode: linear
+  - op: white_balance
+    p: 1.0
+    gain_range: [0.85, 1.15]
