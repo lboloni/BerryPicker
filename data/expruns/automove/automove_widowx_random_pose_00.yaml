@@ -16,7 +16,10 @@ pose:
   z: {random: [0.12, 0.32]}
   roll: {fixed: 0.0}
   pitch: {random: [-0.60, 0.20]}
-  yaw: {fixed: 0.0}
+  # yaw = atan2(y, x) + offset: the gripper points away from the base, which keeps
+  # the wrist away from its singularity (src/robot/widowx/DESIGN-WIDOWX.md, section 9)
+  # The offset must stay 0: any offset flips the wrist where the pitch bend crosses 0.
+  yaw: {heading: [0.0, 0.0]}
 
 # The action is issued once, after the corresponding pose has been reached.
 gripper_actions: [hold, grasp, release]

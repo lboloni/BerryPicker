@@ -6,7 +6,7 @@ import random
 
 from exp_run_config import Config
 from robot.widowx import WidowXCommand, WidowXPose
-from robot.widowx.move import move_pose_towards
+from robot.widowx.move import move_pose_towards, move_towards
 
 
 class WidowXAutoMoveController:
@@ -92,11 +92,14 @@ class WidowXAutoMoveController:
         for field in WidowXPose.FIELDS:
             definition = fields[field]
             if not isinstance(definition, dict) or set(definition) not in (
-                {"fixed"}, {"random"}, {"choices"}
+                {"fixed"}, {"random"}, {"choices"}, {"heading"}
             ):
                 raise ValueError(
-                    f"pose.{field} must contain exactly one of fixed, random, or choices"
+                    f"pose.{field} must contain exactly one of fixed, random, choices, "
+                    "or heading"
                 )
+            if "heading" in definition and field != "yaw":
+                raise ValueError("Only pose.yaw can follow the heading")
             if "fixed" in definition:
                 value = definition["fixed"]
                 if not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -104,6 +107,12 @@ class WidowXAutoMoveController:
                 value = float(value)
                 result[field] = ("fixed", value)
                 minimum[field] = maximum[field] = value
+            elif "heading" in definition:
+                # yaw = atan2(y, x) + an offset from this range; the limits check
+                # uses the offsets, the heading depends on the sampled position
+                limits = self._range(definition["heading"], f"pose.{field}.heading")
+                result[field] = ("heading", limits)
+                minimum[field], maximum[field] = limits
             elif "random" in definition:
                 limits = self._range(definition["random"], f"pose.{field}.random")
                 result[field] = ("random", limits)
@@ -145,9 +154,20 @@ class WidowXAutoMoveController:
                 values[field] = definition
             elif kind == "random":
                 values[field] = self.rng.uniform(*definition)
+            elif kind == "heading":
+                values[field] = self._wrap(
+                    self._heading(values) + self.rng.uniform(*definition))
             else:
                 values[field] = self.rng.choice(definition)
         return self.Pose(self.robot_controller.exp, values)
+
+    @staticmethod
+    def _heading(pose):
+        return math.atan2(pose["y"], pose["x"])
+
+    @staticmethod
+    def _wrap(angle):
+        return (angle + math.pi) % (2.0 * math.pi) - math.pi
 
     def generate_waypoints(self):
         """Populate the route with IK-checked waypoint commands."""
@@ -193,6 +213,15 @@ class WidowXAutoMoveController:
             target = move_pose_towards(
                 self.robot_controller.exp, current, waypoint.pose, max_steps
             )
+            if self.pose_fields["yaw"][0] == "heading":
+                # the yaw of the step follows the heading of the step; only the
+                # offset from the heading moves towards that of the waypoint
+                offset = move_towards(
+                    self._wrap(current["yaw"] - self._heading(current)),
+                    self._wrap(waypoint.pose["yaw"] - self._heading(waypoint.pose)),
+                    max_steps["yaw"], angular=True,
+                )
+                target["yaw"] = self._wrap(self._heading(target) + offset)
             if not self.robot_controller.can_reach(target):
                 raise RuntimeError(f"WidowX AutoMove intermediate pose is unreachable:\n{target}")
             self.pos_target = copy(target)

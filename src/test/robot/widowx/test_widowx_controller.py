@@ -8,7 +8,7 @@ sys.path.extend([
 ])
 
 from robot.widowx import PositionController, WidowXCommand, WidowXPose, WidowXRuntime
-from widowx_test_support import FakeAPI, FakeBot, robot_exp
+from widowx_test_support import SLEEP_JOINTS, FakeAPI, FakeBot, robot_exp
 
 
 class TestWidowXRuntime(unittest.TestCase):
@@ -69,6 +69,14 @@ class TestWidowXPositionController(unittest.TestCase):
         bot.arm.reachable = False
         self.assertFalse(controller.can_reach(target))
 
+    def test_reachability_ignores_the_speed_and_seeds_from_ready_before_start(self):
+        controller, _, bot = self.make_controller()
+        target = WidowXPose(robot_exp())
+        controller.can_reach(target)
+        self.assertEqual(bot.arm.pose_calls[-1]["check_moving_time"], float("inf"))
+        self.assertEqual(bot.arm.moving_time, 0.1)
+        self.assertEqual(bot.arm.pose_calls[-1]["custom_guess"], robot_exp()["READY_JOINTS"])
+
     def test_move_raises_on_ik_failure_and_delegates_gripper(self):
         controller, _, bot = self.make_controller()
         controller.start_robot()
@@ -100,12 +108,53 @@ class TestWidowXPositionController(unittest.TestCase):
         controller.move(target)
         self.assertEqual(bot.arm.pose_calls[-1]["custom_guess"], bot.arm.joints)
 
+    def make_ready_controller(self):
+        exp = robot_exp()
+        exp["startup_pose"] = "ready"
+        exp["shutdown_pose"] = "sleep"
+        api = FakeAPI()
+        bot = FakeBot()
+        bot.arm.joints = list(SLEEP_JOINTS)
+        return PositionController(exp, runtime=WidowXRuntime(api), bot=bot), bot
+
+    def test_start_from_sleep_goes_to_ready_and_stop_goes_through_ready_to_sleep(self):
+        controller, bot = self.make_ready_controller()
+        ready = robot_exp()["READY_JOINTS"]
+        controller.start_robot()
+        self.assertEqual(bot.core.torque_calls, [("group", "all", True)])
+        self.assertEqual(bot.arm.capture_count, 1)
+        self.assertEqual(bot.arm.joints, ready)
+        self.assertEqual(bot.arm.joint_calls[-1][1]["check_moving_time"], 3.0)
+        self.assertEqual((bot.arm.moving_time, bot.arm.accel_time), (0.1, 0.05))
+
+        bot.arm.joints = [0.1, -0.3, 1.0, 0.0, -0.6, 0.0]
+        controller.stop_robot()
+        self.assertEqual(
+            [joints for joints, _ in bot.arm.joint_calls[-2:]], [ready, SLEEP_JOINTS]
+        )
+        self.assertEqual(bot.core.torque_calls[-1], ("group", "all", False))
+        self.assertFalse(controller.started)
+
+    def test_ready_start_requires_the_sleep_pose(self):
+        controller, bot = self.make_ready_controller()
+        bot.arm.joints = robot_exp()["READY_JOINTS"]
+        with self.assertRaisesRegex(RuntimeError, "sleep pose"):
+            controller.start_robot()
+        self.assertEqual(bot.core.torque_calls, [])
+        self.assertFalse(controller.started)
+
+    def test_transition_that_does_not_settle_raises(self):
+        controller, bot = self.make_ready_controller()
+        bot.arm.apply_joint_commands = False
+        with self.assertRaisesRegex(RuntimeError, "did not settle"):
+            controller.start_robot()
+
     def test_joint_and_cartesian_helpers_delegate(self):
         controller, _, bot = self.make_controller()
         controller.start_robot()
         controller.move_joint_positions([0.1] * 6, moving_time=0.4, blocking=False)
         self.assertEqual(bot.arm.joint_calls[-1][1], {
-            "moving_time": 0.4, "blocking": False,
+            "moving_time": 0.4, "blocking": False, "check_moving_time": 0.1,
         })
         controller.move_cartesian(x=0.01, moving_time=0.5)
         self.assertEqual(bot.arm.cartesian_calls[-1], {"x": 0.01, "moving_time": 0.5})

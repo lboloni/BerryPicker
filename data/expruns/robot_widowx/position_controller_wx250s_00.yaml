@@ -11,9 +11,15 @@ accel_time: 0.05
 gripper_pressure: 0.5
 gripper_delay: 0.0
 
-# "hold" leaves the arm where it is when collection starts. "sleep" parks it on stop.
-startup_pose: hold
+# "ready": from the sleep pose, torque on, joint-space move to READY_JOINTS (= POSE_DEFAULT).
+# "sleep": through READY_JOINTS to the sleep pose, then torque off.
+# See src/robot/widowx/DESIGN-WIDOWX.md, section 6.
+startup_pose: ready
 shutdown_pose: sleep
+READY_JOINTS: [0.0, -0.40, 1.09, 0.0, -0.70, 0.0]
+transition_time: 3.0
+settle_tolerance: 0.05
+settle_timeout: 2.0
 
 POSE_DEFAULT:
   x: 0.30

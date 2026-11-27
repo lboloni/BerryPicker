@@ -3,8 +3,7 @@
 from copy import copy
 from math import isfinite
 import logging
-from time import perf_counter
-from time import monotonic
+from time import monotonic, perf_counter, sleep
 
 from .position import WidowXCommand, WidowXPose
 from .runtime import get_default_runtime
@@ -49,6 +48,12 @@ class PositionController:
             startup_pose = self.exp.get("startup_pose", "hold")
             if startup_pose == "hold":
                 self.bot.arm.capture_joint_positions()
+            elif startup_pose == "ready":
+                if not self._at_joints(self.bot.arm.group_info.joint_sleep_positions):
+                    raise RuntimeError("WidowX must start from the sleep pose; park it first")
+                self.bot.core.robot_torque_enable("group", "all", True)
+                self.bot.arm.capture_joint_positions()
+                self._transition(self.exp["READY_JOINTS"])
             elif startup_pose == "home":
                 self.go_home()
             elif startup_pose == "sleep":
@@ -102,14 +107,23 @@ class PositionController:
         return {field: pose[field] for field in WidowXPose.FIELDS}
 
     def can_reach(self, pose):
+        """IK check against the joint position limits only, from the current joints,
+        or from READY_JOINTS before the start (the arm will move from there).
+        Interbotix would also reject solutions that cannot be reached within one
+        moving_time; that check is left to move, so it is switched off here."""
         if not isinstance(pose, WidowXPose):
             raise TypeError("WidowX reachability requires a WidowXPose")
         pose.validate(self.exp)
-        joints = self.bot.arm.get_joint_positions()
+        joints = self.bot.arm.get_joint_positions() if self.started else self.exp["READY_JOINTS"]
+        moving_time = self.bot.arm.moving_time
+        self.bot.arm.moving_time = float("inf")
         started = perf_counter()
-        solution, reachable = self.bot.arm.set_ee_pose_components(
-            **self._pose_kwargs(pose), custom_guess=joints, execute=False,
-        )
+        try:
+            solution, reachable = self.bot.arm.set_ee_pose_components(
+                **self._pose_kwargs(pose), custom_guess=joints, execute=False,
+            )
+        finally:
+            self.bot.arm.moving_time = moving_time
         logger.info(
             "IK check: duration=%.4fs reachable=%s target=%s measured_joints=%s solution=%s",
             perf_counter() - started, reachable, pose.as_dict(), joints, solution,
@@ -175,17 +189,43 @@ class PositionController:
             raise ValueError("Interbotix could not execute WidowX Cartesian trajectory")
         self.target = self._pose_from_matrix(self.bot.arm.get_ee_pose_command())
 
-    def go_home(self, moving_time=None):
-        self._require_started()
-        if self.bot.arm.go_to_home_pose(moving_time=moving_time) is False:
-            raise ValueError("Interbotix rejected the WidowX home pose")
+    def _transition(self, joints):
+        """Joint-space move with transition_time, then wait until the joints settle.
+        The trajectory time is set before the move, since Interbotix checks the joint
+        speeds with it; afterwards it goes back to the streaming moving_time."""
+        self.bot.arm.set_trajectory_time(
+            moving_time=self.exp["transition_time"],
+            accel_time=self.exp["transition_time"] / 4,
+        )
+        if not self.bot.arm.set_joint_positions(joints, blocking=True):
+            raise ValueError(f"Interbotix rejected the WidowX transition to {joints}")
+        deadline = monotonic() + self.exp["settle_timeout"]
+        while not self._at_joints(joints):
+            if monotonic() > deadline:
+                raise RuntimeError(
+                    f"WidowX did not settle at {joints}: {self.bot.arm.get_joint_positions()}"
+                )
+            sleep(0.05)
+        self.bot.arm.set_trajectory_time(
+            moving_time=self.exp["moving_time"], accel_time=self.exp["accel_time"]
+        )
         self.target = self._pose_from_matrix(self.bot.arm.get_ee_pose_command())
 
-    def go_sleep(self, moving_time=None):
+    def _at_joints(self, joints):
+        return max(
+            abs(measured - goal)
+            for measured, goal in zip(self.bot.arm.get_joint_positions(), joints)
+        ) <= self.exp["settle_tolerance"]
+
+    def go_home(self):
         self._require_started()
-        if self.bot.arm.go_to_sleep_pose(moving_time=moving_time) is False:
-            raise ValueError("Interbotix rejected the WidowX sleep pose")
-        self.target = self._pose_from_matrix(self.bot.arm.get_ee_pose_command())
+        self._transition([0.0] * len(self.exp["READY_JOINTS"]))
+
+    def go_sleep(self):
+        """Through the ready pose to the sleep pose."""
+        self._require_started()
+        self._transition(self.exp["READY_JOINTS"])
+        self._transition(self.bot.arm.group_info.joint_sleep_positions)
 
     def stop_robot(self):
         self._require_started()
@@ -195,6 +235,7 @@ class PositionController:
                 self.go_home()
             elif shutdown_pose == "sleep":
                 self.go_sleep()
+                self.bot.core.robot_torque_enable("group", "all", False)
             elif shutdown_pose != "hold":
                 raise ValueError(f"Unsupported WidowX shutdown_pose: {shutdown_pose}")
         finally:

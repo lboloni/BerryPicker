@@ -1,3 +1,4 @@
+import math
 import pathlib
 import sys
 import unittest
@@ -83,6 +84,42 @@ class TestWidowXAutoMoveController(unittest.TestCase):
         self.assertEqual(command.gripper_action, "grasp")
         robot.move(command)
         self.assertIsNone(controller.next_command(0.1))
+
+    def heading_exp(self):
+        exp = automove_exp()
+        exp.values["pose"]["yaw"] = {"heading": [-0.2, 0.2]}
+        return exp
+
+    @staticmethod
+    def offset(pose):
+        return pose["yaw"] - math.atan2(pose["y"], pose["x"])
+
+    def test_heading_yaw_is_sampled_around_the_heading(self):
+        controller, _ = self.make_controller(self.heading_exp())
+        controller.generate_waypoints()
+        for command in controller.waypoints:
+            self.assertLessEqual(abs(self.offset(command.pose)), 0.2 + 1e-9)
+
+    def test_heading_yaw_steps_follow_the_heading(self):
+        controller, robot = self.make_controller(self.heading_exp())
+        robot.start_robot()
+        target = WidowXPose(robot_exp())
+        target["x"], target["y"] = 0.3, 0.2
+        target["yaw"] = math.atan2(0.2, 0.3) + 0.15
+        controller.waypoints = [WidowXCommand(target)]
+        offsets = []
+        while (command := controller.next_command(0.1)) is not None:
+            offsets.append(self.offset(command.pose))
+            robot.move(command)
+        self.assertEqual(offsets, sorted(offsets))
+        self.assertAlmostEqual(offsets[-1], 0.15)
+        self.assertAlmostEqual(robot.get_position()["yaw"], target["yaw"])
+
+    def test_heading_only_for_yaw(self):
+        exp = automove_exp()
+        exp.values["pose"]["pitch"] = {"heading": [-0.2, 0.2]}
+        with self.assertRaisesRegex(ValueError, "Only pose.yaw"):
+            self.make_controller(exp)
 
     def test_raises_when_reachable_waypoint_cannot_be_sampled(self):
         controller, robot = self.make_controller()
