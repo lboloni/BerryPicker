@@ -16,6 +16,11 @@ def robot_exp():
         "transition_time": 3.0,
         "settle_tolerance": 0.05,
         "settle_timeout": 0.2,
+        "sleep_tolerance": 0.2,
+        "torque_off_ramp_time": 0.02,
+        "pwm_max": 885,
+        "pwm_ramp_start": 90,
+        "pwm_ramp_motors": ["shoulder", "shoulder_shadow"],
         "POSE_DEFAULT": {
             "x": 0.3, "y": 0.0, "z": 0.2,
             "roll": 0.0, "pitch": 0.0, "yaw": 0.0,
@@ -38,9 +43,16 @@ class FakeCore:
     def __init__(self, node):
         self.node = node
         self.torque_calls = []
+        self.torque_moving_times = []
+        self.register_calls = []
+        self.arm = None
 
     def robot_torque_enable(self, cmd_type, name, enable):
         self.torque_calls.append((cmd_type, name, enable))
+        self.torque_moving_times.append(self.arm.moving_time)
+
+    def robot_set_motor_registers(self, cmd_type, name, reg, value):
+        self.register_calls.append((cmd_type, name, reg, value))
 
     def get_node(self):
         return self.node
@@ -60,7 +72,11 @@ class FakeArm:
         self.apply_joint_commands = True
         self.moving_time = 0.1
         self.accel_time = 0.05
-        self.group_info = SimpleNamespace(joint_sleep_positions=list(SLEEP_JOINTS))
+        self.group_info = SimpleNamespace(
+            joint_sleep_positions=list(SLEEP_JOINTS),
+            joint_lower_limits=[-3.1416, -1.885, -2.1468, -3.1416, -1.7453, -3.1416],
+            joint_upper_limits=[3.1416, 1.9897, 1.6057, 3.1416, 2.1468, 3.1416],
+        )
 
     def capture_joint_positions(self):
         self.capture_count += 1
@@ -128,6 +144,7 @@ class FakeBot:
     def __init__(self, node=None):
         self.core = FakeCore(object() if node is None else node)
         self.arm = FakeArm()
+        self.core.arm = self.arm
         self.gripper = FakeGripper()
 
 

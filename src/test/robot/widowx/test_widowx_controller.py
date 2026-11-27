@@ -122,18 +122,49 @@ class TestWidowXPositionController(unittest.TestCase):
         ready = robot_exp()["READY_JOINTS"]
         controller.start_robot()
         self.assertEqual(bot.core.torque_calls, [("group", "all", True)])
+        self.assertEqual(bot.core.torque_moving_times, [3.0])
         self.assertEqual(bot.arm.capture_count, 1)
         self.assertEqual(bot.arm.joints, ready)
         self.assertEqual(bot.arm.joint_calls[-1][1]["check_moving_time"], 3.0)
         self.assertEqual((bot.arm.moving_time, bot.arm.accel_time), (0.1, 0.05))
 
+        # the start restored Goal_PWM on every listed motor before the torque on
+        self.assertEqual(bot.core.register_calls, [
+            ("single", "shoulder", "Goal_PWM", 885),
+            ("single", "shoulder_shadow", "Goal_PWM", 885),
+        ])
+
         bot.arm.joints = [0.1, -0.3, 1.0, 0.0, -0.6, 0.0]
+        bot.core.register_calls.clear()
         controller.stop_robot()
         self.assertEqual(
             [joints for joints, _ in bot.arm.joint_calls[-2:]], [ready, SLEEP_JOINTS]
         )
         self.assertEqual(bot.core.torque_calls[-1], ("group", "all", False))
         self.assertFalse(controller.started)
+        # the soft stop: a decreasing Goal_PWM down to 0 before the torque off, then back
+        shoulder = [value for _, name, _, value in bot.core.register_calls if name == "shoulder"]
+        self.assertEqual(len(shoulder), 22)
+        self.assertEqual(shoulder[:-1], sorted(shoulder[:-1], reverse=True))
+        self.assertEqual((shoulder[0], shoulder[-2], shoulder[-1]), (90, 0, 885))
+
+    def test_sleep_goes_to_where_the_arm_rested_at_the_start(self):
+        controller, bot = self.make_ready_controller()
+        controller.exp["torque_off_ramp_time"] = 0
+        bot.arm.joints = [-0.03, -1.91, 1.63, -0.02, 0.79, 0.0]
+        controller.start_robot()
+        bot.core.register_calls.clear()
+        controller.stop_robot()
+        # shoulder and elbow clamped into their joint limits
+        self.assertEqual(bot.arm.joints, [-0.03, -1.885, 1.6057, -0.02, 0.79, 0.0])
+        self.assertEqual(bot.core.register_calls, [])
+        self.assertEqual(bot.core.torque_calls[-1], ("group", "all", False))
+
+    def test_ready_start_accepts_the_arm_resting_below_the_sleep_joints(self):
+        controller, bot = self.make_ready_controller()
+        bot.arm.joints = [-0.03, -1.91, 1.63, -0.02, 0.79, 0.0]
+        controller.start_robot()
+        self.assertEqual(bot.arm.joints, robot_exp()["READY_JOINTS"])
 
     def test_ready_start_requires_the_sleep_pose(self):
         controller, bot = self.make_ready_controller()

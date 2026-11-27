@@ -20,6 +20,15 @@ READY_JOINTS: [0.0, -0.40, 1.09, 0.0, -0.70, 0.0]
 transition_time: 3.0
 settle_tolerance: 0.05
 settle_timeout: 2.0
+# the start accepts the arm resting on its cradle, below the sleep joints
+sleep_tolerance: 0.2
+# soft stop (DESIGN-WIDOWX.md, section 10): the stop parks at the joints where the arm
+# rested at the start; then lowers Goal_PWM from pwm_ramp_start (about 10 % of pwm_max) to 0
+# over torque_off_ramp_time (0: off) before torque off
+torque_off_ramp_time: 2.0
+pwm_max: 885
+pwm_ramp_start: 90
+pwm_ramp_motors: [shoulder, shoulder_shadow, elbow, elbow_shadow, wrist_angle]
 
 POSE_DEFAULT:
   x: 0.30

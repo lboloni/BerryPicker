@@ -24,6 +24,8 @@ class PositionController:
         self.started = False
         self.target = WidowXPose(exp)
         self.gripper_action = "hold"
+        # the joints where the arm rested at a ready start; the sleep pose goes there
+        self.rest_joints = None
         if bot is None:
             self.bot = self.runtime.create_manipulator(
                 self,
@@ -49,8 +51,23 @@ class PositionController:
             if startup_pose == "hold":
                 self.bot.arm.capture_joint_positions()
             elif startup_pose == "ready":
-                if not self._at_joints(self.bot.arm.group_info.joint_sleep_positions):
+                # with the torque off, the arm rests on its cradle below the sleep joints
+                if not self._at_joints(self.bot.arm.group_info.joint_sleep_positions,
+                                       self.exp["sleep_tolerance"]):
                     raise RuntimeError("WidowX must start from the sleep pose; park it first")
+                # the cradle is beyond the joint limits of the shoulder and the elbow
+                info = self.bot.arm.group_info
+                self.rest_joints = [
+                    min(max(joint, low), high) for joint, low, high in zip(
+                        self.bot.arm.get_joint_positions(),
+                        info.joint_lower_limits, info.joint_upper_limits)
+                ]
+                # at torque on the motors go back to their last goal: slowly, not in 0.1 s
+                self.bot.arm.set_trajectory_time(
+                    moving_time=self.exp["transition_time"],
+                    accel_time=self.exp["transition_time"] / 4,
+                )
+                self._set_pwm(self.exp["pwm_max"])
                 self.bot.core.robot_torque_enable("group", "all", True)
                 self.bot.arm.capture_joint_positions()
                 self._transition(self.exp["READY_JOINTS"])
@@ -211,21 +228,43 @@ class PositionController:
         )
         self.target = self._pose_from_matrix(self.bot.arm.get_ee_pose_command())
 
-    def _at_joints(self, joints):
+    def _at_joints(self, joints, tolerance=None):
+        tolerance = self.exp["settle_tolerance"] if tolerance is None else tolerance
         return max(
             abs(measured - goal)
             for measured, goal in zip(self.bot.arm.get_joint_positions(), joints)
-        ) <= self.exp["settle_tolerance"]
+        ) <= tolerance
 
     def go_home(self):
         self._require_started()
         self._transition([0.0] * len(self.exp["READY_JOINTS"]))
 
     def go_sleep(self):
-        """Through the ready pose to the sleep pose."""
+        """Through the ready pose to the sleep pose: where the arm rested at the start,
+        or the nominal sleep joints."""
         self._require_started()
         self._transition(self.exp["READY_JOINTS"])
-        self._transition(self.bot.arm.group_info.joint_sleep_positions)
+        self._transition(self.rest_joints or self.bot.arm.group_info.joint_sleep_positions)
+
+    def _set_pwm(self, value):
+        """Goal_PWM limits the motor output also in position mode. Written motor by
+        motor, since a group write does not reach the shadow motors."""
+        for name in self.exp["pwm_ramp_motors"]:
+            self.bot.core.robot_set_motor_registers("single", name, "Goal_PWM", int(value))
+
+    def _torque_off_softly(self):
+        """Lower Goal_PWM from pwm_ramp_start to 0 over torque_off_ramp_time, so that
+        the arm settles under gravity, then torque off, then Goal_PWM back to the
+        maximum. Holding the arm needs only a few percent of pwm_max."""
+        ramp = self.exp["torque_off_ramp_time"] > 0
+        if ramp:
+            steps = 20
+            for step in range(steps + 1):
+                self._set_pwm(self.exp["pwm_ramp_start"] * (1 - step / steps))
+                sleep(self.exp["torque_off_ramp_time"] / steps)
+        self.bot.core.robot_torque_enable("group", "all", False)
+        if ramp:
+            self._set_pwm(self.exp["pwm_max"])
 
     def stop_robot(self):
         self._require_started()
@@ -235,7 +274,7 @@ class PositionController:
                 self.go_home()
             elif shutdown_pose == "sleep":
                 self.go_sleep()
-                self.bot.core.robot_torque_enable("group", "all", False)
+                self._torque_off_softly()
             elif shutdown_pose != "hold":
                 raise ValueError(f"Unsupported WidowX shutdown_pose: {shutdown_pose}")
         finally:
